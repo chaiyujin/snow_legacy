@@ -3,32 +3,34 @@ project(GLUtils)
 # find package
 find_package(assimp)
 find_package(SDL2)
-add_subdirectory(./glutils/third-party/glm-stable)
 
 # manual add
 include_directories(
-    ./glutils/
-    ./glutils/third-party/stb/
-    ./glutils/third-party/imgui/
-    ./glutils/third-party/glad/include/
+    ${PROJECT_SOURCE_DIR}/glutils/
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/stb/
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/glm-stable/  # glm
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/glad/include/
 )
-
 # set sources file
+# build glad first (with out c++11)
+add_library(GLAD STATIC
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/glad/src/glad.c)  # glad
 set(THIRD_PARTY
-    ./glutils/third-party/glad/src/glad.c  # glad
-    ./glutils/third-party/imgui/imgui.cpp
-    ./glutils/third-party/imgui/imgui_draw.cpp
-    ./glutils/third-party/imgui/imgui_demo.cpp
-    ./glutils/third-party/imgui/imgui_impl_opengl3.cpp
-    ./glutils/third-party/imgui/imgui_impl_sdl.cpp
+    # imgui
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/imgui.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/imgui_draw.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/imgui_demo.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/imgui_impl_opengl3.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/imgui_impl_sdl.cpp
 )
 set(SNOW
-    ./glutils/model/mesh.cpp
-    ./glutils/model/model.cpp
-    ./glutils/snow.cpp)
-set(SOURCES main.cpp
-            ${SNOW}
-            ${THIRD_PARTY})
+    # main sources
+    ${PROJECT_SOURCE_DIR}/glutils/model/mesh.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/model/model.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/snow.cpp)
+# set sources
+set(SOURCES main.cpp ${SNOW} ${THIRD_PARTY})
 
 # set libraries
 if (APPLE)
@@ -41,10 +43,9 @@ if (UNIX AND NOT APPLE)
     # linux case
     set(LIBRARIES GL X11 pthread Xrandr Xi dl)
 endif ()
-set(LIBRARIES ${LIBRARIES} SDL2 assimp glfw)
-add_definitions(-O2)
+set(LIBRARIES ${LIBRARIES} SDL2 assimp)
 
 # exec and link libaraies
+add_compile_options(-std=c++11 -O2)
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
-
+target_link_libraries(${PROJECT_NAME} ${LIBRARIES} GLAD)

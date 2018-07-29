@@ -6,22 +6,10 @@
 #include <snow.h>
 #include <core/math.h>
 #include <core/camera.h>
-#include <shader/shader.h>
+#include <core/shader.h>
 #include <model/model.h>
 #include <iomanip>
 using namespace snow;
-
-inline std::ostream &operator<<(std::ostream &os, const glm::mat4 &mat)
-{
-	for (int i = 0; i < 4; ++i) {
-		os << "[ ";
-		for (int j = 0; j < 4; ++j) {
-			os << std::setw(16) << mat[i][j] << " ";
-		}
-		os << "]\n";
-	}
-	return os;
-}
 
 
 const unsigned int SCR_WIDTH = 1280;
@@ -41,6 +29,9 @@ int main(int, char**)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    std::cout << camera << std::endl;
+    std::cout << glm::mat3(1.0) << std::endl;
+
     // Main loop
     while (Snow::Alive())
     {
@@ -50,13 +41,12 @@ int main(int, char**)
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         model_shader.use();
 
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        // glm::mat4 projection(1.0), view(1.0);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.getViewMatrix();
         model_shader.setMat4("projection", projection);
         model_shader.setMat4("view", view);
 

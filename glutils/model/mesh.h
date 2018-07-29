@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <core/math.h>
-#include <shader/shader.h>
+#include <core/shader.h>
 
 namespace snow {
     struct Vertex {

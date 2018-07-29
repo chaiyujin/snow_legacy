@@ -31,7 +31,6 @@ namespace snow {
         std::vector<uint32_t> indices;
         std::vector<Texture> textures;
 
-        printf("Mesh %d\n", mesh->mNumVertices);
         // walk through all vertices
         for (uint32_t i = 0; i < mesh->mNumVertices; ++i) {
             Vertex vertex;
