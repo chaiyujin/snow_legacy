@@ -7,6 +7,7 @@ find_package(SDL2)
 # manual add
 include_directories(
     ${PROJECT_SOURCE_DIR}/glutils/
+    ${PROJECT_SOURCE_DIR}/glutils/snow/
     ${PROJECT_SOURCE_DIR}/glutils/third-party/stb/
     ${PROJECT_SOURCE_DIR}/glutils/third-party/imgui/
     ${PROJECT_SOURCE_DIR}/glutils/third-party/glm-stable/  # glm
@@ -28,7 +29,9 @@ set(SNOW
     # main sources
     ${PROJECT_SOURCE_DIR}/glutils/model/mesh.cpp
     ${PROJECT_SOURCE_DIR}/glutils/model/model.cpp
-    ${PROJECT_SOURCE_DIR}/glutils/snow.cpp)
+    ${PROJECT_SOURCE_DIR}/glutils/snow/snow.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/snow/snow_app.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/snow/snow_window.cpp)
 # set sources
 set(SOURCES main.cpp ${SNOW} ${THIRD_PARTY})
 
@@ -41,11 +44,12 @@ if (APPLE)
 endif ()
 if (UNIX AND NOT APPLE)
     # linux case
-    set(LIBRARIES GL X11 pthread Xrandr Xi dl)
+    set(LIBRARIES GL X11 pthread Xrandr Xi)
 endif ()
 set(LIBRARIES ${LIBRARIES} SDL2 assimp)
 
 # exec and link libaraies
 add_compile_options(-std=c++11 -O2)
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${LIBRARIES} GLAD)
+target_link_libraries(GLAD dl)
+target_link_libraries(${PROJECT_NAME} GLAD ${LIBRARIES})

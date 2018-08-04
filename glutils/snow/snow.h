@@ -6,8 +6,13 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <string>
+#include <vector>
+#include <snow/snow_window.h>
+#include <snow/snow_app.h>
+
 
 namespace snow {
+
     class Snow
     {
     private:
