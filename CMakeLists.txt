@@ -31,6 +31,7 @@ set(SNOW
     ${PROJECT_SOURCE_DIR}/glutils/model/model.cpp
     ${PROJECT_SOURCE_DIR}/glutils/snow/snow.cpp
     ${PROJECT_SOURCE_DIR}/glutils/snow/snow_app.cpp
+    ${PROJECT_SOURCE_DIR}/glutils/snow/snow_imgui.cpp
     ${PROJECT_SOURCE_DIR}/glutils/snow/snow_window.cpp)
 # set sources
 set(SOURCES main.cpp ${SNOW} ${THIRD_PARTY})

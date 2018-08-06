@@ -38,7 +38,7 @@ namespace snow {
             while(SDL_PollEvent(&mEvent)) {
                 for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
                     Window *p = it->second;
-                    p->processEvent(mEvent);
+                    p->_processEvent(mEvent);
                     if (mEvent.type == SDL_QUIT ||
                         (mEvent.type == SDL_WINDOWEVENT && 
                          mEvent.window.event == SDL_WINDOWEVENT_CLOSE &&
@@ -51,9 +51,9 @@ namespace snow {
                 if (!mRunning) break;
             }
 
-            // /* draw */
-            // for (Window *p : mWindowPtrList)
-            //     p->draw();
+            /* draw */
+            for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it)
+                it->second->_draw();
         }
         
         SDL_Quit();

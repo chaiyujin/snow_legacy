@@ -1,9 +1,9 @@
 #include "snow_window.h"
 
 namespace snow {
-    bool        Window::gIsGLADLoaded  = false;
-    std::string Window::gGLSLVersion   = "";
-    void Window::Initialize(int major, int minor, std::string glslVersion) {
+    bool        AbstractWindow::gIsGLADLoaded  = false;
+    std::string AbstractWindow::gGLSLVersion   = "";
+    void AbstractWindow::Initialize(int major, int minor, std::string glslVersion) {
         if (gGLSLVersion.length() > 0) {
             std::cout << "[SDLWindow]: SDL2 has been initialized already.";
             return;
@@ -30,12 +30,13 @@ namespace snow {
         gGLSLVersion = glslVersion;
     }
 
-    Window::~Window() {
+    AbstractWindow::~AbstractWindow() {
         SDL_GL_DeleteContext(mGLContext);
         SDL_DestroyWindow(mWindowPtr);
+        printf("~AbsWin\n");
     }
 
-    void Window::GLADInit() {
+    void AbstractWindow::GLADInit() {
         if (!gIsGLADLoaded) {
             // glad loading
             if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
@@ -46,7 +47,7 @@ namespace snow {
         }
     }
 
-    Window::Window(int width, int height, const char *title)
+    AbstractWindow::AbstractWindow(int width, int height, const char *title)
         : mWidth(width), mHeight(height), mIsFocused(true)
     {
         if (gGLSLVersion.length() == 0) {
@@ -58,6 +59,7 @@ namespace snow {
         if (mWindowPtr != nullptr) {
             mGLContext = SDL_GL_CreateContext(mWindowPtr);
             GLADInit();
+            mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
         }
         else {
             std::cerr << "[SDLWindow]: Failed to create window.";
@@ -65,14 +67,18 @@ namespace snow {
         }
     }
 
-    void Window::processEvent(SDL_Event &event) {
-        this->imguiMakeCurrent();
-
+    void AbstractWindow::_processEvent(SDL_Event &event) {
+        this->mImGui.processEvent(event);
+        this->processEvent(event);
     }
 
-    void Window::draw() {
+    void AbstractWindow::_draw() {
         this->glMakeCurrent();
-
+        // gui init
+        this->mImGui.newFrame();
+        
+        this->draw();
+        this->mImGui.draw();
         SDL_GL_SwapWindow(mWindowPtr);
     }
 }
