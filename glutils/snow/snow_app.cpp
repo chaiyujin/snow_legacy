@@ -1,4 +1,7 @@
 #include "snow_app.h"
+#include <fstream>
+#include <regex>
+#include "snow_string.h"
 
 namespace snow {
     App::App(int major, int minor, std::string glslVersion)
@@ -15,6 +18,7 @@ namespace snow {
                 glslVersion += "440";
         }
         Window::Initialize(major, minor, glslVersion);
+        this->_loadSettings();
     }
 
     App::~App() {
@@ -32,6 +36,9 @@ namespace snow {
     }
 
     void App::run() {
+        SDL_GL_SetSwapInterval(-1);
+        SDL_RaiseWindow(mWindowPtrDict.begin()->second->windowPtr());
+
         mRunning = true;
         SDL_Event mEvent;
         while (mRunning) {
@@ -52,11 +59,44 @@ namespace snow {
             }
 
             /* draw */
-            for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it)
+            for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
                 it->second->_draw();
+            }
         }
         
         SDL_Quit();
+    }
+
+    void App::_loadSettings() {
+
+        auto parseSettings = [](std::string &line, std::ifstream &fin) -> Settings {
+            Settings sets;
+            line = line.substr(1, line.length() - 2);
+            std::string str;
+            std::getline(fin, str); trim(str);
+            sscanf(str.c_str(), "Pos=%d,%d", &sets.x, &sets.y);
+            std::cout << sets.x << " " << sets.y << std::endl;
+            return sets;
+        };
+
+        std::ifstream fin("snowapp.ini");
+        std::regex re_title("(\\[)(.*)(\\])");
+        if (fin.is_open()) {
+            std::string line;
+            while (!fin.eof()) {
+                std::getline(fin, line);
+                trim(line);
+                if (std::regex_match(line, re_title)) {
+                    // read title
+                    Settings sets = parseSettings(line, fin);
+                    mWindowSettings.insert(std::pair<std::string, Settings>(line, sets));
+                }
+            }
+        }
+    }
+
+    void App::_saveSettings() {
+
     }
 
     bool App::AskQuit() {

@@ -36,14 +36,14 @@ namespace snow {
         void init(SDL_Window *windowPtr, SDL_GLContext glContext, const std::string &glslVersion);
         void activate();
         void newFrame();
-        void draw();
+        void endFrame();
         void processEvent(SDL_Event &event);
         void _sdl2Init();
         void _createFontsTexture();
         void _createDeviceObjects();
         void _destroyDeviceObjects();
         void _destroyFontTextures();
-
+        void _renderDrawData();
         void _updateMouseCursor();
         void _updateMousePosAndButtons();
     };

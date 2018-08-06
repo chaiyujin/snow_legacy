@@ -24,8 +24,6 @@ namespace snow {
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    
-        SDL_GL_SetSwapInterval(1);
 
         gGLSLVersion = glslVersion;
     }
@@ -47,15 +45,14 @@ namespace snow {
         }
     }
 
-    AbstractWindow::AbstractWindow(int width, int height, const char *title)
+    AbstractWindow::AbstractWindow(int width, int height, const char *title, int x, int y)
         : mWidth(width), mHeight(height), mIsFocused(true)
     {
         if (gGLSLVersion.length() == 0) {
             std::cerr << "[SDLWindow]: Please initialize or create an App before create a window.";
             throw std::runtime_error("[SDLWindow]: Please initialize or create an App before create a window.");
         }
-        mWindowPtr = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                      width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
+        mWindowPtr = SDL_CreateWindow(title, x, y, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
         if (mWindowPtr != nullptr) {
             mGLContext = SDL_GL_CreateContext(mWindowPtr);
             GLADInit();
@@ -74,11 +71,9 @@ namespace snow {
 
     void AbstractWindow::_draw() {
         this->glMakeCurrent();
-        // gui init
         this->mImGui.newFrame();
-        
         this->draw();
-        this->mImGui.draw();
+        this->mImGui.endFrame();
         SDL_GL_SwapWindow(mWindowPtr);
     }
 }

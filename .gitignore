@@ -2,3 +2,5 @@
 build/
 CMakeFiles/
 assets/
+main?*.cpp
+*.ini
