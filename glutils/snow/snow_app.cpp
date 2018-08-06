@@ -27,16 +27,29 @@ namespace snow {
         }
     }
 
-    void App::addWindow(std::string name, Window *ptr) {
+    void App::addWindow(Window *ptr) {
+        if (ptr == nullptr) return;
+        std::string name = SDL_GetWindowTitle(ptr->windowPtr());
         if (mWindowPtrDict.find(name) != mWindowPtrDict.end()) {
             std::cerr << "[App]: two windows have same name: " << name << std::endl;
             throw std::runtime_error("[App]: two windows have same name.");
         }
         mWindowPtrDict.insert(std::pair<std::string, Window*>(name, ptr));
+        auto it = mWindowSettings.find(name);
+        std::cout << name << std::endl;
+        if (it != mWindowSettings.end()) {
+            const auto &sets = it->second;
+            // std::cout << "Find settings for " << name << std::endl;
+            SDL_SetWindowSize(ptr->windowPtr(), sets.width, sets.height);
+            SDL_SetWindowPosition(ptr->windowPtr(), sets.x, sets.y);
+        }
+        SDL_RaiseWindow(ptr->windowPtr());
     }
 
     void App::run() {
+        // vsync for multi-windows
         SDL_GL_SetSwapInterval(-1);
+        // raise the first added window
         SDL_RaiseWindow(mWindowPtrDict.begin()->second->windowPtr());
 
         mRunning = true;
@@ -63,7 +76,7 @@ namespace snow {
                 it->second->_draw();
             }
         }
-        
+        this->_saveSettings();
         SDL_Quit();
     }
 
@@ -75,7 +88,10 @@ namespace snow {
             std::string str;
             std::getline(fin, str); trim(str);
             sscanf(str.c_str(), "Pos=%d,%d", &sets.x, &sets.y);
-            std::cout << sets.x << " " << sets.y << std::endl;
+            std::getline(fin, str); trim(str);
+            sscanf(str.c_str(), "Size=%d,%d", &sets.width, &sets.height);
+            if (sets.x < 0) sets.x = SDL_WINDOWPOS_CENTERED;
+            if (sets.y < 0) sets.y = SDL_WINDOWPOS_CENTERED;
             return sets;
         };
 
@@ -92,11 +108,25 @@ namespace snow {
                     mWindowSettings.insert(std::pair<std::string, Settings>(line, sets));
                 }
             }
+            fin.close();
         }
     }
 
     void App::_saveSettings() {
-
+        std::ofstream fout("snowapp.ini");
+        if (fout.is_open()) {
+            for (auto it=mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
+                SDL_Window *p = it->second->windowPtr();
+                std::string title = SDL_GetWindowTitle(p);
+                int x, y, w, h;
+                SDL_GetWindowPosition(p, &x, &y);
+                SDL_GetWindowSize(p, &w, &h);
+                fout << "[" << title << "]\n"
+                     << "Pos=" << x << "," << y << "\n"
+                     << "Size=" << w << "," << h << "\n\n";
+            }
+            fout.close();
+        }
     }
 
     bool App::AskQuit() {

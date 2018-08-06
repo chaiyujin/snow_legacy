@@ -30,7 +30,7 @@ namespace snow {
          * 
          * 
          * */
-        void addWindow(std::string name, Window *ptr);
+        void addWindow(Window *ptr);
         void run();
 
         void _loadSettings();

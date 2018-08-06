@@ -31,7 +31,6 @@ namespace snow {
     AbstractWindow::~AbstractWindow() {
         SDL_GL_DeleteContext(mGLContext);
         SDL_DestroyWindow(mWindowPtr);
-        printf("~AbsWin\n");
     }
 
     void AbstractWindow::GLADInit() {
