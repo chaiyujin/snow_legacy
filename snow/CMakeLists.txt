@@ -40,7 +40,11 @@ if (APPLE)
     # apple case
     find_library(OpenGL OpenGL)
     find_library(CoreFoundation CoreFoundation)
-    set(LIBRARIES ${OpenGL} ${CoreFoundation})
+    find_library(Cocoa Cocoa)
+    set(LIBRARIES ${OpenGL} ${CoreFoundation} ${Cocoa})
+    add_definitions( -DUSE_CLANG_COMPLETER )
+    set(SNOW_SOURCES ${SNOW_SOURCES}
+                     ${PROJECT_SOURCE_DIR}/gui/snow_dialog.mm)
 endif ()
 if (UNIX AND NOT APPLE)
     # linux case

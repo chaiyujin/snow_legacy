@@ -59,4 +59,12 @@ namespace snow {
     } 
 #endif  // _WIN32
 #endif  // __APPLE__
+
+    std::vector<std::string> FileDialog(const std::vector<std::string> &fileTypes, bool save, bool multiple) {
+        std::vector<std::pair<std::string, std::string>> types;
+        for (std::string str : fileTypes) {
+            types.push_back(std::pair<std::string, std::string>(str, ""));
+        }
+        return FileDialog(types, save, multiple);
+    }
 }

@@ -4,5 +4,6 @@ project(snow_examples)
 add_subdirectory(snow)
 include_directories(${SNOW_INCLUDE_DIR})
 
+add_compile_options(-std=c++11 -O2)
 add_executable(example example/main.cpp)
 target_link_libraries(example snow)

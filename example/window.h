@@ -1,7 +1,6 @@
 #pragma once
 #include <snow.h>
 
-
 class ObjWindow : public snow::AbstractWindow {
 private:
     snow::Shader *shader;
@@ -54,6 +53,18 @@ public:
     }
 
     void draw() {
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Open", "Ctrl+O")) {
+                    auto files = snow::FileDialog({"obj"}, false, false);
+                    if (files.size() > 0)
+                        loadObj(files[0]);
+                }
+
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
         if (model) {
             if (mCameraMode == 0) 
                 this->camera = this->cameraZPos;
