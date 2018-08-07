@@ -1,21 +1,19 @@
 #pragma once
-
-#include <glad/glad.h>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
-#include <core/math.h>
-#include <model/mesh.h>
-#include <core/shader.h>
-
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <map>
 #include <vector>
-
+// thidr-party
+#include <glad/glad.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+// snow
+#include "snow_mesh.h"
+#include "../core/snow_math.h"
+#include "../core/snow_shader.h"
 
 namespace snow {
     uint32_t TextureFromFile(const char *path, const std::string &directory, bool gamma);

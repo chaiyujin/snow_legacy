@@ -1,13 +1,14 @@
 #pragma once
 #include <math.h>
 #include <ctype.h>
+#include <iostream>
+#include <iomanip>
+// third-party
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <iostream>
-#include <iomanip>
 
 namespace snow {
     /* glm related stream functions */

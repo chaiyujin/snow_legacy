@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <core/math.h>
-#include <core/shader.h>
+// snow
+#include "../core/snow_math.h"
+#include "../core/snow_shader.h"
 
 namespace snow {
     struct Vertex {

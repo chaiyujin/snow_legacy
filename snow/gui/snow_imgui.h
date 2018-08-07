@@ -1,8 +1,9 @@
 #pragma once
+#include <string>
+// thidr-party
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
 #include <imgui.h>
-#include <string>
 
 namespace snow {
 

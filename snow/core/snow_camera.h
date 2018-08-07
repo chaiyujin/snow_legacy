@@ -1,10 +1,11 @@
 #pragma once
-
-#include <glad/glad.h>
-#include <core/math.h>
-
 #include <vector>
 #include <iostream>
+// third-party
+#include <glad/glad.h>
+// snow
+#include "snow_math.h"
+
 
 namespace snow {
     class Camera {

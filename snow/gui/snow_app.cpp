@@ -1,7 +1,8 @@
-#include "snow_app.h"
 #include <fstream>
 #include <regex>
-#include "snow_string.h"
+// snow
+#include "snow_app.h"
+#include "../core/snow_string.h"
 
 namespace snow {
     App::App(int major, int minor, std::string glslVersion)

@@ -1,6 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "model.h"
 #include <stb_image.h>
+// snow
+#include "snow_model.h"
 
 namespace snow {
     void Model::loadModel(const std::string &path) {

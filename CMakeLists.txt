@@ -6,33 +6,29 @@ find_package(SDL2)
 
 # manual add
 include_directories(
-    ${PROJECT_SOURCE_DIR}/src/
-    ${PROJECT_SOURCE_DIR}/src/snow/
-    ${PROJECT_SOURCE_DIR}/src/third-party/stb/
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/
-    ${PROJECT_SOURCE_DIR}/src/third-party/glm-stable/  # glm
-    ${PROJECT_SOURCE_DIR}/src/third-party/glad/include/
+    ${PROJECT_SOURCE_DIR}/
+    ${PROJECT_SOURCE_DIR}/snow/third-party/stb/
+    ${PROJECT_SOURCE_DIR}/snow/third-party/imgui/
+    ${PROJECT_SOURCE_DIR}/snow/third-party/glm-stable/  # glm
+    ${PROJECT_SOURCE_DIR}/snow/third-party/glad/include/
 )
 # set sources file
 # build glad first (with out c++11)
 add_library(GLAD STATIC
-    ${PROJECT_SOURCE_DIR}/src/third-party/glad/src/glad.c)  # glad
+    ${PROJECT_SOURCE_DIR}/snow/third-party/glad/src/glad.c)  # glad
 set(THIRD_PARTY
     # imgui
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/imgui.cpp
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/imgui_draw.cpp
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/imgui_demo.cpp
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/imgui_impl_opengl3.cpp
-    ${PROJECT_SOURCE_DIR}/src/third-party/imgui/imgui_impl_sdl.cpp
+    ${PROJECT_SOURCE_DIR}/snow/third-party/imgui/imgui.cpp
+    ${PROJECT_SOURCE_DIR}/snow/third-party/imgui/imgui_draw.cpp
+    ${PROJECT_SOURCE_DIR}/snow/third-party/imgui/imgui_demo.cpp
 )
 set(SNOW
     # main sources
-    ${PROJECT_SOURCE_DIR}/src/model/mesh.cpp
-    ${PROJECT_SOURCE_DIR}/src/model/model.cpp
-    ${PROJECT_SOURCE_DIR}/src/snow/snow.cpp
-    ${PROJECT_SOURCE_DIR}/src/snow/snow_app.cpp
-    ${PROJECT_SOURCE_DIR}/src/snow/snow_imgui.cpp
-    ${PROJECT_SOURCE_DIR}/src/snow/snow_window.cpp)
+    ${PROJECT_SOURCE_DIR}/snow/model/snow_mesh.cpp
+    ${PROJECT_SOURCE_DIR}/snow/model/snow_model.cpp
+    ${PROJECT_SOURCE_DIR}/snow/gui/snow_app.cpp
+    ${PROJECT_SOURCE_DIR}/snow/gui/snow_imgui.cpp
+    ${PROJECT_SOURCE_DIR}/snow/gui/snow_window.cpp)
 # set sources
 set(SOURCES main.cpp ${SNOW} ${THIRD_PARTY})
 

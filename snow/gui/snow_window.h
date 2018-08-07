@@ -1,9 +1,11 @@
 #pragma once
-#include <SDL2/SDL.h>
-#include <glad/glad.h>
 #include <iostream>
 #include <string>
 #include <vector>
+// thidr-party
+#include <SDL2/SDL.h>
+#include <glad/glad.h>
+// snow
 #include "snow_imgui.h"
 
 namespace snow {

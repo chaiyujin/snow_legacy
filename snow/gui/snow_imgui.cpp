@@ -1,6 +1,6 @@
-#include "snow_imgui.h"
-#include <imgui_impl_sdl.h>
 #include <iostream>
+// snow
+#include "snow_imgui.h"
 
 namespace snow {
 
@@ -137,7 +137,41 @@ namespace snow {
 
     void ImGuiSDL2::processEvent(SDL_Event &event) {
         this->activate();
-        ImGui_ImplSDL2_ProcessEvent(&event);
+        ImGuiIO& io = ImGui::GetIO();
+        switch (event.type) {
+        case SDL_MOUSEWHEEL:
+            {
+                if (event.wheel.x > 0) io.MouseWheelH += 1;
+                if (event.wheel.x < 0) io.MouseWheelH -= 1;
+                if (event.wheel.y > 0) io.MouseWheel += 1;
+                if (event.wheel.y < 0) io.MouseWheel -= 1;
+                return;
+            }
+        case SDL_MOUSEBUTTONDOWN:
+            {
+                if (event.button.button == SDL_BUTTON_LEFT) gMousePressed[0] = true;
+                if (event.button.button == SDL_BUTTON_RIGHT) gMousePressed[1] = true;
+                if (event.button.button == SDL_BUTTON_MIDDLE) gMousePressed[2] = true;
+                return;
+            }
+        case SDL_TEXTINPUT:
+            {
+                io.AddInputCharactersUTF8(event.text.text);
+                return;
+            }
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+            {
+                int key = event.key.keysym.scancode;
+                IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
+                io.KeysDown[key] = (event.type == SDL_KEYDOWN);
+                io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
+                io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
+                io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
+                io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
+                return;
+            }
+        }
     }
 
     void ImGuiSDL2::_sdl2Init() {

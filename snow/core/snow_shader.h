@@ -1,11 +1,13 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <core/math.h>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+// third-party
+#include <glad/glad.h>
+// snow
+#include "snow_math.h"
 
 class Shader
 {
