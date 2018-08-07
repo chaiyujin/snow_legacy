@@ -46,6 +46,7 @@ namespace snow {
                 vec.x = mesh->mNormals[i].x;
                 vec.y = mesh->mNormals[i].y;
                 vec.z = mesh->mNormals[i].z;
+                vertex.normal = vec;
             }
             if (mesh->mTextureCoords[0]) {
                 // texture coord
@@ -105,6 +106,57 @@ namespace snow {
             }
         }
         return textures;
+    }
+
+    glm::vec3 Model::calcMeanCenter() {
+        double cnt = 0;
+        glm::dvec3 sum(0, 0, 0);
+        for (auto &mesh: meshes) {
+            for (auto &vert : mesh.vertices) {
+                sum += vert.position;
+                cnt += 1;
+            }
+        }
+        center = glm::vec3(sum.x / cnt, sum.y / cnt, sum.z / cnt);
+        return center;
+    }
+
+    glm::vec2 Model::_calcFarestPosition(const glm::mat4 &projView) {
+        auto project = [&](const glm::vec3 p) -> glm::vec2 {
+            auto Q = projView * glm::vec4(p.x, p.y, p.z, 1.0);
+            return glm::vec2(Q.x/Q.z, Q.y/Q.z);
+        };
+        float cnt = 0;
+        farest = glm::vec2(0, 0);
+        for (auto &mesh: meshes) {
+            for (auto &vert : mesh.vertices) {
+                glm::vec2 delta = project(vert.position - center);
+                delta.x = std::abs(delta.x);
+                delta.y = std::abs(delta.y);
+                farest += delta;
+                cnt += 1;
+            }
+        }
+        farest = glm::vec2(farest.x / cnt, farest.y / cnt);
+        return farest;
+    }
+
+    glm::mat4 Model::autoModelTransform(const glm::mat4 &projView) {
+        if (initTransform[0][0] > 0)
+            return initTransform;
+        farest = _calcFarestPosition(projView);
+        float x = 0.5 / farest.x;
+        float y = 0.5 / farest.y;
+        float scale = std::min(x, y);
+        glm::mat4 trans(1.0);
+        // std::cout << scale << " "
+        //           << center.x << " "
+        //           << center.y << " "
+        //           << center.z << " " << std::endl;
+        trans = glm::scale(trans, glm::vec3(scale, scale, scale));	// it's a bit too big for our scene, so scale it down
+        trans = glm::translate(trans, -center); // translate it down so it's at the center of the scene
+        initTransform = trans;
+        return initTransform;
     }
 
     uint32_t TextureFromFile(const char *path, const std::string &directory, bool gamma) {

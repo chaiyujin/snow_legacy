@@ -44,8 +44,8 @@ namespace snow {
         }
     }
 
-    AbstractWindow::AbstractWindow(int width, int height, const char *title, int x, int y)
-        : mWidth(width), mHeight(height), mIsFocused(true)
+    AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, int y)
+        : mWidth(width), mHeight(height), mRatio((float)width / (float)height)
     {
         if (gGLSLVersion.length() == 0) {
             std::cerr << "[SDLWindow]: Please initialize or create an App before create a window.";
@@ -64,15 +64,27 @@ namespace snow {
     }
 
     void AbstractWindow::_processEvent(SDL_Event &event) {
+        // update window size
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+            mWidth = event.window.data1;
+            mHeight = event.window.data2;
+            mRatio = (float)mWidth / (float)mHeight;
+        }
+        // gui process
         this->mImGui.processEvent(event);
+        // custom process
         this->processEvent(event);
     }
 
     void AbstractWindow::_draw() {
         this->glMakeCurrent();
         this->mImGui.newFrame();
-        this->draw();
+        this->draw();  // custom draw
         this->mImGui.endFrame();
         SDL_GL_SwapWindow(mWindowPtr);
+    }
+
+    glm::mat4 AbstractWindow::perspective(const Camera &camera) {
+        return glm::perspective(glm::radians(camera.zoom()), (float)mWidth / (float)mHeight, 0.1f, 100.0f);
     }
 }

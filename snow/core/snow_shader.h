@@ -9,12 +9,15 @@
 // snow
 #include "snow_math.h"
 
+namespace snow {
 class Shader
 {
 public:
     unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
+    Shader(std::string vertex_path, std::string fragment_path)
+        : Shader(vertex_path.c_str(), fragment_path.c_str()) {}
     Shader(const char* vertex_path, const char* fragment_path)
     {
         // 1. retrieve the vertex/fragment source code from filePath
@@ -163,3 +166,5 @@ private:
         }
     }
 };
+
+}

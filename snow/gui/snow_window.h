@@ -7,14 +7,16 @@
 #include <glad/glad.h>
 // snow
 #include "snow_imgui.h"
+#include "../core/snow_math.h"
+#include "../core/snow_camera.h"
 
 namespace snow {
     class AbstractWindow
     {
-    private:
+    protected:
         int                 mWidth;
         int                 mHeight;
-        bool                mIsFocused;
+        float               mRatio;
         SDL_Window *        mWindowPtr;
         SDL_GLContext       mGLContext;
         ImGuiSDL2           mImGui;
@@ -27,7 +29,7 @@ namespace snow {
         static void GLADInit();
 
         /* constructor */ 
-        AbstractWindow(int width=1280, int height=720, const char *title="SDLOpenGLWindow",
+        AbstractWindow(const char *title="SDLOpenGLWindow", int width=1280, int height=720,
                        int x=SDL_WINDOWPOS_CENTERED, int y=SDL_WINDOWPOS_CENTERED);
         virtual ~AbstractWindow();
         /* get */
@@ -37,19 +39,21 @@ namespace snow {
         void                _processEvent(SDL_Event &event);
         void                _draw();
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
+        glm::mat4           perspective(const Camera &camera);
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual void        draw() = 0;
     };
 
-    class Window : public AbstractWindow
+    class ExampleWindow : public AbstractWindow
     {
     private:
         float f;
         int   counter;
     public:
-        Window(int width=1280, int height=720, const char *title="SDLOpenGLWindow",
-               int x=SDL_WINDOWPOS_CENTERED, int y=SDL_WINDOWPOS_CENTERED) : AbstractWindow(width, height, title, x, y), f(0.f), counter(0) {}
+        ExampleWindow(const char *title="SDLOpenGLWindow", int width=1280, int height=720,
+                      int x=SDL_WINDOWPOS_CENTERED, int y=SDL_WINDOWPOS_CENTERED)
+            : AbstractWindow(title, width, height, x, y), f(0.f), counter(0) {}
         virtual void processEvent(SDL_Event &event) {}
         virtual void draw() {
             // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.

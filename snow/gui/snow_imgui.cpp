@@ -99,6 +99,8 @@ namespace snow {
 
     void ImGuiSDL2::newFrame() {
         this->activate();
+        glClearColor(0.2, 0.2, 0.2, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // new frame for opengl
         if (!mFontTexture)
             this->_createDeviceObjects();
@@ -130,8 +132,6 @@ namespace snow {
         ImGui::Render();
         ImGuiIO &io = ImGui::GetIO();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-        glClearColor(0.2, 0.2, 0.2, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
         this->_renderDrawData();
     }
 

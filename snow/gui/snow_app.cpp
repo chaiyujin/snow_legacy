@@ -18,7 +18,7 @@ namespace snow {
             else
                 glslVersion += "440";
         }
-        Window::Initialize(major, minor, glslVersion);
+        AbstractWindow::Initialize(major, minor, glslVersion);
         this->_loadSettings();
     }
 
@@ -28,19 +28,17 @@ namespace snow {
         }
     }
 
-    void App::addWindow(Window *ptr) {
+    void App::addWindow(AbstractWindow *ptr) {
         if (ptr == nullptr) return;
         std::string name = SDL_GetWindowTitle(ptr->windowPtr());
         if (mWindowPtrDict.find(name) != mWindowPtrDict.end()) {
             std::cerr << "[App]: two windows have same name: " << name << std::endl;
             throw std::runtime_error("[App]: two windows have same name.");
         }
-        mWindowPtrDict.insert(std::pair<std::string, Window*>(name, ptr));
+        mWindowPtrDict.insert(std::pair<std::string, AbstractWindow*>(name, ptr));
         auto it = mWindowSettings.find(name);
-        std::cout << name << std::endl;
         if (it != mWindowSettings.end()) {
             const auto &sets = it->second;
-            // std::cout << "Find settings for " << name << std::endl;
             SDL_SetWindowSize(ptr->windowPtr(), sets.width, sets.height);
             SDL_SetWindowPosition(ptr->windowPtr(), sets.x, sets.y);
         }
@@ -57,13 +55,14 @@ namespace snow {
         SDL_Event mEvent;
         while (mRunning) {
             while(SDL_PollEvent(&mEvent)) {
+                uint32_t windowID = App::GetEventID(mEvent);
                 for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
-                    Window *p = it->second;
-                    p->_processEvent(mEvent);
-                    if (mEvent.type == SDL_QUIT ||
-                        (mEvent.type == SDL_WINDOWEVENT && 
-                         mEvent.window.event == SDL_WINDOWEVENT_CLOSE &&
-                         mEvent.window.windowID == SDL_GetWindowID(p->windowPtr())))
+                    AbstractWindow *p = it->second;
+                    if (windowID == 0 || windowID == SDL_GetWindowID(p->windowPtr()))
+                        p->_processEvent(mEvent);
+                    if (mEvent.type == SDL_QUIT || (mEvent.type == SDL_WINDOWEVENT &&
+                                                    mEvent.window.event == SDL_WINDOWEVENT_CLOSE &&
+                                                    windowID == SDL_GetWindowID(p->windowPtr())))
                         mRunning = false;
                 }
             }
@@ -87,9 +86,9 @@ namespace snow {
             Settings sets;
             line = line.substr(1, line.length() - 2);
             std::string str;
-            std::getline(fin, str); trim(str);
+            std::getline(fin, str); Trim(str);
             sscanf(str.c_str(), "Pos=%d,%d", &sets.x, &sets.y);
-            std::getline(fin, str); trim(str);
+            std::getline(fin, str); Trim(str);
             sscanf(str.c_str(), "Size=%d,%d", &sets.width, &sets.height);
             if (sets.x < 0) sets.x = SDL_WINDOWPOS_CENTERED;
             if (sets.y < 0) sets.y = SDL_WINDOWPOS_CENTERED;
@@ -101,8 +100,7 @@ namespace snow {
         if (fin.is_open()) {
             std::string line;
             while (!fin.eof()) {
-                std::getline(fin, line);
-                trim(line);
+                std::getline(fin, line); Trim(line);
                 if (std::regex_match(line, re_title)) {
                     // read title
                     Settings sets = parseSettings(line, fin);
@@ -163,5 +161,31 @@ namespace snow {
             throw std::runtime_error("SDL message box error.");
         }
         return (buttonid == 0);
+    }
+
+
+    uint32_t App::GetEventID(SDL_Event &event) {
+        switch (event.type) {
+        case SDL_DOLLARGESTURE:
+        case SDL_DOLLARRECORD:              return event.dgesture.touchId;
+        case SDL_DROPFILE:
+        case SDL_DROPTEXT:
+        case SDL_DROPBEGIN:
+        case SDL_DROPCOMPLETE:              return event.drop.windowID;
+        case SDL_FINGERMOTION:
+        case SDL_FINGERDOWN:
+        case SDL_FINGERUP:                  return event.tfinger.touchId;
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:                     return event.key.windowID;
+        case SDL_MOUSEMOTION:               return event.motion.windowID;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:             return event.button.windowID;
+        case SDL_MOUSEWHEEL:                return event.wheel.windowID;
+        case SDL_TEXTEDITING:               return event.edit.windowID;
+        case SDL_TEXTINPUT:                 return event.text.windowID;
+        case SDL_USEREVENT:                 return event.user.windowID;
+        case SDL_WINDOWEVENT:               return event.window.windowID;
+        default:                            return 0;
+        }
     }
 }
