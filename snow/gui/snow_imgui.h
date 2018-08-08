@@ -38,6 +38,7 @@ namespace snow {
         void activate();
         void newFrame();
         void endFrame();
+        // some mouse and keyboard event are filtered, because it's for ImGui not for app.
         void processEvent(SDL_Event &event);
         void _sdl2Init();
         void _createFontsTexture();

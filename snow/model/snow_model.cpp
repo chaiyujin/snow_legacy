@@ -145,9 +145,10 @@ namespace snow {
         if (initTransform[0][0] > 0)
             return initTransform;
         farest = _calcFarestPosition(projView);
-        float x = 0.5 / farest.x;
-        float y = 0.5 / farest.y;
+        float x = 10.0 / farest.x;
+        float y = 10.0 / farest.y;
         float scale = std::min(x, y);
+        scale = 1.0;
         glm::mat4 trans(1.0);
         // std::cout << scale << " "
         //           << center.x << " "

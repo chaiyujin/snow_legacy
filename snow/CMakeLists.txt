@@ -31,6 +31,7 @@ set(SNOW_SOURCES
     ${PROJECT_SOURCE_DIR}/gui/snow_app.cpp
     ${PROJECT_SOURCE_DIR}/gui/snow_imgui.cpp
     ${PROJECT_SOURCE_DIR}/gui/snow_window.cpp
+    ${PROJECT_SOURCE_DIR}/gui/snow_arcball.cpp
     ${PROJECT_SOURCE_DIR}/gui/snow_dialog.cpp)
 # set sources
 set(SNOW_SOURCES ${SNOW_SOURCES} ${THIRD_PARTY})

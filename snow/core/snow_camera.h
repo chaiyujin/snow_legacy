@@ -6,20 +6,19 @@
 #include <SDL2/SDL.h>
 // snow
 #include "snow_math.h"
+#include "../gui/snow_arcball.h"
 
 namespace snow {
     class Camera {
     public:
         // constructor
-        Camera(glm::vec3 position=glm::vec3(0.0f, 0.0f, 0.0f),
-               glm::vec3 front=glm::vec3(0.f, 0.f, -1.f),
+        Camera(glm::vec3 eye=glm::vec3(0.0f, 0.0f, 20.0f),
                glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f),
-               glm::quat quaternion=glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
-            : mPosition(position)
-            , mFront(front)
-            , mWolrdFront(front)
+               glm::vec3 lookat=glm::vec3(0.f, 0.f, 0.f))
+            : mPosition(eye)
+            , mLookAt(lookat)
             , mWorldUp(up)
-            , mQuaternion(quaternion)
+            , mQuaternion(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
             , mZoom(45.f)
             , mLastX(-1), mLastY(-1)
         {
@@ -27,12 +26,12 @@ namespace snow {
         }
 
         glm::mat4 getViewMatrix() {
-            return glm::lookAt(mPosition, mPosition + mFront, mUp);
+            return glm::lookAt(mEye, mLookAt, mUp);
         }
 
         const glm::vec3 &up()          const { return mUp; }
         const glm::vec3 &front()       const { return mFront; }
-        const glm::vec3 &position()    const { return mPosition; }
+        const glm::vec3 &position()    const { return mEye; }
         const glm::quat &quaternion()  const { return mQuaternion; }
         float     zoom()        const { return mZoom; }
 
@@ -56,20 +55,25 @@ namespace snow {
                 mPosition.x = mLastPos.x - dx * mRight.x;
                 mPosition.y = mLastPos.y + dy * mUp.y;
             }
-            else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_MIDDLE) {
+            else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_MIDDLE && mLastX >= 0 && mLastY >= 0) {
                 mLastX = mLastY = -1;
                 mLastPos = mPosition;
             }
+            mArcball.processMouseEvent(event);
+            mQuaternion = mArcball.quaternion();
+            updateCameraVectors();
         }
 
     private:
+        Arcball     mArcball;
         // camera attributes
         glm::vec3   mPosition;
         glm::vec3   mFront;
         glm::vec3   mUp;
         glm::vec3   mRight;
-        glm::vec3   mWolrdFront;
         glm::vec3   mWorldUp;
+        glm::vec3   mLookAt;
+        glm::vec3   mEye;
         // quat
         glm::quat   mQuaternion;
         // options
@@ -80,9 +84,13 @@ namespace snow {
         glm::vec3   mLastPos;
 
         void updateCameraVectors() {
-            mFront = glm::normalize(glm::rotate(mQuaternion, mWolrdFront));
-            mRight = glm::normalize(glm::cross(mFront, mWorldUp));
+            auto pos = glm::rotate(mQuaternion, mPosition);
+            auto up  = glm::rotate(mQuaternion, mPosition + mWorldUp) - pos;
+            std::cout << pos.x << " " << pos.y << " " << pos.z << std::endl;
+            mFront = glm::normalize(mLookAt - pos);
+            mRight = glm::normalize(glm::cross(mFront, up));
             mUp    = glm::normalize(glm::cross(mRight, mFront));
+            mEye   = pos;
         }
     };
 

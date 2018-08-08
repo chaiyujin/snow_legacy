@@ -35,8 +35,8 @@ public:
             fragGLSL = "../glsl/frag_notex.glsl";
         this->shader = new snow::Shader(vertGLSL, fragGLSL);
         // cameras
-        this->cameraZPos = new snow::Camera(glm::vec3(0.f, 0.f, 3.f));
-        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, -1.f, 0.f));
+        this->cameraZPos = new snow::Camera(glm::vec3(0.f, 0.f, 20.f));
+        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -20.f), glm::vec3(0.f, -1.f, 0.f));
         this->camera = this->cameraZNeg;
         mCameraMode = 1;
         mFilename = fileName;
@@ -83,6 +83,7 @@ public:
 
             // render the loaded model
             glm::mat4 model = this->model->autoModelTransform(projection * view);
+                            // * glm::toMat4();
             glm::mat4 normal = glm::transpose(glm::inverse(model));
             this->shader->setMat4("model", model);
             this->shader->setMat4("normal", normal);

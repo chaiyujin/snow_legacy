@@ -138,6 +138,9 @@ namespace snow {
     void ImGuiSDL2::processEvent(SDL_Event &event) {
         this->activate();
         ImGuiIO& io = ImGui::GetIO();
+        bool wantMouse = io.WantCaptureMouse;
+        bool wantKeyboard = io.WantCaptureKeyboard;
+
         switch (event.type) {
         case SDL_MOUSEWHEEL:
             {
@@ -145,6 +148,7 @@ namespace snow {
                 if (event.wheel.x < 0) io.MouseWheelH -= 1;
                 if (event.wheel.y > 0) io.MouseWheel += 1;
                 if (event.wheel.y < 0) io.MouseWheel -= 1;
+                if (wantMouse) event.type = 0;  // filter
                 return;
             }
         case SDL_MOUSEBUTTONDOWN:
@@ -152,6 +156,7 @@ namespace snow {
                 if (event.button.button == SDL_BUTTON_LEFT) gMousePressed[0] = true;
                 if (event.button.button == SDL_BUTTON_RIGHT) gMousePressed[1] = true;
                 if (event.button.button == SDL_BUTTON_MIDDLE) gMousePressed[2] = true;
+                if (wantMouse) event.type = 0;  // filter
                 return;
             }
         case SDL_TEXTINPUT:
@@ -169,11 +174,12 @@ namespace snow {
                 io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
                 io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
                 io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
+                if (wantKeyboard) event.type = 0;  // filter
                 return;
             }
         }
     }
-
+    
     void ImGuiSDL2::_sdl2Init() {
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;       // We can honor GetMouseCursor() values (optional)
