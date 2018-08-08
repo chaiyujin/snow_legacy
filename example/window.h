@@ -83,7 +83,9 @@ public:
 
             // render the loaded model
             glm::mat4 model = this->model->autoModelTransform(projection * view);
+            glm::mat4 normal = glm::transpose(glm::inverse(model));
             this->shader->setMat4("model", model);
+            this->shader->setMat4("normal", normal);
             this->model->draw(*shader);
 
             {
