@@ -36,7 +36,7 @@ public:
         this->shader = new snow::Shader(vertGLSL, fragGLSL);
         // cameras
         this->cameraZPos = new snow::Camera(glm::vec3(0.f, 0.f, 20.f));
-        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -20.f), glm::vec3(0.f, -1.f, 0.f));
+        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -20.f), glm::vec3(0.f, 1.f, 0.f));
         this->camera = this->cameraZNeg;
         mCameraMode = 1;
         mFilename = fileName;

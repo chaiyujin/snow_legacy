@@ -16,6 +16,7 @@ namespace snow {
 
     class Arcball {
     private:
+        bool        mIsCamera;
         int         mHalfHeight, mHalfWidth;
         float       mRadiusOfHalfHeight;
         glm::vec3   mCenter;
@@ -27,9 +28,9 @@ namespace snow {
 
         void        _updateDelta();
     public:
-        Arcball(float radiusOfHalfHeight=0.3f, glm::vec3 center=glm::vec3(0.f,0.f,0.f));
+        Arcball(bool isCamera, float radiusOfHalfHeight=0.3f, glm::vec3 center=glm::vec3(0.f,0.f,0.f));
 
-        glm::quat quaternion() { return (mIsMoving)? glm::cross(mQuat, mDelta) : mQuat; }
+        glm::quat quaternion();
         void processMouseEvent(SDL_Event &event);
     };
 }

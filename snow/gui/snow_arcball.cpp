@@ -2,17 +2,27 @@
 
 namespace snow {
 
-    Arcball::Arcball(float radius, glm::vec3 center)
-        : mRadiusOfHalfHeight(radius)
+    Arcball::Arcball(bool isCamera, float radius, glm::vec3 center)
+        : mIsCamera(isCamera)
+        , mRadiusOfHalfHeight(radius)
         , mCenter(center)
         , mQuat(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
         , mIsMoving(false)
     {}
     
+    glm::quat Arcball::quaternion() { 
+        glm::quat ret = (mIsMoving)? glm::cross(mQuat, mDelta) : mQuat;
+        if (mIsCamera)
+            ret = glm::inverse(ret);
+        return ret;
+    }
+
     void Arcball::_updateDelta() {
         if (!mIsMoving) return;
         auto _to_vec = [=](const glm::vec2 &p) -> glm::vec3 {
-            return glm::normalize(glm::vec3(p.x, p.y, mRadiusOfHalfHeight) - mCenter);
+            auto pos = glm::vec3(p.x, p.y, mRadiusOfHalfHeight);
+            pos = glm::rotate(glm::inverse(mQuat), pos);
+            return glm::normalize(pos - mCenter);
         };
         auto v0 = _to_vec(mPrevPos);
         auto v1 = _to_vec(mCurrPos);
@@ -23,7 +33,6 @@ namespace snow {
                        ? glm::vec3(0, 1, 0)
                        : glm::normalize(glm::cross(v0, v1));
         mDelta = glm::angleAxis(angle, axis);
-        // std::cout << glm::dot(v0, v1) << " " << angle << " " << axis.x << " " << axis.y << " " << axis.z << std::endl;
     }
 
     void Arcball::processMouseEvent(SDL_Event &event) {
