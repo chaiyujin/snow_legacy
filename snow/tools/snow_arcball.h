@@ -1,6 +1,8 @@
 #pragma once
+#include <vector>
 #include <SDL2/SDL.h>
 #include "common.h"
+#include "../core/snow_shader.h"
 
 namespace snow {
 
@@ -16,8 +18,15 @@ namespace snow {
      *    this tells us how to rotate p0 and p1 to correct position.
      * 
      **/
+
     class Arcball {
     private:
+        const int       SampleNumber=100;
+        std::vector<glm::vec3> mArcData;  // (x, y, z), (r, g, b)
+        std::vector<uint32_t>  mArcIndices;
+        Shader                 mShader;
+        uint32_t               mVBO, mVAO, mEBO;
+
         CameraBase     *mCamera;
         bool            mIsCamera;
         int             mHalfHeight, mHalfWidth;
@@ -29,10 +38,13 @@ namespace snow {
         glm::quat       mQuatObject;  // the object rotation
         glm::quat       mDelta;
         bool            mIsMoving;
-
         float           mSpeed;
 
-        void        _updateDelta();
+        void            _updateDelta();
+        void            _generateArc();
+
+        glm::mat4       _modelMatrix();
+
     public:
         Arcball(CameraBase *camera,
                 bool manipulateCamera, 
@@ -41,5 +53,7 @@ namespace snow {
         glm::quat quaternion();
         void processMouseEvent(SDL_Event &event);
         void setSpeed(float speed) { mSpeed = speed; }
+
+        void draw(const glm::mat4 &project);
     };
 }

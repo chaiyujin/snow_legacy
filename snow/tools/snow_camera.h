@@ -44,6 +44,7 @@ namespace snow {
         const glm::vec3 &front()       const { return mFront; }
         const glm::vec3 &right()       const { return mRight; }
         const glm::vec3 &eye()         const { return mEye;   }
+        const glm::vec3 &center()      const { return mCenter;}
         const glm::mat4 viewMatrix()   const { return glm::lookAt(mEye, mCenter, mUp); }
         float zoom()                   const { return mZoom;  }
         void  rotateAroundCenter(const glm::quat &q);
@@ -71,6 +72,8 @@ namespace snow {
         void setSpeedZoom(float speed) { mSpeedZoom = speed; }
         void setSpeedMove(float speed) { mSpeedMove = speed; }
         void setSpeedRotate(float speed);
+
+        Arcball *arcballPtr() { return mArcballPtr; }
     private:
         Arcball    *mArcballPtr;
         // for event

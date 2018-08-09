@@ -1,6 +1,8 @@
 #include "snow_window.h"
 
 namespace snow {
+    std::string Shader::GLSLVersion = "";
+
     bool        AbstractWindow::gIsGLADLoaded  = false;
     std::string AbstractWindow::gGLSLVersion   = "";
     void AbstractWindow::Initialize(int major, int minor, std::string glslVersion) {
@@ -26,6 +28,8 @@ namespace snow {
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         gGLSLVersion = glslVersion;
+        // set shader
+        Shader::GLSLVersion = gGLSLVersion;
     }
 
     AbstractWindow::~AbstractWindow() {
@@ -55,6 +59,7 @@ namespace snow {
         mWindowPtr = SDL_CreateWindow(title, x, y, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
         if (mWindowPtr != nullptr) {
             mGLContext = SDL_GL_CreateContext(mWindowPtr);
+            this->glMakeCurrent();
             GLADInit();
             mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
         }

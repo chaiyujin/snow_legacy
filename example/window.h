@@ -11,12 +11,13 @@ private:
     int                  mCameraMode;
     std::string          mFilename;
     // gui
+    bool  DrawArcball;
     float MoveSpeed, RotateSpeed, ZoomSpeed;
 public:
     ObjWindow(const char *title="")
         : AbstractWindow(title), shader(nullptr), model(nullptr)
         , cameraZPos(nullptr),  cameraZNeg(nullptr), camera(nullptr), mCameraMode(1)
-        , MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
+        , DrawArcball(true), MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
     {
         glEnable(GL_DEPTH_TEST);
         this->loadObj("../assets/nanosuit/nanosuit.obj");
@@ -87,6 +88,7 @@ public:
                 this->camera = this->cameraZPos;
             else
                 this->camera = this->cameraZNeg;
+
             this->shader->use();
             this->shader->setVec3("lightPos", this->camera->eye());
             this->shader->setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
@@ -105,16 +107,19 @@ public:
             this->shader->setMat4("normal", normal);
             this->model->draw(*shader);
 
+            if (DrawArcball)
+                this->camera->arcballPtr()->draw(projection);
+
             {
                 ImGui::Begin("utils");
                 ImGui::TextWrapped("%s", (std::string("Path:") + mFilename).c_str());
                 ImGui::BeginGroup();
                 if (ImGui::RadioButton("Camera (at +z)", mCameraMode == 0)) { mCameraMode = 0; } ImGui::SameLine();
                 if (ImGui::RadioButton("Camera (at -z)", mCameraMode == 1)) { mCameraMode = 1; }
-                
                 ImGui::DragFloat("Speed Zoom",   &ZoomSpeed,   0.1f, 0.5f, 5.0f);
                 ImGui::DragFloat("Speed Move",   &MoveSpeed,   0.1f,  1.f, 10.f);
                 ImGui::DragFloat("Speed Rotate", &RotateSpeed, 0.1f, 0.5f, 5.0f);
+                ImGui::Checkbox("Draw Arcball",  &DrawArcball);
                 this->camera->setSpeedMove(MoveSpeed);
                 this->camera->setSpeedRotate(RotateSpeed);
                 this->camera->setSpeedZoom(ZoomSpeed);

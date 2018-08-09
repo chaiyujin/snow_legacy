@@ -8,6 +8,7 @@
 // snow
 #include "snow_imgui.h"
 #include "../core/snow_math.h"
+#include "../core/snow_shader.h"
 #include "../tools/snow_camera.h"
 
 namespace snow {

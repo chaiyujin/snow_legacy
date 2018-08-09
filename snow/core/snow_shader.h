@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string>
 // third-party
 #include <glad/glad.h>
 // snow
@@ -13,6 +14,8 @@ namespace snow {
 class Shader
 {
 public:
+    static std::string GLSLVersion;
+    
     unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
