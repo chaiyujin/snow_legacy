@@ -2,38 +2,44 @@
 #include <SDL2/SDL.h>
 #include "common.h"
 
-/*
-A unit quaternion q = cos(F)+u*sin(F) 
-represents the rotation of vector v by the angle 2*F about axis u.
-
-If your vectors are v and w, then we should normalize them,
-then calculate the angle between them as 2*F=ArcCos(Dot(v, w)). 
-Rotation axis direction vector u = Normalize(VectorProduct(v, w)). 
-Now we can build required rotation quaternion.
-*/
 namespace snow {
 
+    /**
+     *  The arcball controlled by mouse.
+     *  
+     *    Pick p0 and move to p1 (both p0, p1 are on screen).
+     *    We simply set the `z` of p0 and p1 as 2 * arcball radius.
+     *    Then we rotate p0 and p1 according to current axises.
+     *    Finally, we can calculate a quaterion from (p0 - O) to (p1 - O).
+     * 
+     *    We have to keep knowing which camera we are using to observe arcball,
+     *    this tells us how to rotate p0 and p1 to correct position.
+     * 
+     **/
     class Arcball {
     private:
-        CameraBase *mCamera;
+        CameraBase     *mCamera;
         bool            mIsCamera;
         int             mHalfHeight, mHalfWidth;
         float           mRadiusOfHalfHeight;
         glm::vec3       mCenter;
         glm::vec2       mCurrPos;
         glm::vec2       mPrevPos;
-        glm::quat       mQuatCam;  // the camera rotation, which affect arcball coordinate
-        glm::quat       mQuat;  // the object rotation
+        glm::quat       mQuatCamera;  // the camera rotation, which affect arcball coordinate
+        glm::quat       mQuatObject;  // the object rotation
         glm::quat       mDelta;
         bool            mIsMoving;
 
+        float           mSpeed;
+
         void        _updateDelta();
     public:
-        Arcball(CameraBase *camera, bool manipulateCamera, 
-                float radiusOfHalfHeight=0.5f, glm::vec3 center=glm::vec3(0.f,0.f,0.f));
-
+        Arcball(CameraBase *camera,
+                bool manipulateCamera, 
+                float radiusOfHalfHeight=0.5f,
+                glm::vec3 center=glm::vec3(0.f,0.f,0.f));
         glm::quat quaternion();
         void processMouseEvent(SDL_Event &event);
+        void setSpeed(float speed) { mSpeed = speed; }
     };
-    
 }

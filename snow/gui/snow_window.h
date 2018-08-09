@@ -20,6 +20,7 @@ namespace snow {
         SDL_Window *        mWindowPtr;
         SDL_GLContext       mGLContext;
         ImGuiSDL2           mImGui;
+        std::string         mTitle;
 
         static bool         gIsGLADLoaded;
         static std::string  gGLSLVersion;
@@ -39,7 +40,7 @@ namespace snow {
         void                _processEvent(SDL_Event &event);
         void                _draw();
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
-        glm::mat4           perspective(const Camera &camera);
+        glm::mat4           perspective(const CameraBase *camera);
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual void        draw() = 0;

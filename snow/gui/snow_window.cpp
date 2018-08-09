@@ -51,6 +51,7 @@ namespace snow {
             std::cerr << "[SDLWindow]: Please initialize or create an App before create a window.";
             throw std::runtime_error("[SDLWindow]: Please initialize or create an App before create a window.");
         }
+        mTitle = title;
         mWindowPtr = SDL_CreateWindow(title, x, y, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
         if (mWindowPtr != nullptr) {
             mGLContext = SDL_GL_CreateContext(mWindowPtr);
@@ -84,7 +85,7 @@ namespace snow {
         SDL_GL_SwapWindow(mWindowPtr);
     }
 
-    glm::mat4 AbstractWindow::perspective(const Camera &camera) {
-        return glm::perspective(glm::radians(camera.zoom()), (float)mWidth / (float)mHeight, 0.1f, 100.0f);
+    glm::mat4 AbstractWindow::perspective(const CameraBase *camera) {
+        return glm::perspective(glm::radians(camera->zoom()), (float)mWidth / (float)mHeight, 0.1f, 100.0f);
     }
 }

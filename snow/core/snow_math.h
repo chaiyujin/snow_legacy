@@ -19,19 +19,17 @@ namespace snow {
         if (v.z != 0) { return glm::vec3(1, 0, v.x / v.z); }
     }
 
-    inline glm::quat quatBetween(const glm::vec3 &_v0, const glm::vec3 &_v1) {
-        auto v0 = glm::normalize(_v0);
-        auto v1 = glm::normalize(_v1);
-        float angle = std::acos(glm::dot(v0, v1));
-        glm::vec3 axis = glm::normalize(glm::cross(v0, v1));
+    inline glm::quat quatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float angleScale=1.0) {
+        auto _v0 = glm::normalize(vec0);
+        auto _v1 = glm::normalize(vec1);
+        float angle = std::acos(glm::dot(_v0, _v1));
+        glm::vec3 axis = glm::normalize(glm::cross(_v0, _v1));
         if (std::isnan(angle))  angle = 0.f;
-        if (std::isnan(axis.x)) axis = snow::anyPerpendicularTo(v0);
-        auto q = glm::angleAxis(angle, axis);
-        // std::cout << "angle: " << angle << std::endl;
-        // std::cout << "axis:  " << axis.x << " " << axis.y << " " << axis.z << std::endl;
-        // std::cout << "quat:  " << q.x << " " << q.y << " " << q.z << " " << q.w << std::endl;
+        if (std::isnan(axis.x)) axis = snow::anyPerpendicularTo(_v0);
+        auto q = glm::angleAxis(angle * angleScale, axis);
         return q;
     }
+}
 
     /* glm related stream functions */
     inline std::ostream &operator<<(std::ostream &out, const glm::vec3 & vec) { out << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]"; return out; }
@@ -42,4 +40,4 @@ namespace snow {
     inline std::ostream &operator<<(std::ostream &out, const glm::dvec2 & vec) { out << "[" << vec.x << ", " << vec.y << "]"; return out; }
     inline std::ostream &operator<<(std::ostream &out, const glm::dmat4 &mat) { for (int r = 0; r < 4; ++r) { for (int c = 0; c < 4; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==3)? "]\n": ", "); }} return out; }
     inline std::ostream &operator<<(std::ostream &out, const glm::dmat3 &mat) { for (int r = 0; r < 3; ++r) { for (int c = 0; c < 3; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==2)? "]\n": ", "); }} return out; }
-}
+
