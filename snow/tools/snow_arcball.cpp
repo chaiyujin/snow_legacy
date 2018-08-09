@@ -1,14 +1,19 @@
 #include "snow_arcball.h"
+#include "snow_camera.h"
 
 namespace snow {
 
-    Arcball::Arcball(bool isCamera, float radius, glm::vec3 center)
-        : mIsCamera(isCamera)
+    Arcball::Arcball(CameraBase *camera, bool manipulateCamera, float radius, glm::vec3 center)
+        : mCamera(camera)
+        , mIsCamera(manipulateCamera)
         , mRadiusOfHalfHeight(radius)
         , mCenter(center)
         , mQuat(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
+        , mQuatCam(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
         , mIsMoving(false)
-    {}
+    {
+        mQuatCam = mCamera->quatFromStandard();
+    }
     
     glm::quat Arcball::quaternion() { 
         glm::quat ret = (mIsMoving)? glm::cross(mQuat, mDelta) : mQuat;
@@ -21,25 +26,20 @@ namespace snow {
         if (!mIsMoving) return;
         auto _to_vec = [=](const glm::vec2 &p) -> glm::vec3 {
             auto pos = glm::vec3(p.x, p.y, mRadiusOfHalfHeight);
-            pos = glm::rotate(glm::inverse(mQuat), pos);
+            pos = glm::rotate(glm::inverse(glm::cross(mQuatCam, mQuat)), pos);
             return glm::normalize(pos - mCenter);
         };
         auto v0 = _to_vec(mPrevPos);
         auto v1 = _to_vec(mCurrPos);
 
-        float angle = std::acos(glm::dot(v0, v1));
-        if (std::isnan(angle)) angle = 0.f;
-        glm::vec3 axis = (glm::all(glm::equal(v0, v1)))
-                       ? glm::vec3(0, 1, 0)
-                       : glm::normalize(glm::cross(v0, v1));
-        mDelta = glm::angleAxis(angle, axis);
+        mDelta = snow::quatBetween(v0, v1);
     }
 
     void Arcball::processMouseEvent(SDL_Event &event) {
         auto get_pos = [=](int x, int y) -> glm::vec2 {
             
             auto ret = glm::vec2( (x - mHalfWidth ) / (float)mHalfHeight,
-                                  (y - mHalfHeight) / (float)mHalfHeight );
+                                  (mHalfHeight - y) / (float)mHalfHeight );
             // std::cout << ret.x << " " << ret.y << std::endl;
             return ret;
         };

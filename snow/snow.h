@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 
 #include "core/snow_math.h"
-#include "core/snow_camera.h"
+#include "tools/snow_camera.h"
 #include "core/snow_shader.h"
 #include "core/snow_string.h"
 #include "model/snow_mesh.h"

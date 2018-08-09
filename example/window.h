@@ -14,6 +14,7 @@ public:
         , cameraZPos(nullptr),  cameraZNeg(nullptr), camera(nullptr), mCameraMode(1)
     {
         glEnable(GL_DEPTH_TEST);
+        this->loadObj("../assets/nanosuit/nanosuit.obj");
     }
 
     void releaseObj() {
@@ -36,9 +37,9 @@ public:
         this->shader = new snow::Shader(vertGLSL, fragGLSL);
         // cameras
         this->cameraZPos = new snow::Camera(glm::vec3(0.f, 0.f, 20.f));
-        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -20.f), glm::vec3(0.f, 1.f, 0.f));
+        this->cameraZNeg = new snow::Camera(glm::vec3(0.f, 0.f, -20.f), glm::vec3(0.f, -1.f, 0.f));
         this->camera = this->cameraZNeg;
-        mCameraMode = 1;
+        mCameraMode = 0;
         mFilename = fileName;
     }
 
@@ -71,13 +72,13 @@ public:
             else
                 this->camera = this->cameraZNeg;
             this->shader->use();
-            this->shader->setVec3("lightPos", this->camera->position());
+            this->shader->setVec3("lightPos", this->camera->eye());
             this->shader->setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
             // view/projection transformations
             int w, h;
             SDL_GetWindowSize(mWindowPtr, &w, &h);
             glm::mat4 projection = this->perspective(*camera);
-            glm::mat4 view = camera->getViewMatrix();
+            glm::mat4 view = camera->viewMatrix();
             this->shader->setMat4("projection", projection);
             this->shader->setMat4("view", view);
 
