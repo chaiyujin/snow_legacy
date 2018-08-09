@@ -17,6 +17,7 @@ namespace snow {
         if (v.x != 0) { return glm::vec3(v.y / v.x, 1, 0); }
         if (v.y != 0) { return glm::vec3(1, v.x / v.y, 0); }
         if (v.z != 0) { return glm::vec3(1, 0, v.x / v.z); }
+        return glm::vec3(0, 1, 0);
     }
 
     inline glm::quat quatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float angleScale=1.0) {
