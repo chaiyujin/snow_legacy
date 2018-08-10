@@ -4,7 +4,8 @@
 
 int main() {
     snow::App app;
-    app.addWindow(new ObjWindow("obj viewer1"));
+    app.addWindow(new ObjWindow("obj viewer"));
+    app.addWindow(new CameraWindow("camera window"));
     app.run();
     return 0;
 }

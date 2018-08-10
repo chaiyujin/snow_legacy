@@ -63,7 +63,7 @@ namespace snow {
     class ArcballCamera : public CameraBase {
     public:
         // constructor
-        ArcballCamera(glm::vec3 eye=glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f));
+        ArcballCamera(glm::vec3 eye=glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f));
 
         void  zoomIn(float deltaAngle=1.f)  { mZoom = std::max( 5.f, mZoom - std::max(0.f, deltaAngle * mSpeedZoom)); }
         void  zoomOut(float deltaAngle=1.f) { mZoom = std::min(85.f, mZoom + std::max(0.f, deltaAngle * mSpeedZoom)); }

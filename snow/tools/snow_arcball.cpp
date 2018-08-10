@@ -2,9 +2,41 @@
 #include "snow_camera.h"
 
 namespace snow {
+    std::string ArcballVertGLSL =
+        "layout (location = 0) in vec3 aPos;"
+        "layout (location = 1) in vec3 aRGB;"
+        "layout (location = 2) in vec3 aNormal;"
+        "out vec3 FragRGB;"
+        "out vec3 FragPos;"
+        "out vec3 FragNormal;"
+        "uniform mat4 model;"
+        "uniform mat4 view;"
+        "uniform mat4 project;"
+        "void main()"
+        "{"
+        "    gl_Position = project * view * model * vec4(aPos, 1.0);"
+        "    FragRGB = aRGB;"
+        "    FragPos = vec3(model * vec4(aPos, 1.0));"
+        "    FragNormal = aNormal;"
+        "}";
+
+    std::string ArcballFragGLSL = 
+        "out vec4 FragColor;"
+        "in vec3 FragRGB;"
+        "in vec3 FragPos;"
+        "in vec3 FragNormal;"
+        "uniform vec3 LightPos;"
+        "void main()"
+        "{"
+        "    vec3 norm = normalize(FragNormal);"
+        "    vec3 lightDir = normalize(LightPos - FragPos);"
+        "    float diff = max(dot(norm, lightDir), 0.2);"
+        "    FragColor = vec4(diff * FragRGB, 1.0);"
+        "}";
+
 
     Arcball::Arcball(CameraBase *camera, bool manipulateCamera, float radius, glm::vec3 center)
-        : mShader("../glsl/arc_vert.glsl", "../glsl/arc_frag.glsl")
+        : mShader()
         , mCamera(camera)
         , mIsCamera(manipulateCamera)
         , mRadiusOfHalfHeight(radius)
@@ -14,6 +46,7 @@ namespace snow {
         , mIsMoving(false)
         , mSpeed(1.0)
     {
+        mShader.buildFromCode(ArcballVertGLSL, ArcballFragGLSL);
         this->_generateArc();
         mQuatCamera = glm::inverse(mCamera->quatAroundCenter());
     }
@@ -95,6 +128,7 @@ namespace snow {
                 auto p = glm::rotate(glm::angleAxis(deltaAngle * i, axis), first);
                 ret.push_back(p);
                 ret.push_back(rgb);
+                ret.push_back(glm::normalize(p));
             }
             return ret;
         };
@@ -135,10 +169,13 @@ namespace snow {
 
         // vertex position
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 2, (void*)0);
-        // tex_coords
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 3, (void*)0);
+        // rgb
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 2, (void*)sizeof(glm::vec3));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 3, (void*)sizeof(glm::vec3));
+        // normal
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 3, (void*)(2 * sizeof(glm::vec3)));
         // unbind VAO
         glBindVertexArray(0);
     }
@@ -147,9 +184,10 @@ namespace snow {
         // draw
         mShader.use();
         if (mIsCamera) {
-            glm::mat4 mvp = project * this->mCamera->viewMatrix() *
-                            glm::translate(glm::mat4(1.0), this->mCamera->center());
-            mShader.setMat4("model", mvp);
+            mShader.setVec3("LightPos", this->mCamera->eye());
+            mShader.setMat4("model", glm::translate(glm::mat4(1.0), this->mCamera->center()));
+            mShader.setMat4("view",  this->mCamera->viewMatrix());
+            mShader.setMat4("project", project);
         }
         glBindVertexArray(mVAO);
         glDrawElements(GL_LINES, mArcIndices.size(), GL_UNSIGNED_INT, 0);

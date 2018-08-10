@@ -19,9 +19,9 @@ public:
     unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
+    Shader() : ID(0) {}
     Shader(std::string vertex_path, std::string fragment_path)
-        : Shader(vertex_path.c_str(), fragment_path.c_str()) {}
-    Shader(const char* vertex_path, const char* fragment_path)
+        : Shader()
     {
         // 1. retrieve the vertex/fragment source code from filePath
         std::string vertex_code;
@@ -51,6 +51,16 @@ public:
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         }
+        buildFromCode(vertex_code, fragment_code);
+    }
+
+    void buildFromCode(std::string vertex_code, std::string fragment_code) {
+        if (ID != 0) {
+            std::cerr << "ERROR::SHADER::ALREADY_BUILT" << std::endl;
+            return;
+        }
+        this->_prependVersion(vertex_code);
+        this->_prependVersion(fragment_code);
         const char* v_shader_code = vertex_code.c_str();
         const char * f_shader_code = fragment_code.c_str();
         // 2. compile shaders
@@ -77,6 +87,7 @@ public:
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
+
     // activate the shader
     // ------------------------------------------------------------------------
     void use() 
@@ -143,6 +154,12 @@ public:
     }
 
 private:
+    void _prependVersion(std::string &code) {
+        if (code.substr(0, 9) != "#version ") {
+            code = GLSLVersion + "\n" + code;
+        }
+    }
+
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
     void checkCompileErrors(unsigned int shader, std::string type)

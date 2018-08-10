@@ -9,6 +9,7 @@
 #include "snow_imgui.h"
 #include "../core/snow_math.h"
 #include "../core/snow_shader.h"
+#include "../tools/snow_arcball.h"
 #include "../tools/snow_camera.h"
 
 namespace snow {
@@ -38,17 +39,16 @@ namespace snow {
         SDL_Window *        windowPtr() { return mWindowPtr; }
         SDL_GLContext       glContext() { return mGLContext; }
         /* functions */
-        void                _processEvent(SDL_Event &event);
-        void                _draw();
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
         glm::mat4           perspective(const CameraBase *camera);
+        virtual void        _processEvent(SDL_Event &event);
+        virtual void        _draw();
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual void        draw() = 0;
     };
 
-    class ExampleWindow : public AbstractWindow
-    {
+    class ExampleWindow : public AbstractWindow {
     private:
         float f;
         int   counter;
@@ -71,5 +71,24 @@ namespace snow {
                 ImGui::End();
             }
         }
+    };
+
+    class CameraWindow : public AbstractWindow {
+    private:
+        ArcballCamera mCamera;
+        // gui
+        bool  DrawArcball;
+        float MoveSpeed, RotateSpeed, ZoomSpeed;
+    public:
+        CameraWindow(const char *title)
+            : AbstractWindow(title)
+            , DrawArcball(true)
+            , MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
+        {}
+
+        virtual void _processEvent(SDL_Event &event);
+        virtual void _draw();
+        virtual void processEvent(SDL_Event &event) {}
+        virtual void draw() {}
     };
 }

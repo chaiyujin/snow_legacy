@@ -93,4 +93,31 @@ namespace snow {
     glm::mat4 AbstractWindow::perspective(const CameraBase *camera) {
         return glm::perspective(glm::radians(camera->zoom()), (float)mWidth / (float)mHeight, 0.1f, 100.0f);
     }
+
+    void CameraWindow::_processEvent(SDL_Event &event) {
+        AbstractWindow::_processEvent(event);
+        mCamera.processMouseEvent(event);
+    }
+
+    void CameraWindow::_draw() {
+        this->glMakeCurrent();
+        this->mImGui.newFrame();
+        this->draw();  // custom draw
+        {   // draw arch ball and gui
+            if (DrawArcball) {
+                this->mCamera.arcballPtr()->draw(this->perspective(&mCamera));
+                this->mCamera.setSpeedMove(MoveSpeed);
+                this->mCamera.setSpeedZoom(ZoomSpeed);
+                this->mCamera.setSpeedRotate(RotateSpeed);
+            }
+            ImGui::Begin("Camera");
+            ImGui::Checkbox("Draw Arcball", &DrawArcball);
+            ImGui::SliderFloat("Speed Move", &MoveSpeed,     0.5f, 10.f);
+            ImGui::SliderFloat("Speed Zoom", &ZoomSpeed,     0.1f,  5.f);
+            ImGui::SliderFloat("Speed Rotate", &RotateSpeed, 0.1f,  5.f);
+            ImGui::End();
+        }
+        this->mImGui.endFrame();
+        SDL_GL_SwapWindow(mWindowPtr);
+    }
 }
