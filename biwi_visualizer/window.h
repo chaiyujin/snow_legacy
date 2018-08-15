@@ -1,12 +1,31 @@
 #pragma once
 #include <snow.h>
+#include "biwi_obj.h"
 
 using namespace snow;
+
+inline std::vector<glm::vec3> read_vl(std::string filepath) {
+    std::vector<glm::vec3> ret;
+    FILE *fp = fopen(filepath.c_str(), "rb");
+    if (fp != nullptr) {
+        uint32_t n_vertices;
+        size_t n_read;
+        n_read = fread(&n_vertices, sizeof(uint32_t), 1, fp);
+        for (uint32_t i = 0; i < n_vertices; ++i) {
+            float v[3];
+            n_read = fread(v, sizeof(float), 3, fp);
+            ret.emplace_back(v[0], v[1], v[2]);
+        }
+        fclose(fp);
+    }
+    return ret;
+}
 
 class ObjWindow : public snow::AbstractWindow {
 private:
     snow::Shader        *shader;
-    snow::Model         *model;
+    // snow::Model         *model;
+    ObjMesh             *model;
     snow::ArcballCamera *cameraZPos, *cameraZNeg, *camera;
     int                  mCameraMode;
     std::string          mFilename;
@@ -17,10 +36,10 @@ public:
     ObjWindow(const char *title="")
         : AbstractWindow(title), shader(nullptr), model(nullptr)
         , cameraZPos(nullptr),  cameraZNeg(nullptr), camera(nullptr), mCameraMode(1)
-        , DrawArcball(true), MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
+        , DrawArcball(false), MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
     {
         glEnable(GL_DEPTH_TEST);
-        this->loadObj("../assets/nanosuit/nanosuit.obj");
+        this->loadObj("../assets/F1/F1.obj");
     }
 
     void releaseObj() {
@@ -42,7 +61,8 @@ public:
         this->glMakeCurrent();  // important !!
 
         this->releaseObj();
-        this->model = new snow::Model(fileName);
+        this->model = new ObjMesh(fileName);
+        // this->model = ObjMesh::LoadFromFile(fileName);
         std::string vertGLSL = "../glsl/vert.glsl";
         std::string fragGLSL = "../glsl/frag.glsl";
         if (this->model->textures_loaded.size() == 0) {
@@ -54,7 +74,7 @@ public:
         this->cameraZPos = new snow::ArcballCamera(glm::vec3(0.f, 0.f,  3.f), glm::vec3(0.f,  1.f, 0.f));
         this->cameraZNeg = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
         this->camera = this->cameraZNeg;
-        mCameraMode = 0;
+        mCameraMode = 1;
         mFilename = fileName;
         std::cout << "Open: " << fileName << std::endl;
     }
@@ -62,8 +82,10 @@ public:
     void processEvent(SDL_Event &event) {
         if (event.type == SDL_DROPFILE) {
             std::string file = event.drop.file;
-            std::cout << event.drop.windowID << " " << SDL_GetWindowID(this->windowPtr()) << std::endl;
-            loadObj(file);
+            if (file.substr(file.length() - 4, 4) == ".obj")
+                loadObj(file);
+            else if (this->model != nullptr && file.substr(file.length() - 3, 3) == ".vl")
+                this->model->modifyPosition(read_vl(file));
         }
         else if (camera)
             camera->processMouseEvent(event);

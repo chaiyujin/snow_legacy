@@ -1,5 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 // snow
 #include "snow_model.h"
 
@@ -27,7 +25,7 @@ namespace snow {
             processNode(node->mChildren[i], scene);
     }
 
-    Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
+    Mesh *Model::processMesh(aiMesh *mesh, const aiScene *scene) {
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
         std::vector<Texture> textures;
@@ -79,7 +77,7 @@ namespace snow {
             std::vector<Texture> height_maps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
             textures.insert(textures.end(), height_maps.begin(), height_maps.end());
         }
-        return Mesh(vertices, indices, textures);
+        return Mesh::CreateMesh(vertices, indices, textures);
     }
 
     std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string type_name) {
@@ -112,7 +110,7 @@ namespace snow {
         double cnt = 0;
         glm::dvec3 sum(0, 0, 0);
         for (auto &mesh: meshes) {
-            for (auto &vert : mesh.vertices) {
+            for (auto &vert : mesh->vertices) {
                 sum += vert.position;
                 cnt += 1;
             }
@@ -129,7 +127,7 @@ namespace snow {
         float cnt = 0;
         farest = glm::vec2(0, 0);
         for (auto &mesh: meshes) {
-            for (auto &vert : mesh.vertices) {
+            for (auto &vert : mesh->vertices) {
                 glm::vec2 delta = project(vert.position - center);
                 delta.x = std::abs(delta.x);
                 delta.y = std::abs(delta.y);
@@ -143,7 +141,8 @@ namespace snow {
 
     glm::mat4 Model::autoModelTransform(const glm::mat4 &projView) {
         if (initTransform[0][0] > 0)
-            return initTransform;
+            return initTransform;        
+        calcMeanCenter();
         farest = _calcFarestPosition(projView);
         float x = 0.3 / farest.x;
         float y = 0.3 / farest.y;
@@ -157,42 +156,5 @@ namespace snow {
         trans = glm::translate(trans, -center); // translate it down so it's at the center of the scene
         initTransform = trans;
         return initTransform;
-    }
-
-    uint32_t TextureFromFile(const char *path, const std::string &directory, bool gamma) {
-        std::string filename(path);
-        filename = directory + '/' + filename;
-
-        uint32_t texture_id;
-        int width, height, nr_components;
-        glGenTextures(1, &texture_id);
-        uint8_t *data = stbi_load(filename.c_str(), &width, &height, &nr_components, 0);
-        if (data) {
-            GLenum format;
-            switch (nr_components) {
-            case 1: format = GL_RED; break;
-            case 3: format = GL_RGB; break;
-            case 4: format = GL_RGBA; break;
-            default:
-                std::cerr << "[Texture]: unsupported nr_components " << nr_components << std::endl;
-                throw std::runtime_error("texture error");
-            }
-
-            glBindTexture(GL_TEXTURE_2D, texture_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            stbi_image_free(data);
-        }
-        else {
-            std::cerr << "[Texture]: failed to load at path " << path << std::endl;
-            stbi_image_free(data);
-            throw std::runtime_error("texture error");
-        }
-        return texture_id;
     }
 }
