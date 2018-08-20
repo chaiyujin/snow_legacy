@@ -4,3 +4,4 @@ CMakeFiles/
 assets/
 main?*.cpp
 *.ini
+pybind11/

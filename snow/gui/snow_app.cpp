@@ -7,6 +7,7 @@
 namespace snow {
     App::App(int major, int minor, std::string glslVersion)
         : mRunning(false)
+        , mStop(true)
     {
         // choose glsl version
         if (glslVersion.length() == 0) {
@@ -52,8 +53,9 @@ namespace snow {
         SDL_RaiseWindow(mWindowPtrDict.begin()->second->windowPtr());
 
         mRunning = true;
+        mStop = false;
         SDL_Event mEvent;
-        while (mRunning) {
+        while (mRunning && !mStop) {
             while(SDL_PollEvent(&mEvent)) {
                 uint32_t windowID = App::GetEventID(mEvent);
                 for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {

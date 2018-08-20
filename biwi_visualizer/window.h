@@ -23,6 +23,7 @@ inline std::vector<glm::vec3> read_vl(std::string filepath) {
 
 class ObjWindow : public snow::AbstractWindow {
 private:
+public:
     snow::Shader        *shader;
     // snow::Model         *model;
     ObjMesh             *model;
@@ -32,14 +33,14 @@ private:
     // gui
     bool  DrawArcball;
     float MoveSpeed, RotateSpeed, ZoomSpeed;
-public:
+
     ObjWindow(const char *title="")
         : AbstractWindow(title), shader(nullptr), model(nullptr)
         , cameraZPos(nullptr),  cameraZNeg(nullptr), camera(nullptr), mCameraMode(1)
         , DrawArcball(false), MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
     {
         glEnable(GL_DEPTH_TEST);
-        this->loadObj("../assets/F1/F1.obj");
+        // this->loadObj("../assets/F1/F1.obj");
     }
 
     void releaseObj() {
@@ -66,7 +67,7 @@ public:
         std::string vertGLSL = "../glsl/vert.glsl";
         std::string fragGLSL = "../glsl/frag.glsl";
         if (this->model->textures_loaded.size() == 0) {
-            std::cout << "no tex\n";
+            // std::cout << "no tex\n";
             fragGLSL = "../glsl/frag_notex.glsl";
         }
         this->shader = new snow::Shader(vertGLSL, fragGLSL);

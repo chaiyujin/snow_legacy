@@ -16,7 +16,7 @@ set(SNOW_INCLUDE_DIR
 include_directories(${SNOW_INCLUDE_DIR})
 # set sources file
 # build glad first (with out c++11)
-add_library(glad STATIC
+add_library(glad SHARED
     ${PROJECT_SOURCE_DIR}/third-party/glad/src/glad.c)  # glad
 set(THIRD_PARTY
     # imgui
@@ -56,7 +56,7 @@ set(LIBRARIES ${LIBRARIES} SDL2 assimp)
 
 # exec and link libaraies
 add_compile_options(-std=c++11 -O2)
-add_library(${PROJECT_NAME} STATIC ${SNOW_SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SNOW_SOURCES})
 target_link_libraries(glad dl)
 target_link_libraries(${PROJECT_NAME} glad ${LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
