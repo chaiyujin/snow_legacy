@@ -4,6 +4,8 @@
 
 using namespace snow;
 
+typedef std::vector<glm::vec3> Frame;
+
 inline std::vector<glm::vec3> read_vl(std::string filepath) {
     std::vector<glm::vec3> ret;
     FILE *fp = fopen(filepath.c_str(), "rb");
@@ -34,13 +36,23 @@ public:
     bool  DrawArcball;
     float MoveSpeed, RotateSpeed, ZoomSpeed;
 
+    std::vector<Frame>  *mAnimeList;
+    int                 *mCurIndex;
+
     ObjWindow(const char *title="")
         : AbstractWindow(title), shader(nullptr), model(nullptr)
         , cameraZPos(nullptr),  cameraZNeg(nullptr), camera(nullptr), mCameraMode(1)
         , DrawArcball(false), MoveSpeed(5.f), RotateSpeed(1.f), ZoomSpeed(1.f)
+        , mAnimeList(nullptr)
+        , mCurIndex(nullptr)
     {
         glEnable(GL_DEPTH_TEST);
         // this->loadObj("../assets/F1/F1.obj");
+    }
+
+    void setAnime(int *curIndex, std::vector<Frame> *anime) {
+        mCurIndex = curIndex;
+        mAnimeList = anime;
     }
 
     void releaseObj() {
@@ -94,17 +106,17 @@ public:
 
     void draw() {
         glEnable(GL_DEPTH_TEST);
-        if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Open", "Ctrl+O")) {
-                    auto files = snow::FileDialog({"obj"}, false, false);
-                    if (files.size() > 0)
-                        loadObj(files[0]);
-                }
-                ImGui::EndMenu();
-            }
-            ImGui::EndMainMenuBar();
-        }
+        // if (ImGui::BeginMainMenuBar()) {
+        //     if (ImGui::BeginMenu("File")) {
+        //         if (ImGui::MenuItem("Open", "Ctrl+O")) {
+        //             auto files = snow::FileDialog({"obj"}, false, false);
+        //             if (files.size() > 0)
+        //                 loadObj(files[0]);
+        //         }
+        //         ImGui::EndMenu();
+        //     }
+        //     ImGui::EndMainMenuBar();
+        // }
 
         if (model) {
             if (mCameraMode == 0) 
@@ -133,21 +145,29 @@ public:
             if (DrawArcball)
                 this->camera->arcballPtr()->draw(projection);
 
-            {
+            // {
+            //     ImGui::Begin("utils");
+            //     ImGui::TextWrapped("%s", (std::string("Path:") + mFilename).c_str());
+            //     ImGui::BeginGroup();
+            //     if (ImGui::RadioButton("Camera (at +z)", mCameraMode == 0)) { mCameraMode = 0; } ImGui::SameLine();
+            //     if (ImGui::RadioButton("Camera (at -z)", mCameraMode == 1)) { mCameraMode = 1; }
+            //     ImGui::DragFloat("Speed Zoom",   &ZoomSpeed,   0.1f, 0.5f, 5.0f);
+            //     ImGui::DragFloat("Speed Move",   &MoveSpeed,   0.1f,  1.f, 10.f);
+            //     ImGui::DragFloat("Speed Rotate", &RotateSpeed, 0.1f, 0.5f, 5.0f);
+            //     ImGui::Checkbox("Draw Arcball",  &DrawArcball);
+            //     this->camera->setSpeedMove(MoveSpeed);
+            //     this->camera->setSpeedRotate(RotateSpeed);
+            //     this->camera->setSpeedZoom(ZoomSpeed);
+            //     ImGui::EndGroup();
+            //     ImGui::End();
+            // }
+            if (mCurIndex) {
                 ImGui::Begin("utils");
-                ImGui::TextWrapped("%s", (std::string("Path:") + mFilename).c_str());
-                ImGui::BeginGroup();
-                if (ImGui::RadioButton("Camera (at +z)", mCameraMode == 0)) { mCameraMode = 0; } ImGui::SameLine();
-                if (ImGui::RadioButton("Camera (at -z)", mCameraMode == 1)) { mCameraMode = 1; }
-                ImGui::DragFloat("Speed Zoom",   &ZoomSpeed,   0.1f, 0.5f, 5.0f);
-                ImGui::DragFloat("Speed Move",   &MoveSpeed,   0.1f,  1.f, 10.f);
-                ImGui::DragFloat("Speed Rotate", &RotateSpeed, 0.1f, 0.5f, 5.0f);
-                ImGui::Checkbox("Draw Arcball",  &DrawArcball);
-                this->camera->setSpeedMove(MoveSpeed);
-                this->camera->setSpeedRotate(RotateSpeed);
-                this->camera->setSpeedZoom(ZoomSpeed);
-                ImGui::EndGroup();
+                ImGui::SliderInt("Frame", mCurIndex, 0, mAnimeList->size() - 1);
                 ImGui::End();
+
+                int idx = *mCurIndex;
+                this->model->modifyPosition(mAnimeList->at(idx));
             }
         }
         else {
