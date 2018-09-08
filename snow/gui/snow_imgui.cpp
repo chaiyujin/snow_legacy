@@ -90,7 +90,9 @@ namespace snow {
         (void)glContext;
         _sdl2Init();
         // theme
-        ImGui::StyleColorsDark();  // default color theme
+        // ImGui::StyleColorsDark();  // default color theme
+        ImGui::StyleColorsLight();
+        // ImGui::StyleColorsClassic();
     }
 
     void ImGuiSDL2::activate() {

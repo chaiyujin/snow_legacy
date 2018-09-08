@@ -24,6 +24,7 @@ namespace snow {
     }
 
     App::~App() {
+        AbstractWindow::Terminate();
         for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
             delete it->second;
         }
@@ -69,7 +70,7 @@ namespace snow {
                 }
             }
             if (!mRunning) {
-                mRunning = !App::AskQuit();
+                // mRunning = !App::AskQuit();
                 if (!mRunning) break;
             }
 

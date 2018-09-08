@@ -32,6 +32,10 @@ namespace snow {
         Shader::GLSLVersion = gGLSLVersion;
     }
 
+    void AbstractWindow::Terminate() {
+        gGLSLVersion = "";
+    }
+
     AbstractWindow::~AbstractWindow() {
         SDL_GL_DeleteContext(mGLContext);
         SDL_DestroyWindow(mWindowPtr);

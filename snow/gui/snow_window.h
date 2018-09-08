@@ -29,6 +29,7 @@ namespace snow {
     public:
         /* init */
         static void Initialize(int major, int minor, std::string glslVersion);
+        static void Terminate();
         static void GLADInit();
 
         /* constructor */ 

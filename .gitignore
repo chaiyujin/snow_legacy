@@ -1,7 +1,6 @@
-.vscode/
-build/
-CMakeFiles/
-assets/
-main?*.cpp
 *.ini
+*build/
+*.vscode/
+*CMakeFiles/
+*assets/
 pybind11/
