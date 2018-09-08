@@ -24,3 +24,26 @@ extern "C" {
 #include <libswresample/swresample.h>
 
 };
+
+// replace av log macro
+#undef av_ts2str
+#undef av_err2str
+#undef av_ts2timestr
+
+inline char *av_ts2str(int64_t ts) {
+    static char str[AV_TS_MAX_STRING_SIZE];
+	memset(str, 0, sizeof(str));
+    return av_ts_make_string(str, ts);
+}
+
+inline char* av_err2str(int errnum) {
+	static char str[AV_ERROR_MAX_STRING_SIZE];
+	memset(str, 0, sizeof(str));
+	return av_make_error_string(str, AV_ERROR_MAX_STRING_SIZE, errnum);
+}
+
+inline char *av_ts2timestr(int64_t ts, AVRational tb) {
+	static char str[AV_TS_MAX_STRING_SIZE];
+	memset(str, 0, sizeof(str));
+    return av_ts_make_time_string(str, ts, &tb);
+}
