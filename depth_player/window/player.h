@@ -1,10 +1,33 @@
 #pragma once
 #include <snow.h>
+#include "../shader/image.h"
+#include "../video/reader.h"
 
-class PlayerWindow: snow::AbstractWindow {
+class PlayerWindow : public snow::AbstractWindow {
 private:
-    
+    DepthVideoReader    *mReaderPtr;
+    ImageShader          mImageShader;
+    float                mCurrentTime;
+    float                mPlayerSecond;
+    void updateFrame(const VideoFrame &frame);
+    void seek();
+    void nextFrame();
+
 public:
-    PlayerWindow(const char *title="player") : AbstractWindow(title) {}
+    PlayerWindow(const char *title="player")
+        : AbstractWindow(title)
+        , mReaderPtr(nullptr)
+        , mCurrentTime(0)
+        , mPlayerSecond(0) {}
+    ~PlayerWindow() {
+        closeVideo();
+    }
+
+    ImageShader &imageShader() { return mImageShader; }
+    bool openVideo(const std::string filename);
+    void closeVideo();
+
+    void processEvent(SDL_Event &event) {}
+    void draw();
 
 };

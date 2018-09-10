@@ -1,7 +1,7 @@
 #include <snow.h>
 #include <iostream>
 #include "video/reader.h"
-
+#include "window/player.h"
 using namespace snow;
 
 void write_image(const char *name, const VideoFrame &input_frame) {
@@ -18,33 +18,11 @@ void write_image(const char *name, const VideoFrame &input_frame) {
 }
 
 int main() {
-
-    int3 a = {1, 2};
-    float3 b = {10, 10};
-
-    std::cout << a << std::endl
-              << b << std::endl
-              << dot(b, b) << std::endl
-              << dot(float3{1, 2, 3}, float3{3, 2, 1}) << std::endl
-              << cross(float3{11.23, 2.14, 3.54}, float3{3, 231, 1}) << std::endl
-              << dot(float2{1, 10}, float2{4, -1}) << std::endl
-              << cross(float2{21.12, 3.14}, float2{5.13, 1.3}) << std::endl
-              << euclidean_norm(float2{4, 3}) << std::endl;
-
-    DepthVideoReader::initialize_ffmpeg();
-    DepthVideoReader reader("/home/chaiyujin/Desktop/0-0-0.mkv");
-    if (reader.open()) {
-        int frameCount = 0;
-        do {
-            auto framepair = reader.read_frame_pair();
-            if (framepair.first.isNull()) break;
-            std::cout << ++frameCount << "\n";
-            write_image("color.ppm", framepair.first);
-            write_image("depth.ppm", framepair.second);
-            break;
-        } while (true);
-        std::cout << "\n";
-    }
+    snow::App app;
+    PlayerWindow * player = new PlayerWindow();
+    player->openVideo("/home/chaiyujin/Desktop/0-0-0.mkv");
+    app.addWindow(player);
+    app.run();
 
     return 0;
 }

@@ -169,6 +169,10 @@ private:
 
 	std::vector<StreamQueue<VideoFrame>*>   mVideoQueues;
 	std::vector<StreamQueue<AudioFrame>*>   mAudioQueues;
+
+    // mutex for format context ptr
+    std::mutex                  mFmtCtxMutex;
+
 public:
     static void initialize_ffmpeg() { if (!gInitialized) { av_register_all(); gInitialized = true; } }
     enum Type { Audio = 1, Video = 2, All = 3 };
@@ -176,9 +180,11 @@ public:
     DepthVideoReader(const std::string &filename);
     ~DepthVideoReader();
 
-    bool open();
-    void close();
-    int  process_input(Type request_type=Type::All);
+    bool    open();
+    void    close();
+    int     process_input(Type request_type=Type::All);
+    int64_t duration_ms();
+    void    seek(int64_t ms);
 
     // read data
     std::pair<VideoFrame, VideoFrame> read_frame_pair();

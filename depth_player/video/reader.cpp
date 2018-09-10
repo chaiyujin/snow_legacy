@@ -204,13 +204,15 @@ void DepthVideoReader::close() {
     for (auto *st : mStreamPtrList) delete st;
     mStreamPtrList.clear();
     if (mFmtCtxPtr) {
+        std::lock_guard<std::mutex> lock(mFmtCtxMutex);
         avformat_close_input(&mFmtCtxPtr);
         mFmtCtxPtr == nullptr;
     }
 }
 
 int DepthVideoReader::process_input(Type request_type) {
-    // std::lock_guard<std::mutex> lock(avmutex);
+    std::lock_guard<std::mutex> lock(mFmtCtxMutex);
+    if (!mFmtCtxPtr) return AVERROR_EOF;
 
     int ret;
     AVPacket pkt;
@@ -334,4 +336,17 @@ std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
         q->pop();
     }
     return ret;
+}
+
+int64_t DepthVideoReader::duration_ms() {
+    std::lock_guard<std::mutex> lock(mFmtCtxMutex); 
+    return (mFmtCtxPtr)? av_rescale_q(mFmtCtxPtr->duration, AV_TIME_BASE_Q, AVRational{1, 1000}) : 0;
+}
+
+void DepthVideoReader::seek(int64_t ms) {
+    if (mFmtCtxPtr) {
+        std::lock_guard<std::mutex> lock(mFmtCtxMutex);       
+        int64_t ts = av_rescale_q(ms, AVRational{ 1, 1000 }, AV_TIME_BASE_Q);
+        int ret = av_seek_frame(mFmtCtxPtr, -1, ts, AVSEEK_FLAG_BACKWARD);
+    }
 }

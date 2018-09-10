@@ -21,7 +21,8 @@ pkg_search_module(PKG_SWSCALE    REQUIRED libswscale)
 add_definitions(-O3)
 add_executable(DepthPlayer
     ./main.cpp
-    ./video/reader.cpp)
+    ./video/reader.cpp
+    ./window/player.cpp)
 target_link_libraries(DepthPlayer
     # link snow
     snow
