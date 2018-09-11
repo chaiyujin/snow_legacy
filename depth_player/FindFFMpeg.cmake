@@ -34,7 +34,7 @@ include(FindPackageHandleStandardArgs)
 
 # The default components were taken from a survey over other FindFFMPEG.cmake files
 if (NOT FFmpeg_FIND_COMPONENTS)
-    set(FFmpeg_FIND_COMPONENTS AVCODEC AVDEVICE AVFORMAT AVUTIL POSTPROC SWSCALE)
+    set(FFmpeg_FIND_COMPONENTS AVCODEC AVDEVICE AVFORMAT AVUTIL POSTPROC SWSCALE SWRESAMPLE)
 endif ()
 
 #
@@ -71,16 +71,11 @@ macro(find_component _component _pkgconfig _library _header)
                 HINTS "${FFMPEG_INSTALL_PATH}/include/" )
             find_library(${_component}_LIBRARIES NAMES ${_library}
                 HINTS "${FFMPEG_INSTALL_PATH}/lib/" )
-
-            set(${_component}_EXTRA_LDFLAGS ${PC_${_component}_LDFLAGS})                        
+                    
             # process ldflags
             if (APPLE)
-                string(REPLACE "-framework," "-framework"   ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
-                string(REPLACE "-framework " "-framework"   ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
-                string(REPLACE "-frameworkOpenGL"       ";" ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
-                string(REPLACE "-frameworkVideoToolBox" ";" ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
-                string(REPLACE "-frameworkAudioToolBox" ";" ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
-                string(REPLACE "-frameworkFoundation"   ";" ${_component}_EXTRA_LDFLAGS ${${_component}_EXTRA_LDFLAGS})
+            else()
+                set(${_component}_EXTRA_LDFLAGS ${PC_${_component}_LDFLAGS})
             endif (APPLE)
             set(${_component}_LIBRARIES     ${${_component}_LIBRARIES} ${${_component}_EXTRA_LDFLAGS})
 

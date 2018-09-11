@@ -7,7 +7,7 @@ add_subdirectory(../snow ext/snow/)
 include_directories(${SNOW_INCLUDE_DIR})
 # add pre-compiled ffmpeg 
 
-include(FindFFMpeg.cmake)
+include(FindFFmpeg.cmake)
 
 add_definitions(-O3)
 add_executable(DepthPlayer
@@ -20,4 +20,5 @@ target_link_libraries(DepthPlayer
     # link ffmpeg
     ${FFMPEG_LIBRARIES}
     # link librealsense
-    realsense2)
+    # realsense2)
+)
