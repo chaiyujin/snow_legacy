@@ -1,6 +1,7 @@
 #include <iostream>
 // snow
 #include "snow_imgui.h"
+#include <SDL2/SDL_syswm.h>
 
 namespace snow {
 
@@ -226,7 +227,7 @@ namespace snow {
 #ifdef _WIN32
         SDL_SysWMinfo wmInfo;
         SDL_VERSION(&wmInfo.version);
-        SDL_GetWindowWMInfo(window, &wmInfo);
+        SDL_GetWindowWMInfo(mWindowPtr, &wmInfo);
         io.ImeWindowHandle = wmInfo.info.win.window;
 #else
         (void)mWindowPtr;

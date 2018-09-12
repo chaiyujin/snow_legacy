@@ -123,7 +123,7 @@ namespace snow {
         auto sample_around = [=](glm::vec3 first, glm::vec3 axis, glm::vec3 rgb) -> std::vector<glm::vec3> {
             std::vector<glm::vec3> ret;
             int   N = SampleNumber;
-            float deltaAngle = 2.0 * M_PI / N;
+            float deltaAngle = 2.0f * M_PI / N;
             for (int i = 0; i < N; ++i) {
                 auto p = glm::rotate(glm::angleAxis(deltaAngle * i, axis), first);
                 ret.push_back(p);
@@ -190,7 +190,7 @@ namespace snow {
             mShader.setMat4("project", project);
         }
         glBindVertexArray(mVAO);
-        glDrawElements(GL_LINES, mArcIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINES, (GLsizei)mArcIndices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 }

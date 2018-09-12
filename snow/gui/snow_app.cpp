@@ -170,24 +170,24 @@ namespace snow {
     uint32_t App::GetEventID(SDL_Event &event) {
         switch (event.type) {
         case SDL_DOLLARGESTURE:
-        case SDL_DOLLARRECORD:              return event.dgesture.touchId;
+        case SDL_DOLLARRECORD:              return (uint32_t)event.dgesture.touchId;
         case SDL_DROPFILE:
         case SDL_DROPTEXT:
         case SDL_DROPBEGIN:
-        case SDL_DROPCOMPLETE:              return event.drop.windowID;
+        case SDL_DROPCOMPLETE:              return (uint32_t)event.drop.windowID;
         case SDL_FINGERMOTION:
         case SDL_FINGERDOWN:
-        case SDL_FINGERUP:                  return event.tfinger.touchId;
+        case SDL_FINGERUP:                  return (uint32_t)event.tfinger.touchId;
         case SDL_KEYDOWN:
-        case SDL_KEYUP:                     return event.key.windowID;
-        case SDL_MOUSEMOTION:               return event.motion.windowID;
+        case SDL_KEYUP:                     return (uint32_t)event.key.windowID;
+        case SDL_MOUSEMOTION:               return (uint32_t)event.motion.windowID;
         case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:             return event.button.windowID;
-        case SDL_MOUSEWHEEL:                return event.wheel.windowID;
-        case SDL_TEXTEDITING:               return event.edit.windowID;
-        case SDL_TEXTINPUT:                 return event.text.windowID;
-        case SDL_USEREVENT:                 return event.user.windowID;
-        case SDL_WINDOWEVENT:               return event.window.windowID;
+        case SDL_MOUSEBUTTONUP:             return (uint32_t)event.button.windowID;
+        case SDL_MOUSEWHEEL:                return (uint32_t)event.wheel.windowID;
+        case SDL_TEXTEDITING:               return (uint32_t)event.edit.windowID;
+        case SDL_TEXTINPUT:                 return (uint32_t)event.text.windowID;
+        case SDL_USEREVENT:                 return (uint32_t)event.user.windowID;
+        case SDL_WINDOWEVENT:               return (uint32_t)event.window.windowID;
         default:                            return 0;
         }
     }

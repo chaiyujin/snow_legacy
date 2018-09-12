@@ -4,11 +4,17 @@ set(CMAKE_CXX_STANDARD 11)
 project(AnimeViewer)
 add_subdirectory(../snow ext/snow/)
 include_directories(${SNOW_INCLUDE_DIR})
+link_directories(${SNOW_LIBRARIES_DIR})
 
-add_executable(AnimeViewer ./main.cpp
-                           ./biwi_obj.cpp
-                           ./window.cpp)
+set(SOURCES ./main.cpp
+            ./biwi_obj.cpp
+            ./window.cpp)
+add_executable(AnimeViewer ${SOURCES})
 target_link_libraries(AnimeViewer snow)
+
+if (WIN32)
+    SNOW_COPY_DLL(AnimeViewer)
+endif (WIN32)
 
 # === Python Binding ===
 # 

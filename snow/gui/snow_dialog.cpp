@@ -13,6 +13,7 @@ namespace snow {
 
 #if defined(_WIN32)
         std::runtime_error("not implemented.");
+    }
 #else
         char buffer[FILE_DIALOG_MAX_BUFFER];
         buffer[0] = '\0';

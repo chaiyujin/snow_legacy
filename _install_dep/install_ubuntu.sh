@@ -1,0 +1,1 @@
+sudo apt-get install libassimp-dev libassimp3 assimp-utils

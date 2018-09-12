@@ -144,8 +144,8 @@ namespace snow {
             return initTransform;        
         calcMeanCenter();
         farest = _calcFarestPosition(projView);
-        float x = 0.4 / farest.x;
-        float y = 0.4 / farest.y;
+        float x = 0.4f / farest.x;
+        float y = 0.4f / farest.y;
         float scale = std::min(x, y);
         glm::mat4 trans(1.0);
         // std::cout << scale << " "

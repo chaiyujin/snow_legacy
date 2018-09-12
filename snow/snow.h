@@ -11,3 +11,5 @@
 #include "gui/snow_dialog.h"
 #include "tools/snow_camera.h"
 #include "tools/snow_arcball.h"
+
+#undef main
