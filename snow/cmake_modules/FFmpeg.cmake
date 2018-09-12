@@ -12,8 +12,6 @@
 # - binary  dir: $HOME/ffmpeg_build/bin
 #  =====================================
 
-message(STATUS ${FFMPEG_TEST})
-
 if (NOT FFMPEG_INSTALL_PATH)
     if (UNIX)   # macos or Linux using Home
         set(FFMPEG_INSTALL_PATH "$ENV{HOME}/ffmpeg_build")
@@ -92,7 +90,7 @@ if (NOT FFMPEG_FOUND)
     set(FFMPEG_INCLUDE_DIRS "")
     set(FFMPEG_LIBRARIES    "")
     set(FFMPEG_DEFINITIONS  "")
-    set(FFMPEG_WIN32_DLLS         "")
+    set(FFMPEG_WIN32_DLLS   "")
 
     # Check for all possible component.
     find_component(AVCODEC    libavcodec    avcodec    libavcodec/avcodec.h)

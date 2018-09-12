@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(snow VERSION 0.0.1 DESCRIPTION "A simple tool for OpenGL and GUI.")
 
-OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
-OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
+OPTION(MODULE_OPENGL    "Build with module opengl" on)
+OPTION(MODULE_FFMPEG    "Build with module ffmpeg" on)
 
 # ============== Begin ===============
 set(SNOW_SOURCES        "")
@@ -30,7 +30,7 @@ list(APPEND SNOW_LIBRARIES     ${SNOW_CORE_LIBRARIES})
 # ====================================
 # ========== Module OpenGL ===========
 # ====================================
-if (SNOW_MODULE_OPENGL)
+if (MODULE_OPENGL)
     set(SNOW_OPENGL_SOURCES
         "${PROJECT_SOURCE_DIR}/gui/snow_app.cpp"
         "${PROJECT_SOURCE_DIR}/gui/snow_imgui.cpp"
@@ -84,13 +84,13 @@ if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_INCLUDE_DIRS   ${SNOW_OPENGL_INCLUDE_DIRS})
     list(APPEND SNOW_LIBRARIES_DIRS ${SNOW_OPENGL_LIBRARIES_DIRS})
     list(APPEND SNOW_LIBRARIES      ${SNOW_OPENGL_LIBRARIES})
-endif (SNOW_MODULE_OPENGL)
+endif (MODULE_OPENGL)
 
-if (SNOW_MODULE_FFMPEG)
+if (MODULE_FFMPEG)
     include(cmake_modules/FFmpeg.cmake)
     list(APPEND SNOW_LIBRARIES ${FFMPEG_LIBRARIES})
     list(APPEND SNOW_WIN32_DLLS ${FFMPEG_WIN32_DLLS})
-endif (SNOW_MODULE_FFMPEG)
+endif (MODULE_FFMPEG)
 
 # === CACHE ===
 set(SNOW_SOURCES        "${SNOW_SOURCES}"        CACHE INTERNAL "DIRS")

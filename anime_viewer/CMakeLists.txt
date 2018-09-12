@@ -3,8 +3,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(AnimeViewer)
 add_subdirectory(../snow ext/snow/)
-include_directories(${SNOW_INCLUDE_DIR})
-link_directories(${SNOW_LIBRARIES_DIR})
+include_directories(${SNOW_INCLUDE_DIRS})
+link_directories(${SNOW_LIBRARIES_DIRS})
 
 set(SOURCES ./main.cpp
             ./biwi_obj.cpp
@@ -12,6 +12,7 @@ set(SOURCES ./main.cpp
 add_executable(AnimeViewer ${SOURCES})
 target_link_libraries(AnimeViewer snow)
 
+message(STATUS "---${SNOW_WIN32_DLLS}")
 if (WIN32)
     SNOW_COPY_DLL(AnimeViewer)
 endif (WIN32)

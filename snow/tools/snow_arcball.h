@@ -2,7 +2,7 @@
 #include <vector>
 #include <SDL2/SDL.h>
 #include "common.h"
-#include "../core/snow_shader.h"
+#include "../gui/snow_shader.h"
 
 namespace snow {
 

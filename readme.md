@@ -16,9 +16,10 @@ Expect the third-party libraries, there are some useful tools:
     - string operation
     - [ ] stb_image
 - OpenGL: (optional)
-    - glad, SDL2, ImGui
-    - Naive obj reader
-    - Assimp        (optional)
+    - GUI: glad, SDL2, ImGui
+    - Model:
+        - Naive obj reader
+        - Assimp (optional)
 - FFmpeg  (optional)
 - Vision: (optional)
     - [ ] OpenCV    (optional)

@@ -7,8 +7,7 @@
 #include <glad/glad.h>
 // snow
 #include "snow_imgui.h"
-#include "../core/snow_math.h"
-#include "../core/snow_shader.h"
+#include "../core/snow_core.h"
 #include "../tools/snow_arcball.h"
 #include "../tools/snow_camera.h"
 

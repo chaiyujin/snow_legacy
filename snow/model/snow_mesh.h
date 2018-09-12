@@ -3,7 +3,7 @@
 #include <vector>
 // snow
 #include "../core/snow_math.h"
-#include "../core/snow_shader.h"
+#include "../gui/snow_shader.h"
 
 namespace snow {
     struct Vertex {
