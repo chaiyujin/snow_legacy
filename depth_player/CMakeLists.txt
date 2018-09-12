@@ -8,7 +8,7 @@ include_directories(${SNOW_INCLUDE_DIR})
 link_directories(${SNOW_LIBRARIES_DIR})
 # add pre-compiled ffmpeg 
 
-include(FindFFmpeg.cmake)
+include(FFmpeg.cmake)
 include_directories(${FFMPEG_INCLUDE_DIRS})
 
 add_definitions(-O3)
