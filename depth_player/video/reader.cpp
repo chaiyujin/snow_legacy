@@ -327,7 +327,7 @@ std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
     for (auto *q : mVideoQueues) {
         while (abs(q->front().mTimestamp - max_pts) > SYNC_EPS && q->front().mTimestamp < max_pts) {
             q->pop();
-            if (q->size() == 0)
+            while (q->size() == 0)
                 if (process_input() == AVERROR_EOF) return ret;
         }
         if (q->front().mIsDepth)
@@ -340,7 +340,7 @@ std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
 
 int64_t DepthVideoReader::duration_ms() {
     std::lock_guard<std::mutex> lock(mFmtCtxMutex); 
-    return (mFmtCtxPtr)? av_rescale_q(mFmtCtxPtr->duration, AV_TIME_BASE_Q, AVRational{1, 1000}) : 0;
+    return (mFmtCtxPtr)? av_rescale_q(mFmtCtxPtr->duration, AV_TIME_BASE_Q, AVRational{ 1, 1000 }) : 0;
 }
 
 void DepthVideoReader::seek(int64_t ms) {

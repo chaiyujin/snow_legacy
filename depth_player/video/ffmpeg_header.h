@@ -29,6 +29,8 @@ extern "C" {
 #undef av_ts2str
 #undef av_err2str
 #undef av_ts2timestr
+#undef AV_TIME_BASE_Q
+#define AV_TIME_BASE_Q AVRational {1, AV_TIME_BASE}
 
 inline char *av_ts2str(int64_t ts) {
     static char str[AV_TS_MAX_STRING_SIZE];
