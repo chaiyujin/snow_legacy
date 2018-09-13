@@ -23,8 +23,8 @@ void PlayerWindow::closeVideo() {
 
 void PlayerWindow::updateFrame(const VideoFrame &frame) {
     mImageShader.uploadImage(frame.mData.get(), frame.mWidth, frame.mHeight, GL_RGBA);
-    mCurrentTime = frame.mTimestamp;
-    mPlayerSecond = mCurrentTime / 1000.0;
+    mCurrentTime = (float)frame.mTimestamp;
+    mPlayerSecond = (float) (mCurrentTime / 1000.0);
 }
 
 void PlayerWindow::seek() {

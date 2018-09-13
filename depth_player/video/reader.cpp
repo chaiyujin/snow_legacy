@@ -7,7 +7,7 @@ snow::color_map DepthVideoReader::gJetCmap = snow::color_map::jet();
 
 AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
                            uint64_t channel_layout,
-                           int sample_rate, int nb_samples) {
+                           int sample_rate, int64_t nb_samples) {
     AVFrame *frame = av_frame_alloc();
     int ret;
 
@@ -87,7 +87,7 @@ bool DepthVideoReader::open() {
     /* -- open streams -- */
     int video_streams = 0;
     int audio_streams = 0;
-    for (int i = 0; i < mFmtCtxPtr->nb_streams; i++) {
+    for (uint32_t i = 0; i < mFmtCtxPtr->nb_streams; i++) {
         AVStream *stream = mFmtCtxPtr->streams[i];
         AVCodec *dec = avcodec_find_decoder(stream->codecpar->codec_id);
         AVCodecContext *codec_ctx;
@@ -137,8 +137,8 @@ bool DepthVideoReader::open() {
             st->mAudioStreamIdx = audio_streams++;
             mAudioQueues.push_back(new StreamQueue<AudioFrame>());
 
-            int src_nb_samples = (codec_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) ? 10000 : codec_ctx->frame_size;
-            int dst_nb_samples = av_rescale_rnd(src_nb_samples, mDstAudioFmt.sample_rate, codec_ctx->sample_rate, AV_ROUND_UP);
+            int     src_nb_samples = (codec_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) ? 10000 : codec_ctx->frame_size;
+            int64_t dst_nb_samples = av_rescale_rnd(src_nb_samples, mDstAudioFmt.sample_rate, codec_ctx->sample_rate, AV_ROUND_UP);
 
             st->mTmpFramePtr = alloc_audio_frame(
                 mDstAudioFmt.sample_fmt,
@@ -206,9 +206,34 @@ void DepthVideoReader::close() {
     if (mFmtCtxPtr) {
         std::lock_guard<std::mutex> lock(mFmtCtxMutex);
         avformat_close_input(&mFmtCtxPtr);
-        mFmtCtxPtr == nullptr;
+        mFmtCtxPtr = nullptr;
     }
 }
+
+static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt) {
+    int ret;
+    int consumed = 0;
+
+    *got_frame = 0;
+
+    // This relies on the fact that the decoder will not buffer additional
+    // packets internally, but returns AVERROR(EAGAIN) if there are still
+    // decoded frames to be returned.
+    ret = avcodec_send_packet(avctx, pkt);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return ret;
+    if (ret >= 0)
+        consumed = pkt->size;
+
+    ret = avcodec_receive_frame(avctx, frame);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return ret;
+    if (ret >= 0)
+        *got_frame = 1;
+
+    return consumed;
+}
+
 
 int DepthVideoReader::process_input(Type request_type) {
     std::lock_guard<std::mutex> lock(mFmtCtxMutex);
@@ -237,9 +262,9 @@ int DepthVideoReader::process_input(Type request_type) {
     int got_frame = 0;
     if ((st->mType == AVMEDIA_TYPE_AUDIO) && (request_type & Type::Audio))
     {
-        got_frame = avcodec_decode_audio4(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
+        decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            double pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            double pts = (double)av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f nb_samples %d %s\n",
@@ -272,9 +297,9 @@ int DepthVideoReader::process_input(Type request_type) {
         }
     }
     else if ((st->mType == AVMEDIA_TYPE_VIDEO) && (request_type & Type::Video)) {
-        got_frame = avcodec_decode_video2(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
+        decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            double pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            double pts = (double)av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f %s\n",

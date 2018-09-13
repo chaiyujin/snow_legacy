@@ -141,9 +141,9 @@ public:
 	}
 
 	void updateLandmarks(const std::vector<snow::float2> &data) {
-		mNumLandmarks = data.size();
+		mNumLandmarks = (int)data.size();
 		for (size_t i = 0; i < data.size(); ++i) {
-			int k = 20 + i * 5;
+			int k = 20 + (int)i * 5;
 			mPointsPtr[k]     = data[i].x;
 			mPointsPtr[k + 1] = data[i].y;
 			mPointsPtr[k + 2] = 0;

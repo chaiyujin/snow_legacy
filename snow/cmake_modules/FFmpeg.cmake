@@ -62,7 +62,6 @@ macro(FIND_COMPONENT _component _pkgconfig _library _header)
         # in windows
         find_path(${_component}_INCLUDE_DIRS       ${_header}  HINTS "${FFMPEG_INSTALL_PATH}/include/" )
         find_library(${_component}_LIBRARIES NAMES ${_library} HINTS "${FFMPEG_INSTALL_PATH}/lib/")
-        include_directories(${_component}_INCLUDE_DIRS)
     endif (UNIX)
 
     set_component_found(${_component})

@@ -3,13 +3,13 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(DepthPlayer)
 # snow
-set(SNOW_MODULE_FFMPEG on)
+set(SNOW_MODULE_FFMPEG on CACHE BOOL "enable ffmpeg" FORCE)  # set module on
 add_subdirectory(../snow ext/snow/)
+add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
-link_directories(${SNOW_LIBRARIES_DIRS})
-# add pre-compiled ffmpeg 
+link_directories(   ${SNOW_LIBRARIES_DIRS})
 
-add_definitions(-O3)
+add_compile_options(-O3)
 add_executable(${PROJECT_NAME}
     ./main.cpp
     ./video/reader.cpp
