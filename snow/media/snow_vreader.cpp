@@ -394,10 +394,11 @@ void DepthVideoReader::seek(int64_t ms) {
     }
 }
 
-FrameBase * DepthVideoReader::operator()(int64_t id, MediaType type) {
+FrameBase * DepthVideoReader::readFrame(int64_t id, MediaType type) {
     while (mVideoQueues[id]->size() == 0)
         if (process_input() == AVERROR_EOF) return nullptr;
     VideoFrame * frame = new VideoFrame(mVideoQueues[id]->front());
+    mVideoQueues[id]->pop();
     return frame;
 }
 

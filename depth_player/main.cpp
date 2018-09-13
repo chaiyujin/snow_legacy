@@ -19,7 +19,8 @@ void write_image(const char *name, const VideoFrame &input_frame) {
 int main() {
     snow::App app;
     PlayerWindow * player = new PlayerWindow();
-    player->openVideo("../../assets/test.mkv");
+    // player->openVideo("../../assets/test.mkv");
+    player->openVideo("D:\\Linux\\Dataset\\Modality\\SPEAKER03_S1\\SPEAKER03_S1_STRL.mkv");
     app.addWindow(player);
     app.run();
 

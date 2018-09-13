@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <memory>
 #include <functional>
 #define SNOW_NONE_PTS       ((int64_t)UINT64_C(0x8000000000000000))
@@ -8,8 +9,7 @@ namespace snow {
 
 enum MediaType { None=0, Audio=0x0001, Video=0x0010, AudioVideo=0x0011, Other=0x1000 };
 
-class FrameBase {
-public:
+struct FrameBase {
     FrameBase() : mType(MediaType::None), mDataSize(0), mTimeStamp(SNOW_NONE_PTS) {}
     FrameBase(MediaType type, uint8_t *data, size_t size, int64_t ts=0) : mType(type), mData(data), mDataSize(size), mTimeStamp(ts) {}
     FrameBase(const FrameBase &b) : mType(b.mType), mData(b.mData), mDataSize(b.mDataSize), mTimeStamp(b.mTimeStamp) {}
@@ -26,31 +26,43 @@ public:
     int64_t                     mTimeStamp;
 };
 
+struct InputBase {
+    virtual bool open() = 0;
+    virtual void seek(int64_t ms) = 0;
+    virtual FrameBase * readFrame(int64_t id, MediaType type) = 0;
+};
+
 class StreamBase {
 public:
-    StreamBase(): mID(SNOW_FRMAE_NONE_ID), mType(MediaType::None), mFrame(nullptr)
+    StreamBase(): mInputPtr(nullptr), mID(SNOW_FRMAE_NONE_ID), mType(MediaType::None), mFrame(nullptr)
                 , mStartTime(SNOW_NONE_PTS), mCurrTime(SNOW_NONE_PTS)
                 , mNextTime(SNOW_NONE_PTS), mDuration(0) {}
     StreamBase(int64_t id, MediaType type, int64_t start=0, int64_t duration=0)
-                : mID(id), mType(type), mFrame(nullptr), mStartTime(start), mCurrTime(0), mNextTime(start), mDuration(duration) {}
-    virtual ~StreamBase() { clearFrame(); } 
+                : mInputPtr(nullptr), mID(id), mType(type), mFrame(nullptr)
+                , mStartTime(start), mCurrTime(0), mNextTime(start), mDuration(duration) {}
+    virtual ~StreamBase() { clearFrame(); }
 
-    void clearFrame() { if (mFrame) delete mFrame; mFrame = nullptr; }
-    FrameBase *frame() { return mFrame; }
+    void setInput(InputBase *input) { mInputPtr = input; }
+    void clearFrame()               { if (mFrame) delete mFrame; mFrame = nullptr; }
+    FrameBase *frame()              { return mFrame; }
     
     virtual bool readFrame() {
         clearFrame();
-        mFrame = mReadFunction(mID, mType);
-        return mFrame != nullptr;
+        if (mInputPtr) {
+            mFrame = mInputPtr->readFrame(mID, mType);
+            return mFrame != nullptr;
+        }
+        else {
+            throw std::runtime_error("Input is not set for stream!\n");
+        }
     }
     virtual void seek(int64_t ms) {
-        return mSeekFunction(ms);
+        if (mInputPtr)  mInputPtr->seek(ms);
+        else            throw std::runtime_error("Input is not set for stream!\n");
     }
 
-    void setReadFunction(std::function<FrameBase *  (int64_t, MediaType)> const &func) { mReadFunction = func; }
-    void setSeekFunction(std::function<void         (int64_t           )> const &func) { mSeekFunction = func; }
-
 protected:
+    InputBase * mInputPtr;
     int64_t     mID;
     MediaType   mType;
     FrameBase * mFrame;
@@ -58,8 +70,6 @@ protected:
     int64_t     mCurrTime;
     int64_t     mNextTime;
     int64_t     mDuration;
-    std::function<FrameBase *   (int64_t, MediaType)> mReadFunction;
-    std::function<void          (int64_t           )> mSeekFunction;
 };
 
 }

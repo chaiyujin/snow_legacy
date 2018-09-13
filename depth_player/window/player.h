@@ -5,6 +5,7 @@ using namespace snow;
 
 class PlayerWindow : public snow::AbstractWindow {
 private:
+    StreamBase          *mStreamPtr;
     DepthVideoReader    *mReaderPtr;
     ImageShader          mImageShader;
     float                mCurrentTime;
@@ -17,6 +18,7 @@ public:
     PlayerWindow(const char *title="player")
         : AbstractWindow(title)
         , mReaderPtr(nullptr)
+        , mStreamPtr(nullptr)
         , mCurrentTime(0)
         , mPlayerSecond(0) {}
     ~PlayerWindow() {

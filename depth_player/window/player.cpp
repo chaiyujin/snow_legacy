@@ -4,12 +4,14 @@ bool PlayerWindow::openVideo(const std::string filename) {
     DepthVideoReader::initialize_ffmpeg();
     // try to open a new video
     closeVideo();
+    mStreamPtr = new StreamBase(0, MediaType::Video);
     mReaderPtr = new DepthVideoReader(filename);
+    mStreamPtr->setInput(mReaderPtr);
     if (!mReaderPtr->open()) return false;
 
     /* first frame */ {
         seek();
-        mReaderPtr->seek(0);
+        mStreamPtr->seek(0);
     }
 
     return true;
@@ -17,6 +19,8 @@ bool PlayerWindow::openVideo(const std::string filename) {
 
 void PlayerWindow::closeVideo() {
     if (mReaderPtr) delete mReaderPtr;
+    if (mStreamPtr) delete mStreamPtr;
+    mStreamPtr = nullptr;
     mReaderPtr = nullptr;
     mCurrentTime = mPlayerSecond = 0;
 }
@@ -28,10 +32,15 @@ void PlayerWindow::updateFrame(const VideoFrame &frame) {
 }
 
 void PlayerWindow::seek() {
-    if (mReaderPtr) {
-        mReaderPtr->seek(mPlayerSecond * 1000.0);
-        auto framepair = mReaderPtr->read_frame_pair();
-        this->updateFrame(framepair.first);
+    if (mStreamPtr) {
+        mStreamPtr->seek(mPlayerSecond * 1000.0);
+        if (mStreamPtr->readFrame()) {
+            FrameBase *frame = mStreamPtr->frame();
+            this->updateFrame(*(VideoFrame*)frame);
+        }
+        else {
+            printf("fuck\n");
+        }
     }
 }
 

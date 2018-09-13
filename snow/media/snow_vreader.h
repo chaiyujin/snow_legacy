@@ -102,7 +102,7 @@ public:
     }
 };
 
-class DepthVideoReader {
+class DepthVideoReader : public InputBase {
 private:
     static bool                 gInitialized;
     static snow::color_map      gJetCmap;
@@ -136,8 +136,7 @@ public:
     int64_t duration_ms();
     void    seek(int64_t ms);
 
-    void        operator()(int64_t ms) { seek(ms); }
-    FrameBase * operator()(int64_t id, MediaType type);
+    FrameBase * readFrame(int64_t id, MediaType type);
 
     // read data
     std::pair<VideoFrame, VideoFrame> read_frame_pair();
