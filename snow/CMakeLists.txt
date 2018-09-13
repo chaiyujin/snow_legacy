@@ -93,6 +93,10 @@ if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_LIBRARIES      ${SNOW_OPENGL_LIBRARIES})
 endif (SNOW_MODULE_OPENGL)
 
+# ====================================
+# ========== Module FFmpeg ===========
+# ====================================
+
 if (SNOW_MODULE_FFMPEG)
     include(cmake_modules/FFmpeg.cmake)
     list(APPEND SNOW_INCLUDE_DIRS       "${FFMPEG_INCLUDE_DIRS}")
