@@ -1,7 +1,7 @@
 #pragma once
 #include <snow.h>
 #include "../shader/image.h"
-#include "../video/reader.h"
+using namespace snow;
 
 class PlayerWindow : public snow::AbstractWindow {
 private:

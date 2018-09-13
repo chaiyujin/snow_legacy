@@ -1,13 +1,16 @@
-#include "reader.h"
+#include "snow_vreader.h"
 
 #define SYNC_EPS 5
+
+namespace snow {
 
 bool            DepthVideoReader::gInitialized = false;
 snow::color_map DepthVideoReader::gJetCmap = snow::color_map::jet();
 
 AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
                            uint64_t channel_layout,
-                           int sample_rate, int64_t nb_samples) {
+                           int sample_rate,
+                           int64_t nb_samples) {
     AVFrame *frame = av_frame_alloc();
     int ret;
 
@@ -58,6 +61,21 @@ DepthVideoReader::DepthVideoReader(const std::string &filename)
     : mFilename(filename)
     , mFmtCtxPtr(nullptr)
     , mErrorAgain(false) {}
+
+DepthVideoReader::DepthVideoReader(const DepthVideoReader &b) 
+    : mFilename(b.mFilename)
+    , mStreamPtrList(b.mStreamPtrList)
+    , mFmtCtxPtr(b.mFmtCtxPtr)
+    , mStartTime(b.mStartTime)
+    , mInputTsOffset(b.mInputTsOffset)
+    , mTsOffset(b.mTsOffset)
+    , mDuration(b.mDuration)
+    , mTimeBase(b.mTimeBase)
+    , mErrorAgain(b.mErrorAgain)
+    , mDstAudioFmt(b.mDstAudioFmt)
+    , mVideoQueues(b.mVideoQueues)
+    , mAudioQueues(b.mAudioQueues)
+    {}
 
 DepthVideoReader::~DepthVideoReader() {
     close();
@@ -132,18 +150,18 @@ bool DepthVideoReader::open() {
         st->mMaxPts     = INT64_MIN;
         if (st->mType == AVMEDIA_TYPE_AUDIO) {
             // get sampel rate
-            mDstAudioFmt.sample_rate = codec_ctx->sample_rate;
+            mDstAudioFmt.mSampleRate = codec_ctx->sample_rate;
 
             st->mAudioStreamIdx = audio_streams++;
-            mAudioQueues.push_back(new StreamQueue<AudioFrame>());
+            mAudioQueues.push_back(new SafeQueue<AudioFrame>());
 
             int     src_nb_samples = (codec_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) ? 10000 : codec_ctx->frame_size;
-            int64_t dst_nb_samples = av_rescale_rnd(src_nb_samples, mDstAudioFmt.sample_rate, codec_ctx->sample_rate, AV_ROUND_UP);
+            int64_t dst_nb_samples = av_rescale_rnd(src_nb_samples, mDstAudioFmt.mSampleRate, codec_ctx->sample_rate, AV_ROUND_UP);
 
             st->mTmpFramePtr = alloc_audio_frame(
-                mDstAudioFmt.sample_fmt,
-                mDstAudioFmt.ch_layout,
-                mDstAudioFmt.sample_rate,
+                mDstAudioFmt.mSampleFmt,
+                mDstAudioFmt.mChLayout,
+                mDstAudioFmt.mSampleRate,
                 dst_nb_samples);
             {
                 st->mSwrCtxPtr = swr_alloc();
@@ -156,9 +174,9 @@ bool DepthVideoReader::open() {
                 av_opt_set_int(st->mSwrCtxPtr, "in_channel_count", codec_ctx->channels, 0);
                 av_opt_set_int(st->mSwrCtxPtr, "in_sample_rate", codec_ctx->sample_rate, 0);
                 av_opt_set_sample_fmt(st->mSwrCtxPtr, "in_sample_fmt", codec_ctx->sample_fmt, 0);
-                av_opt_set_int(st->mSwrCtxPtr, "out_channel_count", mDstAudioFmt.channels, 0);
-                av_opt_set_int(st->mSwrCtxPtr, "out_sample_rate", mDstAudioFmt.sample_rate, 0);
-                av_opt_set_sample_fmt(st->mSwrCtxPtr, "out_sample_fmt", mDstAudioFmt.sample_fmt, 0);
+                av_opt_set_int(st->mSwrCtxPtr, "out_channel_count", mDstAudioFmt.mChannels, 0);
+                av_opt_set_int(st->mSwrCtxPtr, "out_sample_rate", mDstAudioFmt.mSampleRate, 0);
+                av_opt_set_sample_fmt(st->mSwrCtxPtr, "out_sample_fmt", mDstAudioFmt.mSampleFmt, 0);
 
                 /* initialize the resampling context */
                 if ((ret = swr_init(st->mSwrCtxPtr)) < 0) {
@@ -170,7 +188,7 @@ bool DepthVideoReader::open() {
         else if (st->mType == AVMEDIA_TYPE_VIDEO)
         {
             st->mVideoStreamIdx = video_streams++;
-            mVideoQueues.push_back(new StreamQueue<VideoFrame>());
+            mVideoQueues.push_back(new SafeQueue<VideoFrame>());
             // if (st->is_depth()) { _depth_indices.push_back(st->mVideoStreamIdx); }
 
             st->mTmpFramePtr = alloc_picture(AV_PIX_FMT_RGBA, codec_ctx->width, codec_ctx->height);
@@ -235,7 +253,7 @@ static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacke
 }
 
 
-int DepthVideoReader::process_input(Type request_type) {
+int DepthVideoReader::process_input(MediaType request_type) {
     std::lock_guard<std::mutex> lock(mFmtCtxMutex);
     if (!mFmtCtxPtr) return AVERROR_EOF;
 
@@ -260,11 +278,11 @@ int DepthVideoReader::process_input(Type request_type) {
     InputStream *st = mStreamPtrList[pkt.stream_index];
 
     int got_frame = 0;
-    if ((st->mType == AVMEDIA_TYPE_AUDIO) && (request_type & Type::Audio))
+    if ((st->mType == AVMEDIA_TYPE_AUDIO) && (request_type & MediaType::Audio))
     {
         decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            double pts = (double)av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f nb_samples %d %s\n",
@@ -275,14 +293,14 @@ int DepthVideoReader::process_input(Type request_type) {
             // compute the converted samples number
             int dst_nb_samples = av_rescale_rnd(
                 swr_get_delay(st->mSwrCtxPtr, st->mDecCtxPtr->sample_rate) + st->mDecodeFramePtr->nb_samples,
-                mDstAudioFmt.sample_rate, st->mDecCtxPtr->sample_rate, AV_ROUND_UP);
+                mDstAudioFmt.mSampleRate, st->mDecCtxPtr->sample_rate, AV_ROUND_UP);
             // realloc the temporary frame
             if (st->mTmpFramePtr->nb_samples < dst_nb_samples) {
                 av_frame_free(&st->mTmpFramePtr);
                 st->mTmpFramePtr = alloc_audio_frame(
-                    mDstAudioFmt.sample_fmt,
-                    mDstAudioFmt.ch_layout,
-                    mDstAudioFmt.sample_rate,
+                    mDstAudioFmt.mSampleFmt,
+                    mDstAudioFmt.mChLayout,
+                    mDstAudioFmt.mSampleRate,
                     dst_nb_samples);
             }
             // software resample
@@ -296,10 +314,10 @@ int DepthVideoReader::process_input(Type request_type) {
             }
         }
     }
-    else if ((st->mType == AVMEDIA_TYPE_VIDEO) && (request_type & Type::Video)) {
+    else if ((st->mType == AVMEDIA_TYPE_VIDEO) && (request_type & MediaType::Video)) {
         decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            double pts = (double)av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f %s\n",
@@ -332,13 +350,13 @@ int DepthVideoReader::process_input(Type request_type) {
 std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
     std::pair<VideoFrame, VideoFrame> ret;
     // 1. read frames & get max pts
-    double max_pts = -1000.0;
+    int64_t max_pts = -1000.0;
     int count = 0;
     do {
         for (int i = 0; i < mVideoQueues.size(); ++i) {
             if (mVideoQueues[i]->size()) {
                 ++count;
-                max_pts = std::max(max_pts, mVideoQueues[i]->front().mTimestamp);
+                max_pts = std::max(max_pts, mVideoQueues[i]->front().mTimeStamp);
             }
         }
         // all queues have a frame
@@ -350,7 +368,7 @@ std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
 
     // 2. get frame pair
     for (auto *q : mVideoQueues) {
-        while (abs(q->front().mTimestamp - max_pts) > SYNC_EPS && q->front().mTimestamp < max_pts) {
+        while (abs(q->front().mTimeStamp - max_pts) > SYNC_EPS && q->front().mTimeStamp < max_pts) {
             q->pop();
             while (q->size() == 0)
                 if (process_input() == AVERROR_EOF) return ret;
@@ -374,4 +392,13 @@ void DepthVideoReader::seek(int64_t ms) {
         int64_t ts = av_rescale_q(ms, AVRational{ 1, 1000 }, AV_TIME_BASE_Q);
         int ret = av_seek_frame(mFmtCtxPtr, -1, ts, AVSEEK_FLAG_BACKWARD);
     }
+}
+
+FrameBase * DepthVideoReader::operator()(int64_t id, MediaType type) {
+    while (mVideoQueues[id]->size() == 0)
+        if (process_input() == AVERROR_EOF) return nullptr;
+    VideoFrame * frame = new VideoFrame(mVideoQueues[id]->front());
+    return frame;
+}
+
 }

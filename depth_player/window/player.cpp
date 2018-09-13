@@ -23,7 +23,7 @@ void PlayerWindow::closeVideo() {
 
 void PlayerWindow::updateFrame(const VideoFrame &frame) {
     mImageShader.uploadImage(frame.mData.get(), frame.mWidth, frame.mHeight, GL_RGBA);
-    mCurrentTime = (float)frame.mTimestamp;
+    mCurrentTime = (float)frame.mTimeStamp;
     mPlayerSecond = (float) (mCurrentTime / 1000.0);
 }
 

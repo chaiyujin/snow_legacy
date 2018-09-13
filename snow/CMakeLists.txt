@@ -98,7 +98,12 @@ endif (SNOW_MODULE_OPENGL)
 # ====================================
 
 if (SNOW_MODULE_FFMPEG)
+    list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_FFMPEG")
+    
     include(cmake_modules/FFmpeg.cmake)
+    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_vreader.cpp")
+
+    list(APPEND SNOW_SOURCES            "${SNOW_FFMPEG_SOURCES}")
     list(APPEND SNOW_INCLUDE_DIRS       "${FFMPEG_INCLUDE_DIRS}")
     list(APPEND SNOWL_LIBRARIES_DIRS    "${FFMPEG_LIBRARIES_DIRS}")
     list(APPEND SNOW_WIN32_DLLS         "${FFMPEG_WIN32_DLLS}")

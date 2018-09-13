@@ -1,6 +1,5 @@
 #include <snow.h>
 #include <iostream>
-#include "video/reader.h"
 #include "window/player.h"
 using namespace snow;
 
