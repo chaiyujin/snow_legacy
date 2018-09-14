@@ -44,6 +44,24 @@ public:
         return mQueue.front();
     }
 
+    T frontAndPop() {
+        std::unique_lock<std::mutex> lock(mMutex);
+        // release lock as long as the wait and reaquire it afterwards.
+        while (mQueue.empty())
+            mCondVar.wait(lock);
+        T ret = mQueue.front();
+        mQueue.pop();
+        mSize --;
+        return ret;
+    }
+
+    void clear() {
+        std::unique_lock<std::mutex> lock(mMutex);
+        std::queue<T> empty;
+        std::swap( mQueue, empty );
+        mSize = 0;
+    }
+
     size_t size() const { return mSize; }
 
 };

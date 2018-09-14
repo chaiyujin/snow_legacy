@@ -4,10 +4,10 @@
 
 namespace snow {
 
-bool            DepthVideoReader::gInitialized = false;
-snow::color_map DepthVideoReader::gJetCmap = snow::color_map::jet();
+bool            MediaReader::gInitialized = false;
+snow::color_map MediaReader::gJetCmap = snow::color_map::jet();
 
-AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
+static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
                            uint64_t channel_layout,
                            int sample_rate,
                            int64_t nb_samples) {
@@ -35,7 +35,7 @@ AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
     return frame;
 }
 
-AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height) {
+static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height) {
     AVFrame *picture;
     int ret;
 
@@ -57,31 +57,52 @@ AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height) {
     return picture;
 }
 
-DepthVideoReader::DepthVideoReader(const std::string &filename)
+static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt) {
+    int ret;
+    int consumed = 0;
+
+    *got_frame = 0;
+
+    // This relies on the fact that the decoder will not buffer additional
+    // packets internally, but returns AVERROR(EAGAIN) if there are still
+    // decoded frames to be returned.
+    ret = avcodec_send_packet(avctx, pkt);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return ret;
+    if (ret >= 0)
+        consumed = pkt->size;
+
+    ret = avcodec_receive_frame(avctx, frame);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return ret;
+    if (ret >= 0)
+        *got_frame = 1;
+
+    return consumed;
+}
+
+MediaReader::MediaReader(const std::string &filename)
     : mFilename(filename)
     , mFmtCtxPtr(nullptr)
-    , mErrorAgain(false) {}
+    , mErrorAgain(false)
+    , mSyncVideoStreams(true) {}
 
-DepthVideoReader::DepthVideoReader(const DepthVideoReader &b) 
+MediaReader::MediaReader(const MediaReader &b) 
     : mFilename(b.mFilename)
     , mStreamPtrList(b.mStreamPtrList)
     , mFmtCtxPtr(b.mFmtCtxPtr)
-    , mStartTime(b.mStartTime)
-    , mInputTsOffset(b.mInputTsOffset)
-    , mTsOffset(b.mTsOffset)
-    , mDuration(b.mDuration)
-    , mTimeBase(b.mTimeBase)
     , mErrorAgain(b.mErrorAgain)
     , mDstAudioFmt(b.mDstAudioFmt)
+    , mSyncVideoStreams(b.mSyncVideoStreams)
     , mVideoQueues(b.mVideoQueues)
     , mAudioQueues(b.mAudioQueues)
     {}
 
-DepthVideoReader::~DepthVideoReader() {
+MediaReader::~MediaReader() {
     close();
 }
 
-bool DepthVideoReader::open() {
+bool MediaReader::open() {
     if (gInitialized == false) {
         av_log(NULL, AV_LOG_ERROR, "Please initialize ffmpeg first!\n");
         return false;
@@ -209,16 +230,14 @@ bool DepthVideoReader::open() {
     }
     // av_dump_format(mFmtCtxPtr, 0, mFilename.c_str(), 0);
 
-    mStartTime = AV_NOPTS_VALUE;
-    mInputTsOffset = 0;
-    mTsOffset = (0 - timestamp);   // not copy ts
-    mDuration = 0;
-    mTimeBase = AVRational{ 1, 1 };
+    mStartTime = 0;
+    mDuration  = duration_ms();
 
     return true;
 }
 
-void DepthVideoReader::close() {
+void MediaReader::close() {
+    clearQueues();
     for (auto *st : mStreamPtrList) delete st;
     mStreamPtrList.clear();
     if (mFmtCtxPtr) {
@@ -228,32 +247,13 @@ void DepthVideoReader::close() {
     }
 }
 
-static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt) {
-    int ret;
-    int consumed = 0;
 
-    *got_frame = 0;
-
-    // This relies on the fact that the decoder will not buffer additional
-    // packets internally, but returns AVERROR(EAGAIN) if there are still
-    // decoded frames to be returned.
-    ret = avcodec_send_packet(avctx, pkt);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return ret;
-    if (ret >= 0)
-        consumed = pkt->size;
-
-    ret = avcodec_receive_frame(avctx, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return ret;
-    if (ret >= 0)
-        *got_frame = 1;
-
-    return consumed;
+void MediaReader::clearQueues() {
+    for (auto *q : mVideoQueues) q->clear();
+    for (auto *q: mAudioQueues)  q->clear();
 }
 
-
-int DepthVideoReader::process_input(MediaType request_type) {
+int MediaReader::process_input(MediaType request_type) {
     std::lock_guard<std::mutex> lock(mFmtCtxMutex);
     if (!mFmtCtxPtr) return AVERROR_EOF;
 
@@ -347,8 +347,14 @@ int DepthVideoReader::process_input(MediaType request_type) {
     return ret;
 }
 
-std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
-    std::pair<VideoFrame, VideoFrame> ret;
+void MediaReader::syncVideoStreams() {
+    auto quitEOF = [this]() -> void {
+        for (auto * q : mVideoQueues) {
+            q->clear();
+            q->push(VideoFrame());
+        }
+    };
+
     // 1. read frames & get max pts
     int64_t max_pts = -1000.0;
     int count = 0;
@@ -356,50 +362,98 @@ std::pair<VideoFrame, VideoFrame> DepthVideoReader::read_frame_pair() {
         for (int i = 0; i < mVideoQueues.size(); ++i) {
             if (mVideoQueues[i]->size()) {
                 ++count;
-                max_pts = std::max(max_pts, mVideoQueues[i]->front().mTimeStamp);
+                max_pts = std::max(max_pts, mVideoQueues[i]->front().timestamp());
             }
         }
         // all queues have a frame
         if (count == (int)mVideoQueues.size()) break;
         // need to read frame from video
-        if (process_input() == AVERROR_EOF) return ret; // end of file return null pair.
+        if (process_input() == AVERROR_EOF) { quitEOF(); return; } // end of file return null pair.
         count = 0;
     } while (count == 0);
 
     // 2. get frame pair
     for (auto *q : mVideoQueues) {
-        while (abs(q->front().mTimeStamp - max_pts) > SYNC_EPS && q->front().mTimeStamp < max_pts) {
+        while (abs(q->front().timestamp() - max_pts) > SYNC_EPS && q->front().timestamp() < max_pts) {
             q->pop();
             while (q->size() == 0)
-                if (process_input() == AVERROR_EOF) return ret;
+                if (process_input() == AVERROR_EOF) { quitEOF(); return; }
         }
-        if (q->front().mIsDepth)
-            ret.second = q->front();
-        else ret.first = q->front();
-        q->pop();
     }
-    return ret;
+
+    // // now each video queue has at least one frame, they are all at the close ts.
+    // printf("=====\n");
+    // for (size_t i = 0; i < mVideoQueues.size(); ++i) {
+    //     auto *q = mVideoQueues[i];
+    //     printf(" video stream %d: timestamp %d ms.\n", i, q->front().timestamp());
+    // }
+    // printf("=====\n");
 }
 
-int64_t DepthVideoReader::duration_ms() {
-    std::lock_guard<std::mutex> lock(mFmtCtxMutex); 
+int64_t MediaReader::duration_ms() {
     return (mFmtCtxPtr)? av_rescale_q(mFmtCtxPtr->duration, AV_TIME_BASE_Q, AVRational{ 1, 1000 }) : 0;
 }
 
-void DepthVideoReader::seek(int64_t ms) {
+void MediaReader::seek(int64_t ms) {
     if (mFmtCtxPtr) {
+        clearQueues();
         std::lock_guard<std::mutex> lock(mFmtCtxMutex);       
         int64_t ts = av_rescale_q(ms, AVRational{ 1, 1000 }, AV_TIME_BASE_Q);
         int ret = av_seek_frame(mFmtCtxPtr, -1, ts, AVSEEK_FLAG_BACKWARD);
     }
 }
 
-FrameBase * DepthVideoReader::readFrame(int64_t id, MediaType type) {
-    while (mVideoQueues[id]->size() == 0)
-        if (process_input() == AVERROR_EOF) return nullptr;
-    VideoFrame * frame = new VideoFrame(mVideoQueues[id]->front());
-    mVideoQueues[id]->pop();
-    return frame;
+/**
+ * Video: 1. all video streams will be synced. 2. just read
+ * Audio: just read.
+ * */
+std::unique_ptr<FrameBase> MediaReader::readFrame(const StreamBase *st) {
+    const auto *stream = (const MediaStream *)st;
+    if (stream->type() == MediaType::Video) {
+        int index = stream->streamIndex();
+        if (mSyncVideoStreams) {
+            while (mVideoQueues[index]->size() == 0)   syncVideoStreams();
+            if (mVideoQueues[index]->front().isNull()) return nullptr;
+        }
+        else
+            while (mVideoQueues[index]->size() == 0)   if (process_input() == AVERROR_EOF) return nullptr;
+        auto p = std::make_unique<VideoFrame>(mVideoQueues[index]->frontAndPop());
+        return std::move(p);
+    }
+    else if (stream->type() == MediaType::Audio) {
+        int index = stream->streamIndex();
+        // normally read
+        while (mAudioQueues[index]->size() == 0)
+            if (process_input() == AVERROR_EOF) return nullptr;
+        auto p = std::make_unique<AudioFrame>(mAudioQueues[index]->frontAndPop());
+        mAudioQueues[index]->pop();
+        return std::move(p);
+    }
+    else {
+        throw std::runtime_error("[MediaReader]: only support Video and Audio stream.");
+    }
+}
+
+std::vector<std::shared_ptr<StreamBase>> MediaReader::getStreams() {
+    std::vector<std::shared_ptr<StreamBase>> ret;
+    int64_t duration = duration_ms();
+    for (size_t i = 0; i < mStreamPtrList.size(); ++i) {
+        auto * st = mStreamPtrList[i];
+        MediaType type  = (st->mType == AVMEDIA_TYPE_VIDEO) ? MediaType::Video : MediaType::Audio;
+        int streamIndex = (st->mType == AVMEDIA_TYPE_VIDEO) ? st->mVideoStreamIdx : st->mAudioStreamIdx;
+        VideoFormat videoFmt;
+        AudioFormat audioFmt;
+        if (st->mType == AVMEDIA_TYPE_VIDEO) {
+            videoFmt.mWidth = st->mDecCtxPtr->width;
+            videoFmt.mHeight = st->mDecCtxPtr->height;
+            videoFmt.mPixelFmt = st->mDecCtxPtr->pix_fmt;
+            videoFmt.mIsDepth = st->is_depth();
+        }
+        else
+            audioFmt = mDstAudioFmt;
+        ret.emplace_back(new MediaStream(streamIndex, type, 0, duration, this, audioFmt, videoFmt));
+    }
+    return ret;
 }
 
 }

@@ -240,14 +240,14 @@ namespace taylorCos
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = fastCosNew(AngleShift + glm::vec4(Begin + Steps * i));
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("fastCosNew %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("fastCosNew %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -281,14 +281,14 @@ namespace taylorCos
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = taylorCos::fastCosDeterminisctic(AngleShift + glm::vec4(Begin + Steps * i));
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("fastCosDeterminisctic %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("fastCosDeterminisctic %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -328,14 +328,14 @@ namespace taylorCos
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = taylorCos::fastRefCos(AngleShift + glm::vec4(Begin + Steps * i));
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("fastCosRef %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("fastCosRef %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -350,14 +350,14 @@ namespace taylorCos
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = glm::fastCos(AngleShift + glm::vec4(Begin + Steps * i));
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("fastCosOld %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("fastCosOld %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -372,14 +372,14 @@ namespace taylorCos
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = glm::cos(AngleShift + glm::vec4(Begin + Steps * i));
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("cos %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("cos %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -467,14 +467,14 @@ namespace taylor2
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = taylorCosA(AngleShift.x + Begin + Steps * i);
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("taylorCosA %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("taylorCosA %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -489,14 +489,14 @@ namespace taylor2
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = taylorCosB(AngleShift.x + Begin + Steps * i);
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("taylorCosB %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("taylorCosB %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)
@@ -511,14 +511,14 @@ namespace taylor2
 
 		float Steps = (End - Begin) / Samples;
 
-		std::clock_t const TimeStampBegin = std::clock();
+		std::clock_t const TimestampBegin = std::clock();
 
 		for(std::size_t i = 0; i < Samples; ++i)
 			Results[i] = taylorCosC(AngleShift.x + Begin + Steps * i);
 
-		std::clock_t const TimeStampEnd = std::clock();
+		std::clock_t const TimestampEnd = std::clock();
 
-		std::printf("taylorCosC %ld clocks\n", TimeStampEnd - TimeStampBegin);
+		std::printf("taylorCosC %ld clocks\n", TimestampEnd - TimestampBegin);
 
 		int Error = 0;
 		for(std::size_t i = 0; i < Samples; ++i)

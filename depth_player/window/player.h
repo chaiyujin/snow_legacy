@@ -1,12 +1,13 @@
 #pragma once
 #include <snow.h>
+#include <memory>
 #include "../shader/image.h"
 using namespace snow;
 
 class PlayerWindow : public snow::AbstractWindow {
 private:
-    StreamBase          *mStreamPtr;
-    DepthVideoReader    *mReaderPtr;
+    std::shared_ptr<MediaStream> mStreamPtr;
+    MediaReader         *mReaderPtr;
     ImageShader          mImageShader;
     float                mCurrentTime;
     float                mPlayerSecond;
