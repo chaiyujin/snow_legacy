@@ -1,4 +1,6 @@
 #pragma once
+#define SNOW_MODULE_OPENGL
+#define SNOW_MODULE_FFMPEG
 #include <snow.h>
 #include <memory>
 #include "../shader/image.h"
@@ -6,7 +8,9 @@ using namespace snow;
 
 class PlayerWindow : public snow::AbstractWindow {
 private:
-    std::shared_ptr<MediaStream> mStreamPtr;
+    std::shared_ptr<MediaStream> mVideoStreamPtr;
+    std::shared_ptr<MediaStream> mDepthStreamPtr;
+    std::vector<std::shared_ptr<MediaStream>> mAudioStreamPtrList;
     MediaReader         *mReaderPtr;
     ImageShader          mImageShader;
     float                mCurrentTime;
@@ -19,7 +23,9 @@ public:
     PlayerWindow(const char *title="player")
         : AbstractWindow(title)
         , mReaderPtr(nullptr)
-        , mStreamPtr(nullptr)
+        , mVideoStreamPtr(nullptr)
+        , mDepthStreamPtr(nullptr)
+        , mAudioStreamPtrList(0)
         , mCurrentTime(0)
         , mPlayerSecond(0) {}
     ~PlayerWindow() {

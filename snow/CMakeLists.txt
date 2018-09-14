@@ -101,7 +101,7 @@ if (SNOW_MODULE_FFMPEG)
     list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_FFMPEG")
     
     include(cmake_modules/FFmpeg.cmake)
-    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_vreader.cpp")
+    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_reader.cpp")
 
     list(APPEND SNOW_SOURCES            "${SNOW_FFMPEG_SOURCES}")
     list(APPEND SNOW_INCLUDE_DIRS       "${FFMPEG_INCLUDE_DIRS}")
@@ -130,7 +130,7 @@ macro (SNOW_COPY_DLL projectName)
     endforeach(THEDLL ${SNOW_WIN32_DLLS})
 endmacro()
 
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11" "-O3")
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
 # exec and link libaraies
 add_definitions      (${SNOW_DEFINITIONS})
 include_directories  (${SNOW_INCLUDE_DIRS}                  )

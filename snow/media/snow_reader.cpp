@@ -1,5 +1,5 @@
-#include "snow_vreader.h"
-
+#include "snow_reader.h"
+#include <memory>
 #define SYNC_EPS 5
 
 namespace snow {
@@ -417,17 +417,14 @@ std::unique_ptr<FrameBase> MediaReader::readFrame(const StreamBase *st) {
         }
         else
             while (mVideoQueues[index]->size() == 0)   if (process_input() == AVERROR_EOF) return nullptr;
-        auto p = std::make_unique<VideoFrame>(mVideoQueues[index]->frontAndPop());
-        return std::move(p);
+        return std::unique_ptr<FrameBase> (new VideoFrame(mVideoQueues[index]->frontAndPop()));
     }
     else if (stream->type() == MediaType::Audio) {
         int index = stream->streamIndex();
         // normally read
         while (mAudioQueues[index]->size() == 0)
             if (process_input() == AVERROR_EOF) return nullptr;
-        auto p = std::make_unique<AudioFrame>(mAudioQueues[index]->frontAndPop());
-        mAudioQueues[index]->pop();
-        return std::move(p);
+        return std::unique_ptr<FrameBase> (new AudioFrame(mAudioQueues[index]->frontAndPop()));
     }
     else {
         throw std::runtime_error("[MediaReader]: only support Video and Audio stream.");

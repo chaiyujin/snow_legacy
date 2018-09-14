@@ -9,7 +9,6 @@ add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(   ${SNOW_LIBRARIES_DIRS})
 
-add_compile_options(-O3)
 add_executable(${PROJECT_NAME}
     ./main.cpp
     ./window/player.cpp)

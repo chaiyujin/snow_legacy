@@ -9,12 +9,12 @@ bool PlayerWindow::openVideo(const std::string filename) {
     printf("new media\n");
     if (!mReaderPtr->open()) return false;
     printf("open\n");
-    mStreamPtr = std::dynamic_pointer_cast<MediaStream> (mReaderPtr->getStreams()[0]);
-    printf("get streams %d %d\n", mStreamPtr->videoFormat().mWidth, mStreamPtr->videoFormat().mHeight);
+    mVideoStreamPtr = std::dynamic_pointer_cast<MediaStream> (mReaderPtr->getStreams()[0]);
+    printf("get streams %d %d\n", mVideoStreamPtr->videoFormat().mWidth, mVideoStreamPtr->videoFormat().mHeight);
 
     /* first frame */ {
         seek();
-        mStreamPtr->seek(0);
+        mVideoStreamPtr->seek(0);
     }
 
     return true;
@@ -23,8 +23,12 @@ bool PlayerWindow::openVideo(const std::string filename) {
 void PlayerWindow::closeVideo() {
     if (mReaderPtr) delete mReaderPtr;
     mReaderPtr = nullptr;
-    mStreamPtr.reset();
     mCurrentTime = mPlayerSecond = 0;
+    {
+        mVideoStreamPtr.reset();
+        mDepthStreamPtr.reset();
+        mAudioStreamPtrList.clear();
+    }
 }
 
 void PlayerWindow::updateFrame(const VideoFrame &frame) {
@@ -34,10 +38,10 @@ void PlayerWindow::updateFrame(const VideoFrame &frame) {
 }
 
 void PlayerWindow::seek() {
-    if (mStreamPtr) {
-        mStreamPtr->seek(mPlayerSecond * 1000.0);
-        if (mStreamPtr->readFrame()) {
-            const FrameBase *frame = mStreamPtr->framePtr();
+    if (mVideoStreamPtr) {
+        mVideoStreamPtr->seek(mPlayerSecond * 1000.0);
+        if (mVideoStreamPtr->readFrame()) {
+            const FrameBase *frame = mVideoStreamPtr->framePtr();
             this->updateFrame(*(const VideoFrame*)frame);
         }
         else {
