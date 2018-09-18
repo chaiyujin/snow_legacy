@@ -52,7 +52,7 @@ macro(FIND_COMPONENT _component _pkgconfig _library _header)
         
         # process ldflags
         if (NOT APPLE)
-            set(${_component}_LIBRARIES ${_component}_LIBRARIES ${PC_${_component}_LDFLAGS})
+            list(APPEND ${_component}_LIBRARIES "${PC_${_component}_LDFLAGS}")
         endif (NOT APPLE)
 
         set(${_component}_DEFINITIONS   ${PC_${_component}_CFLAGS_OTHER} CACHE STRING "The ${_component} CFLAGS.")

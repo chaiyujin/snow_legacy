@@ -68,11 +68,11 @@ template <typename T> inline bool       operator<=(const _float3<T> &a, const _f
 template <typename T> inline _float3<T> operator +(const _float3<T>& a, const _float3<T>& b)    { return{ a.x + b.x, a.y + b.y, a.z + b.z }; }
 template <typename T> inline _float3<T> operator -(const _float3<T>& a, const _float3<T>& b)    { return{ a.x - b.x, a.y - b.y, a.z - b.z }; }
 template <typename T> inline _float3<T> operator *(const _float3<T>& a, T t)                    { return{ a.x * t,   a.y * t,   a.z * t }; }
-template <typename T> inline _float3<T> operator /(const _float3<T>& a, T t)                    { return a * (1.0 / t); }
+template <typename T> inline _float3<T> operator /(const _float3<T>& a, T t)                    { return a * ((T)1.0 / t); }
 template <typename T> inline _float3<T> cross(const _float3<T>& a,const _float3<T> &b)          { return { a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x }; }
 template <typename T> inline T          dot(const _float3<T>& a,const _float3<T> &b)            { return a.x*b.x + a.y*b.y + a.z*b.z; }
 template <typename T> inline T          euclidean_norm(const _float3<T> &a)                     { return std::sqrt(a.x*a.x + a.y*a.y + a.z*a.z); }
-template <typename T> inline _float3<T> normalize(const _float3<T> &a)                          { T t = euclidean_norm(a); return (t > 0) ? a * (1.0 / t): a; }
+template <typename T> inline _float3<T> normalize(const _float3<T> &a)                          { T t = euclidean_norm(a); return (t > 0) ? a * ((T)1.0 / t): a; }
 template <typename T> inline bool       close(const _float3<T> &a, const _float3<T> &b, T eps=1e-5) { return std::abs(a.x-b.x)<eps && std::abs(a.y-b.y)<eps && std::abs(a.z-b.z)<eps; }
 template <typename T> inline _float3<T> lerp(const _float3<T>& a, const _float3<T>& b, T t)     { return b * t + a * ((T)1.0 - t); }
 template <typename T> inline std::ostream& operator<<(std::ostream &out, const _float3<T> &a)   { out << "[ " << a.x << " " << a.y << " " << a.z << " ]"; return out; }
@@ -92,7 +92,7 @@ template <typename T> inline bool       operator<=(const _float2<T> &a, const _f
 template <typename T> inline _float2<T> operator +(const _float2<T> &a, const _float2<T> &b)    { return { a.x+b.x, a.y+b.y }; }
 template <typename T> inline _float2<T> operator -(const _float2<T> &a, const _float2<T> &b)    { return { a.x-b.x, a.y-b.y }; }
 template <typename T> inline _float2<T> operator *(const _float2<T> &a, T t)                    { return { a.x*t,   a.y*t };   }
-template <typename T> inline _float2<T> operator /(const _float2<T> &a, T t)                    { return a * (1.0 / t); }
+template <typename T> inline _float2<T> operator /(const _float2<T> &a, T t)                    { return a * ((T)1.0 / t); }
 template <typename T> inline T          dot(const _float2<T> &a, const _float2<T> &b)           { return a.x*b.x + a.y*b.y; }
 template <typename T> inline T          cross(const _float2<T> &a, const _float2<T> &b)         { return a.x*b.y-a.y*b.x; }
 template <typename T> inline T          euclidean_norm(const _float2<T> &a)                     { return std::sqrt(a.x*a.x + a.y*a.y); }

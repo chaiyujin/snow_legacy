@@ -37,6 +37,12 @@ namespace snow {
         virtual ~Model() {
             for (size_t i = 0; i < meshes.size(); ++i)
                 delete meshes[i];
+            meshes.clear();
+            for (size_t i = 0; i < textures_loaded.size(); ++i) {
+                GLuint tid = textures_loaded[i].id;
+                glDeleteTextures(1, &tid);
+            }
+            textures_loaded.clear();
         }
         void draw(Shader &shader) {
             for (size_t i = 0; i < meshes.size(); ++i) {
@@ -45,7 +51,7 @@ namespace snow {
         }
         glm::vec3 calcMeanCenter();
         // auto translation and scale for visualization
-        glm::mat4 autoModelTransform(const glm::mat4 &projView);
+        glm::mat4 autoModelTransform(const glm::mat4 &projView, float ratio=0.5f);
 
     protected:
         glm::vec2 farest;

@@ -139,13 +139,13 @@ namespace snow {
         return farest;
     }
 
-    glm::mat4 Model::autoModelTransform(const glm::mat4 &projView) {
+    glm::mat4 Model::autoModelTransform(const glm::mat4 &projView, float ratio) {
         if (initTransform[0][0] > 0)
             return initTransform;        
         calcMeanCenter();
         farest = _calcFarestPosition(projView);
-        float x = 0.4f / farest.x;
-        float y = 0.4f / farest.y;
+        float x = ratio / farest.x;
+        float y = ratio / farest.y;
         float scale = std::min(x, y);
         glm::mat4 trans(1.0);
         // std::cout << scale << " "

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(snow VERSION 0.0.2 DESCRIPTION "A simple tool for OpenGL, Gui and FFmpeg.")
 
+OPTION(SNOW_AVX              "AVX functions" on)
+OPTION(SNOW_RELEASE          "-O3 switch"    on)
+
 OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
 
@@ -15,7 +18,8 @@ set(SNOW_DEFINITIONS    "")
 # ====================================
 # =========== Module Core ============
 # ====================================
-set(SNOW_CORE_SOURCES       "")
+set(SNOW_CORE_SOURCES
+    "${PROJECT_SOURCE_DIR}/core/snow_memory.cpp")
 set(SNOW_CORE_INCLUDE_DIRS
     # third-party
     "${PROJECT_SOURCE_DIR}/third-party/stb/"
@@ -23,10 +27,20 @@ set(SNOW_CORE_INCLUDE_DIRS
 set(SNOW_CORE_LIBRARIES_DIRS "")
 set(SNOW_CORE_LIBRARIES     "")
 
-list(APPEND SNOW_SOURCES       ${SNOW_CORE_SOURCES})
+list(APPEND SNOW_SOURCES        ${SNOW_CORE_SOURCES})
 list(APPEND SNOW_INCLUDE_DIRS   ${SNOW_CORE_INCLUDE_DIRS})
 list(APPEND SNOW_LIBRARIES_DIRS ${SNOW_CORE_LIBRARIES_DIRS})
-list(APPEND SNOW_LIBRARIES     ${SNOW_CORE_LIBRARIES})
+list(APPEND SNOW_LIBRARIES      ${SNOW_CORE_LIBRARIES})
+if (SNOW_RELEASE)
+    list(APPEND SNOW_DEFINITIONS    "-O3")
+    list(APPEND SNOW_DEFINITIONS    "-DNDEBUG")
+else()
+    list(APPEND SNOW_DEFINITIONS    "-D__DEBUG__")
+endif (SNOW_RELEASE)
+if (SNOW_AVX)
+    list(APPEND SNOW_DEFINITIONS    "-mavx")
+    list(APPEND SNOW_DEFINITIONS    "-DSNOW_AVX")
+endif (SNOW_AVX)
 
 # ====================================
 # ========== Module OpenGL ===========
@@ -84,7 +98,7 @@ if (SNOW_MODULE_OPENGL)
         add_definitions( -DUSE_CLANG_COMPLETER )
         list(APPEND SNOW_OPENGL_SOURCES "${PROJECT_SOURCE_DIR}/gui/snow_dialog.mm")
     elseif (UNIX) # LINUX
-        list(APPEND SNOW_OPENGL_LIBRARIES GL X11 pthread Xrandr Xi)
+        list(APPEND SNOW_OPENGL_LIBRARIES GL X11 pthread Xrandr Xi dl)
     endif ()
 
     list(APPEND SNOW_SOURCES        ${SNOW_OPENGL_SOURCES})

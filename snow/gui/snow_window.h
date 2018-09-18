@@ -74,7 +74,7 @@ namespace snow {
     };
 
     class CameraWindow : public AbstractWindow {
-    private:
+    protected:
         ArcballCamera mCamera;
         // gui
         bool  DrawArcball;
