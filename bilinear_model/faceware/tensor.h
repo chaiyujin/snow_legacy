@@ -20,7 +20,7 @@ public:
 	{
 		if (!mIsSub)
 		{
-            mDataPtr = snow::alignedMalloc<double>(mSize, 32);
+            mDataPtr = snow::alignedMalloc<double>(mSize);
 			memcpy(mDataPtr, b.mDataPtr, sizeof(double) * mSize);
 		}
 	}
@@ -69,7 +69,7 @@ public:
 		{
             printf("resize\n");
             if (mDataPtr != nullptr) snow::alignedFree(mDataPtr);
-            mDataPtr = snow::alignedMalloc<double>(size, 32);
+            mDataPtr = snow::alignedMalloc<double>(size);
             printf("resize done\n");
 			mSize = size;
 		}
