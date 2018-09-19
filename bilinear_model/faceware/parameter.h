@@ -23,7 +23,7 @@ public:
     virtual void reset()      { memset(mParamPtr, 0, sizeof(double) * mLength); memset(mTrainPtr, 0, sizeof(double) * mLength); }
     virtual void useTrained() { memcpy(mParamPtr, mTrainPtr, sizeof(double) * mLength); }
 
-    // double *param() { return mParamPtr; }
+    double *param() { return mParamPtr; }
     double *train() { return mTrainPtr; }
     const double *param() const { return mParamPtr; }
     const double *train() const { return mTrainPtr; }
@@ -50,8 +50,8 @@ public:
         getT(mParamPtr, 2) = -0.5;
     }
 
-    // double *rotateYXZ()                   { return &getR(mParamPtr, 0); }
-    // double *translate()                   { return &getT(mParamPtr, 0); }
+    double *rotateYXZ()                   { return &getR(mParamPtr, 0); }
+    double *translate()                   { return &getT(mParamPtr, 0); }
     double *trainRotateYXZ()              { return &getR(mTrainPtr, 0); }
     double *trainTranslate()              { return &getT(mTrainPtr, 0); }
     const double *rotateYXZ()       const { return &getR(mParamPtr, 0); }

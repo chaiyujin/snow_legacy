@@ -22,10 +22,10 @@ class FaceDB
 	static std::vector<double>				_iden_singular;
 	static std::vector<double>				_expr_singular;
 	/* static face information */
-	static std::vector<snow::int3>				_triangles;
+	static std::vector<snow::int3>			_triangles;
 	static std::vector<std::vector<int>>	_faces_of_point;
 	static std::vector<int>					_face_vertices;
-	static std::vector<snow::int3>				_face_triangles;
+	static std::vector<snow::int3>			_face_triangles;
 	/* static contour candidates */
 	static std::vector<std::vector<int>>	_contour_candidates;
 	/* norms */
@@ -34,7 +34,7 @@ class FaceDB
 	static const std::vector<int>			_landmarks_73;
 	static const std::vector<int>			_expr_mask;
 	static const std::vector<int>			_expr_valid_at_reference;
-	static const std::vector<snow::int3>			_landmarks_triangles;
+	static const std::vector<snow::int3>	_landmarks_triangles;
 public:
 #ifdef USE_75_45
     static const int LengthIdentity = 75;

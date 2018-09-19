@@ -21,27 +21,24 @@ private:
     ShowModel        mGLModel;
     snow::Shader    *mShaderPtr;
     BilinearModel    mBilinearModel;
+    std::vector<float> mIden;
+    std::vector<float> mExpr;
+
 public:
     ShowWindow();
+    void draw();
 
-    void draw() {
-        {
-            glEnable(GL_DEPTH_TEST);
-            mShaderPtr->use();
-            mShaderPtr->setVec3("lightPos", mCamera.eye());
-            mShaderPtr->setVec3("lightColor", glm::vec3(1.0f, 0.95f, 0.9f));
-            // view. projection
-            glm::mat4 projection = this->perspective(&mCamera);
-            glm::mat4 view = mCamera.viewMatrix();
-            mShaderPtr->setMat4("projection", projection);
-            mShaderPtr->setMat4("view", view);
-            // model, normal
-            glm::mat4 model = mGLModel.autoModelTransform(projection * view, 0.3);
-            glm::mat4 normal = glm::transpose(glm::inverse(model));
-            mShaderPtr->setMat4("model", model);
-            mShaderPtr->setMat4("normal", normal);
-            // draw model
-            mGLModel.draw(*mShaderPtr);
+    template <typename T>
+    void updateShowParameters(T *iden, T *expr) {
+        for (size_t i = 0; i < mIden.size(); ++i) {
+            mIden[i] = iden[i];
+            mBilinearModel.idenParameter().param()[i] = iden[i];
         }
+        for (size_t i = 0; i < mExpr.size(); ++i) {
+            mExpr[i] = expr[i];
+            mBilinearModel.exprParameter(0).param()[i] = expr[i];
+        }
+        mBilinearModel.updateMesh();
+        mGLModel.updateFromTensor(mBilinearModel.mesh(0));
     }
 };
