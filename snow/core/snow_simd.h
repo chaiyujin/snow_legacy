@@ -21,6 +21,8 @@ inline double dot(const double *a, const double *b, size_t len) {
 
     bool alignA = ((intptr_t)a & 31) == 0;
     bool alignB = ((intptr_t)b & 31) == 0;
+    if (!alignA) throw std::runtime_error("dot: A not aligned");
+    if (!alignB) throw std::runtime_error("dot: B not aligned");
 
     for (i = 0; i < cntBlock; ++i) {
         if (alignA && alignB) {
@@ -83,6 +85,9 @@ inline void addWB(double *a, const double *b, double w, int len) {
 
     bool alignA = ((intptr_t)a & 31) == 0;
     bool alignB = ((intptr_t)b & 31) == 0;
+    if (!alignA) throw std::runtime_error("addWB: A not aligned");
+    if (!alignB) throw std::runtime_error("addWB: B not aligned");
+
     for (i = 0; i < cntBlock; ++i) {
         if (alignA && alignB) {
             avxLoadA0 = _mm256_load_pd(a);
@@ -132,6 +137,10 @@ inline void storeWB(double *a, const double *b, double w, int len) {
 
     bool alignA = ((intptr_t)a & 31) == 0;
     bool alignB = ((intptr_t)b & 31) == 0;
+
+    if (!alignA) throw std::runtime_error("storeWB: A not aligned");
+    if (!alignB) throw std::runtime_error("storeWB: B not aligned");
+
     for (i = 0; i < cntBlock; ++i) {
         if (alignB) {
             avxLoadB0 = _mm256_load_pd(b);

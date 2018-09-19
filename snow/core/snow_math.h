@@ -7,12 +7,15 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 // self defined
 #include "math_types.h"
 
 namespace snow {
+
+inline glm::dvec3 homoCoord(glm::dvec4 &q) { return glm::dvec3(q.x / q.w, q.y / q.w, q.z / q.w); }
 
 inline glm::vec3 anyPerpendicularTo(glm::vec3 v) {
     // special case : (0, 0, 0)

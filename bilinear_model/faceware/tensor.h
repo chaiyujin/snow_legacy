@@ -65,6 +65,7 @@ public:
 
 	const std::vector<int> &shape() const { return mShape; }
     const int shape(int i) const { return mShape[i]; }
+    const int memShape(int i) const { return mMemShape[i]; }
 
 	template <int Mode>
 	void mulVec(const double *vec, Tensor3 &result) const;
@@ -109,6 +110,8 @@ private:
     }
 
     void alloc(const std::vector<int> &shape) {
+        // if 0 dim, return
+        if (shape[0] == 0 || shape[1] == 0 || shape[2] == 0) return;
         mShape = shape;
         mMemShape = mShape;
         alignShape(mMemShape);

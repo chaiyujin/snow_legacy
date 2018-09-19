@@ -3,6 +3,7 @@
 #include <snow.h>
 #include "tensor.h"
 
+// #define PARAMETER_FACS
 #define USE_75_45
 
 #ifndef USE_75_45
@@ -35,11 +36,22 @@ class FaceDB
 	static const std::vector<int>			_expr_valid_at_reference;
 	static const std::vector<snow::int3>			_landmarks_triangles;
 public:
+#ifdef USE_75_45
+    static const int LengthIdentity = 75;
+    static const int LengthExpression = 45;
+#else
+    static const int LengthIdentity = 50;
+    static const int LengthExpression = 25;
+#endif
+#ifdef PARAMETER_FACS
+    static const int LengthFACS = 47;
+#endif
+
 	static double MAX_ALLOWED_WEIGHT_RANGE;
-	static int  ndim_vert() { return _tensor_shape[0]; }
-	static int  ndim_iden() { return _tensor_shape[1]; }
-	static int  ndim_expr() { return _tensor_shape[2]; }
-	static int  n_vertices() { return _tensor_shape[0] / 3; }
+	static int  ndim_vert()   { return _tensor_shape[0]; }
+	static int  ndim_iden()   { return _tensor_shape[1]; }
+	static int  ndim_expr()   { return _tensor_shape[2]; }
+	static int  n_vertices()  { return _tensor_shape[0] / 3; }
 	static int  n_triangles() { return _triangles.size(); }
 	static const Tensor3 &core_tensor() { return _core_tensor; }
 	static const std::vector<std::vector<int>> contours() { return _contour_candidates; }

@@ -89,21 +89,10 @@ void  ShowModel::load() {
     iden[1] = -1;
     expr[0] = 0.1;
 
-    printf("begin to bilinear\n");
-    Tensor3 t2;
     Tensor3 t1;
     
     core.mulVec(iden, expr, t1);
-
-    {
-        Tensor3 test;
-        snow::StopWatch watch("scale");
-        t1.mul(3.0, test);
-    }
     
-    printf("%d %d %d\n", t1.shape(0), t1.shape(1), t1.shape(2));
-
-    printf("vertices\n");
     FaceDB::update_gl_normal(t1, nullptr);
     for (int i = 0; i < t1.shape(0); i += 3) {
         auto norm = FaceDB::v_normals()[i / 3];
@@ -123,10 +112,25 @@ void  ShowModel::load() {
     meshes.push_back(snow::Mesh::CreateMesh(vertices, indices, textures, true));
 }
 
+void ShowModel::updateFromTensor(const Tensor3 &tensor) {
+    for (size_t i = 0; i < tensor.shape(0); i += 3) {
+        meshes[0]->vertices[i / 3].position = { tensor.data(i)[0], tensor.data(i)[1], tensor.data(i)[2] };
+    }
+    glBindVertexArray(meshes[0]->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, meshes[0]->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, meshes[0]->vertices.size() * sizeof(snow::Vertex), &meshes[0]->vertices[0]);
+}
+
+
 ShowWindow::ShowWindow()
     : snow::CameraWindow("")
-    , mModel() {
-    mModel.load();
+    , mGLModel()
+    , mBilinearModel(1) {
     mShaderPtr = new snow::Shader();
     mShaderPtr->buildFromCode(VERT_GLSL, FRAG_NOTEX_GLSL);
+
+    mBilinearModel.idenParameter().train()[1] = -1;
+    mBilinearModel.idenParameter().useTrained() ;
+    mBilinearModel.updateMesh(0);
+    mGLModel.updateFromTensor(mBilinearModel.mesh(0));
 }

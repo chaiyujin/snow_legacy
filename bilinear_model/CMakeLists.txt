@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
     ./main.cpp
     ./faceware/tensor.cpp
     ./faceware/faceware.cpp
+    ./faceware/bilinear_model.cpp
     ./faceware/show_model.cpp)
 target_link_libraries(${PROJECT_NAME}
     snow                    # link snow

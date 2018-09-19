@@ -22,10 +22,10 @@ set(SNOW_CORE_SOURCES
     "${PROJECT_SOURCE_DIR}/core/snow_memory.cpp")
 set(SNOW_CORE_INCLUDE_DIRS
     # third-party
-    "${PROJECT_SOURCE_DIR}/third-party/stb/"
-    "${PROJECT_SOURCE_DIR}/third-party/glm-stable/")
+    "${PROJECT_SOURCE_DIR}/third-party/stb/")
 set(SNOW_CORE_LIBRARIES_DIRS "")
 set(SNOW_CORE_LIBRARIES     "")
+add_subdirectory("${PROJECT_SOURCE_DIR}/third-party/glm-stable")
 
 list(APPEND SNOW_SOURCES        ${SNOW_CORE_SOURCES})
 list(APPEND SNOW_INCLUDE_DIRS   ${SNOW_CORE_INCLUDE_DIRS})
