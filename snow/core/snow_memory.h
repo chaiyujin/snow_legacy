@@ -18,68 +18,102 @@ template <typename T> inline T *  alignedMalloc(uint32_t number, int alignment=M
 template <typename T> inline void alignedFree(T *ptr) { snow::_aligned_free((void *)ptr); }
 
 
-/* fast memory pool */
+/* memory pool */
 
+/**
+ * Block: a block of memory, keep many smaller chunks.
+ *  
+ *  alloc: return aligned memory:
+ *      __PADDING__ (block pointer), (required size), (memory)
+ *  free: remove the memory record from block. Return `this` pointer, if itself is empty.
+ * */
 struct Block {
     uint8_t     *mData;
     uint32_t     mSize;
     uint8_t      mCount;
     size_t       mCurPos;
     Block(uint32_t blockSize=32768)
-        : mData(new uint8_t[blockSize]), mSize(blockSize), mCount(0), mCurPos(0) {}
+        : mData(new uint8_t[blockSize]), mSize(blockSize)
+        , mCount(0), mCurPos(0) {}
     ~Block() { delete[] mData; }
 
     static size_t actualSize(size_t size) { 
         static const int pointer_size  = sizeof(void *);
-        return size + (size_t)MEMORY_ALIGNMENT - 1 + pointer_size;
+        static const int size_size     = sizeof(size_t);
+        return size + (size_t)MEMORY_ALIGNMENT - 1 + pointer_size + size_size;
     }
 
-    void *alloc(size_t size) {
+    void *alloc(size_t _size) {
         static const uintptr_t pointer_size  = (uintptr_t)sizeof(void *);
-        const int alignment_1                = MEMORY_ALIGNMENT - 1;
+        static const uintptr_t size_size     = (uintptr_t)sizeof(size_t);
+        const uintptr_t alignment_1          = MEMORY_ALIGNMENT - 1;
 
-        size = Block::actualSize(size);
-        if (mCurPos + size > mSize) return nullptr;
-        uintptr_t start = mCurPos + pointer_size;
+        size_t actualSize = Block::actualSize(_size);
+        if (mCurPos + actualSize > mSize) return nullptr;
+#ifdef TEST_MEMORY
+        printf("-> alloc 0x%X: start pos %d\n", this, mCurPos);
+#endif
+        uintptr_t start = (uintptr_t)mData + mCurPos + pointer_size + size_size;
         uintptr_t align = (start + alignment_1) & (~(alignment_1));
 
         // record block
-        *((Block **)(align - pointer_size)) = (Block *)this;
+        *((Block **)(align - pointer_size - size_size)) = (Block *)this;
+        *(size_t *) (align - size_size) = _size;
         mCount += 1;
-        mCurPos += size;
+        mCurPos += actualSize;
+        return (void *)align;
     }
 
-    bool free(void *ptr) {
-        if (ptr == nullptr) return;
-        Block *raw = *((Block **) ( (uintptr_t)ptr - (uintptr_t)sizeof(void *) ));
-        if (raw == this) mCount -= 1;
-        return mCount == 0;
+    static Block * free(void *ptr) {
+        static const uintptr_t pointer_size  = (uintptr_t)sizeof(void *);
+        static const uintptr_t size_size     = (uintptr_t)sizeof(size_t);
+        if (ptr == nullptr) return nullptr;
+        Block *from = *((Block **) ( (uintptr_t)ptr - pointer_size - size_size ));
+        if (--(from->mCount) == 0) {
+            from->mCurPos = 0;
+            return from;
+        }
+        else return nullptr;
+    }
+
+    static Block * queryFrom(void *ptr) {
+        static const uintptr_t pointer_size  = (uintptr_t)sizeof(void *);
+        static const uintptr_t size_size     = (uintptr_t)sizeof(size_t);
+        if (ptr == nullptr) return nullptr;
+        return *((Block **) ( (uintptr_t)ptr - pointer_size - size_size ));
+    }
+
+    static size_t querySize(void *ptr) {
+        if (ptr == nullptr) return 0;
+        static const uintptr_t size_size     = (uintptr_t)sizeof(size_t);
+        return *(size_t *) ((uintptr_t)ptr - size_size);
     }
 };
 
+/**
+ * MemoryArena: keep alloced blocks
+ * 
+ * */
 class MemoryArena {
 private:
     Block                  *mCurBlockPtr;
     uint32_t                mBlockSize;
-    uint32_t                mBlockAlignment;
     std::list<Block *>      mUsedBlocks;
     std::list<Block *>      mAvailableBlocks;
 
-    void _sortAvailable() {
-        std::sort(mAvailableBlocks.begin(), mAvailableBlocks.end(), [](const Block *a, const Block *b) -> bool {
-            return a->mSize < b->mSize;
-        });
+public:
+    MemoryArena(uint32_t blockSize=32768)
+        : mCurBlockPtr(nullptr)
+        , mBlockSize(blockSize)
+        , mUsedBlocks(0)
+        , mAvailableBlocks(0) {}
+    ~MemoryArena() {
+        if (mCurBlockPtr) delete mCurBlockPtr;
+        for (auto *block : mUsedBlocks)      delete block;
+        for (auto *block : mAvailableBlocks) delete block;
     }
 
-public:
-    MemoryArena(uint32_t blockSize=32768, int blockAlignment=MEMORY_ALIGNMENT)
-        : mCurBlockPtr(nullptr)
-        , mBlockSize(blockSize), mBlockAlignment(blockAlignment)
-        , mUsedBlocks(0),        mAvailableBlocks(0) {}
-
     void *alloc(uint32_t size) {
-        // round size to alignment
-        size = (size + mBlockAlignment - 1) & ~(mBlockAlignment - 1);
         void * ret = nullptr;
         if (!mCurBlockPtr || !(ret = mCurBlockPtr->alloc(size))) {
             // store in used
@@ -96,25 +130,54 @@ public:
             }
             
             // still not found
-            if (!mCurBlockPtr) mCurBlockPtr = new Block(std::max(Block::actualSize(size), (size_t)mBlockSize));
+            if (!mCurBlockPtr) {
+                mCurBlockPtr = new Block(std::max(Block::actualSize(size), (size_t)mBlockSize));
+            }
         }
-        if (!ret)
-            void *ret = mCurBlockPtr->alloc(size);
+        if (!ret) ret = mCurBlockPtr->alloc(size);
         return ret;
     }
 
     template <typename T>
     T *alloc(uint32_t count=1) {
         T *ret = (T*)this->alloc(count * sizeof(T));
-        for (uint32_t i = 0; i < count; ++i)
-            new (&ret[i]) T();
+        for (uint32_t i = 0; i < count; ++i) new (&ret[i]) T();
         return ret;
     }
 
+    template <typename T>
+    static size_t queryCount(T *ptr) {
+        if (ptr == nullptr) return 0;
+        return Block::querySize(ptr) / sizeof(T);
+    }
+
+    template <typename T>
+    void free(T *ptr) {
+        if (ptr == nullptr) return;
+        const int count = Block::querySize(ptr) / sizeof(T);
+        for (uint32_t i = 0; i < count; ++i) ptr[i].~T();
+        Block * block = Block::free(ptr);
+#ifdef TEST_MEMORY
+        if (block) printf("-> reuse block 0x%X\n", block);
+#endif
+        if (block && block != mCurBlockPtr) {
+            // check if the empty block is in used blocks
+            bool find = false;
+            for (auto iter = mUsedBlocks.begin(); iter != mUsedBlocks.end(); ++iter) {
+                if ((*iter) == block) {
+                    mUsedBlocks.erase(iter);
+                    // recently used (just delete), push at first
+                    mAvailableBlocks.push_front(block);
+                    find = true;
+                    break;
+                }
+            }
+            if (!find) throw std::runtime_error("[MemoryArena]: empty block not found!\n");
+        }
+    }
+
     void reset() {
-        mCurBlockPos = 0;
         mAvailableBlocks.splice(mAvailableBlocks.begin(), mUsedBlocks);
-        _sortAvailable();
     }
 
 };

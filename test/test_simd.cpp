@@ -1,3 +1,5 @@
+#define SNOW_AVX
+
 #include <snow.h>
 #include <vector>
 
