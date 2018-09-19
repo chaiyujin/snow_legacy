@@ -30,7 +30,7 @@ int main() {
         add_res.push_back(vec0[i] + vec1[i] * W);
     }
     printf("\n");
-    addwb(vec0, vec1, W, NUM);
+    addWB(vec0, vec1, W, NUM);
     for (int i = 0; i < NUM; ++i) {
         printf("%d ", abs(vec0[i] - add_res[i]) < 1e-6);
         if (i % 15 == 14) printf("\n");
@@ -39,14 +39,14 @@ int main() {
 
     {
         for (int i = 0; i < NUM; ++i) {vec0[i] = vec1[i] = i;}
-        snow::StopWatch watch("addwb");
-        for (int i = 0; i < 1000000; ++i) addwb(vec0, vec1, 10.0, NUM);
+        snow::StopWatch watch("addWB");
+        for (int i = 0; i < 1000000; ++i) addWB(vec0, vec1, 10.0, NUM);
     }
 
     {
         for (int i = 0; i < NUM; ++i) {vec0[i] = vec1[i] = i;}
-        snow::StopWatch watch("addwb_normally");
-        for (int i = 0; i < 1000000; ++i) addwb_normally(vec0, vec1, 10.0, NUM);
+        snow::StopWatch watch("addWB_normally");
+        for (int i = 0; i < 1000000; ++i) addWB_normally(vec0, vec1, 10.0, NUM);
     }
 
     return 0;

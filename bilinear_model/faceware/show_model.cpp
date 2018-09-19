@@ -94,6 +94,12 @@ void  ShowModel::load() {
     Tensor3 t1;
     
     core.mulVec(iden, expr, t1);
+
+    {
+        Tensor3 test;
+        snow::StopWatch watch("scale");
+        t1.mul(3.0, test);
+    }
     
     printf("%d %d %d\n", t1.shape(0), t1.shape(1), t1.shape(2));
 
@@ -102,7 +108,7 @@ void  ShowModel::load() {
     for (int i = 0; i < t1.shape(0); i += 3) {
         auto norm = FaceDB::v_normals()[i / 3];
         vertices.push_back({
-            {t1.data()[i], t1.data()[i + 1], t1.data()[i + 2]},
+            {t1.data(i)[0], t1.data(i)[1], t1.data(i)[2]},
             {norm.x, norm.y, norm.z},
             {0, 0}
         });

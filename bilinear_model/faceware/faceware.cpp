@@ -217,6 +217,8 @@ void FaceDB::read_raw_information(std::string dir)
         exit(1);
     }
 
+    printf("[FaceDB]: begin to read\n");
+
 	/* read tensor */
 	auto tmp_alloc_read = [](float **tmp, FILE **fp, int size) -> void
 	{
@@ -541,9 +543,9 @@ void FaceDB::update_gl_points(const Tensor3 &vertices, float *points, const int 
 		if (mask) for (int j = 0; j < 3; ++j) if (0 == mask[v3[j]]) v3[j] = -1;
 		for (int j = 0; j < 3; ++j)
 		{
-			points[idx++] = (v3[j] < 0) ? -1.f : vertices.data()[v3[j] * 3];
-			points[idx++] = (v3[j] < 0) ? -1.f : vertices.data()[v3[j] * 3 + 1];
-			points[idx++] = (v3[j] < 0) ? 0.0f : vertices.data()[v3[j] * 3 + 2];
+			points[idx++] = (v3[j] < 0) ? -1.f : vertices.data(v3[j] * 3)[0];
+			points[idx++] = (v3[j] < 0) ? -1.f : vertices.data(v3[j] * 3)[1];
+			points[idx++] = (v3[j] < 0) ? 0.0f : vertices.data(v3[j] * 3)[2];
 		}
 	}
 }
@@ -551,19 +553,21 @@ void FaceDB::update_gl_points(const Tensor3 &vertices, float *points, const int 
 snow::float3 FaceDB::face_norm(const Tensor3 &vertices, int ti)
 {
 	int k[3];
-	const double *vertice = vertices.data();
 	k[0] = _triangles[ti][0] * 3;
 	k[1] = _triangles[ti][1] * 3;
 	k[2] = _triangles[ti][2] * 3;
+    const double *p0 = vertices.data(k[0]);
+    const double *p1 = vertices.data(k[1]);
+    const double *p2 = vertices.data(k[2]);
 	snow::float3 v0{
-		(float)(vertice[k[1]] - vertice[k[0]]),
-		(float)(vertice[k[1] + 1] - vertice[k[0] + 1]),
-		(float)(vertice[k[1] + 2] - vertice[k[0] + 2])
+		(float)(p1[0] - p0[0]),
+		(float)(p1[1] - p0[1]),
+		(float)(p1[2] - p0[2])
 	};
 	snow::float3 v1{
-		(float)(vertice[k[2]] - vertice[k[1]]),
-		(float)(vertice[k[2] + 1] - vertice[k[1] + 1]),
-		(float)(vertice[k[2] + 2] - vertice[k[1] + 2])
+		(float)(p2[0] - p1[0]),
+		(float)(p2[1] - p1[1]),
+		(float)(p2[2] - p1[2])
 	};
 	return snow::normalize(snow::cross(v0, v1));
 };

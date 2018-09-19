@@ -8,79 +8,22 @@
 #include <snow.h>
 
 /* 3 dim Tensor3 */
-class Tensor3
-{
+class Tensor3 {
 public:
-	Tensor3() : mDataPtr(NULL), mSize(0), mIsSub(false), mShape(3, 0) {}
-	Tensor3(const Tensor3 &b)
-		: mDataPtr(b.mDataPtr)
-		, mSize(b.mSize)
-		, mIsSub(b.mIsSub)
-		, mShape(b.mShape)
-	{
-		if (!mIsSub)
-		{
-            mDataPtr = snow::alignedMalloc<double>(mSize);
-			memcpy(mDataPtr, b.mDataPtr, sizeof(double) * mSize);
-		}
-	}
-	Tensor3(const std::vector<int> &shape) : Tensor3()
-	{
-		resize(shape);
-	}
-	Tensor3(const Tensor3 &father, int start, int len=-1)
-		: mIsSub(true)
-	{
-		int c = 1;
-		for (int i = 1; i < father.mShape.size(); ++i) c *= father.mShape[i];
-		mDataPtr = father.mDataPtr + start * c;
-		mShape.resize(father.mShape.size());
-		for (int i = 1; i < mShape.size(); ++i) mShape[i] = father.mShape[i];
-		if (len < 0)
-		{
-			len = father.mShape[0] - start;
-		}
-		mShape[0] = len;
-		mSize = len * c;
-	}
-	~Tensor3() {
-        if (!mIsSub) { if (!is_null()) snow::alignedFree(mDataPtr); mDataPtr = NULL; }
-    }
 
-	bool is_null() const { return mDataPtr == NULL; }
+	Tensor3();
+	Tensor3(const Tensor3 &b);
+	Tensor3(const std::vector<int> &shape);
+	Tensor3(const Tensor3 &father, int start, int len=0);
+	~Tensor3();
 
-	void resize(const std::vector<int> & shape)
-	{
-		assert(shape.size() <= 3);
-		if (mIsSub)
-		{
-			printf("[Tensor3 error]: You cannot resize sub-Tensor3.");
-			exit(1);
-			return;
-		}
-		mShape.resize(3);
-		int size = 1;
-		for (size_t i = 0; i < mShape.size(); ++i)
-		{
-			mShape[i] = (i < shape.size()) ? (shape[i]) : 1;
-			size *= mShape[i];
-		}
-		if (size != mSize)
-		{
-            printf("resize\n");
-            if (mDataPtr != nullptr) snow::alignedFree(mDataPtr);
-            mDataPtr = snow::alignedMalloc<double>(size);
-            printf("resize done\n");
-			mSize = size;
-		}
-	}
+	bool isNull() const { return !mDataPtr; }
+	void resize(const std::vector<int> & shape);
 
 	template <typename T>
-	void unfoldData(T *data, int unfold_mode, bool is_data_colmajor=true)
-	{
+	void unfoldData(T *data, int unfold_mode, bool is_data_colmajor=true) {
 		assert(unfold_mode >= 0 && unfold_mode < 3);
-		if (mIsSub)
-		{
+		if (mIsSub) {
 			printf("[Tensor3 error]: You cannot set data of sub-Tensor3.");
 			exit(1);
 			return;
@@ -94,33 +37,29 @@ public:
 			div[mShape.size() - 1] = 1;
 			for (int i = mShape.size() - 2; i >= 0; --i) { div[i] = div[i + 1] * mShape[i + 1]; }
 		}
-		if (is_data_colmajor)
-		{
-			for (int i = 0, d=unfold_mode, v=1; i < D; ++i)
-			{
+		if (is_data_colmajor) {
+			for (int i = 0, d=unfold_mode, v=1; i < D; ++i) {
 				mul[d] = v;
 				v *= mShape[d];
 				d = (d + 1) % D;
 			}
 		}
-		else
-		{
-			printf("not support so far.\n");
-			exit(1);
-			return;
-		}
+		else throw std::runtime_error("[Tensor3]: unfoldData() don't support row major!\n");
 
-		for (int i = 0; i < mSize; ++i)
-		{
-			int ii = i;
-			int j = 0;
-			for (int d = 0; d < D; ++d)
-			{
-				indices[d] = ii / div[d];
-				ii %= div[d];
-				j += indices[d] * mul[d];
-			}
-			mDataPtr[i] = data[j];
+        double *p = mDataPtr;
+        for (int c0 = 0, i = 0; c0 < mShape[0]; ++c0) {
+            for (int c1 = 0; c1 < mShape[1]; ++c1, p += mMemShape[2]) {
+                for (int c2 = 0; c2 < mShape[2]; ++c2, ++i) {
+                    int ii = i;
+                    int j = 0;
+                    for (int d = 0; d < D; ++d) {
+                        indices[d] = ii / div[d];
+                        ii %= div[d];
+                        j += indices[d] * mul[d];
+                    }
+                    p[c2] = data[j];
+                }
+            }
 		}
 	}
 
@@ -130,24 +69,56 @@ public:
 	template <int Mode>
 	void mulVec(const double *vec, Tensor3 &result) const;
 	void mulVec(const double *vec1, const double *vec2, Tensor3 &result) const;
-	template <int Mode>
-	void mulMat(const double *mat, int rows, int cols, Tensor3 &result) const;
 	void mul(double value, Tensor3 &result) const;
 
-	template <int Mode>
-	void unfold(Tensor3 &result);
 
-	double *data() { return mDataPtr; }
-	const double *data() const { return mDataPtr; }
+	void            zero()                                 { memset(mDataPtr, 0, sizeof(double) * mMemSize); }
 
-	void setZero() { memset(mDataPtr, 0, sizeof(double) * mSize); }
+	// double *        data()                                 { return mDataPtr; }
+	// const double *  data()                           const { return mDataPtr; }
+    double *        data(int d0, int d1=0, int d2=0)       { return mDataPtr + d0 * mMemShape[1] * mMemShape[2] + d1 * mMemShape[2] + d2; }
+    const double *  data(int d0, int d1=0, int d2=0) const { return mDataPtr + d0 * mMemShape[1] * mMemShape[2] + d1 * mMemShape[2] + d2; }
 
 private:
 	double *			mDataPtr;
-	int					mSize;
 	bool				mIsSub;
+	int					mSize;
+    int                 mMemSize;
 	std::vector<int>	mShape;
+    std::vector<int>    mMemShape;
+
+    static snow::MemoryArena gArena;
+    static const int Alignment;  // Alignment * sizeof(double) == 32
+
+    void alignShape(std::vector<int> &shape) {
+        static const int align_1 = Alignment - 1;
+        for (int i = 2; i >= 0; --i) {
+            if (shape[i] > 1) {
+                shape[i] = (shape[i] + align_1) & ~align_1;
+                break;
+            }
+        }
+    }
+
+    void free() {
+        if (!mDataPtr) return;
+        gArena.free<double>(mDataPtr);
+        mShape = mMemShape = {0, 0, 0};
+        mSize  = mMemSize  = 0;
+        mDataPtr = nullptr;
+    }
+
+    void alloc(const std::vector<int> &shape) {
+        mShape = shape;
+        mMemShape = mShape;
+        alignShape(mMemShape);
+        mSize    = mShape[0]    * mShape[1]    * mShape[2];
+        mMemSize = mMemShape[0] * mMemShape[1] * mMemShape[2];
+        mDataPtr = gArena.alloc<double>(mMemSize);
+        mIsSub   = false; // should be false before alloc
+    }
 };
+
 
 inline std::ostream &operator<<(std::ostream &out, const std::vector<int> &v)
 {
@@ -167,12 +138,12 @@ inline void Tensor3::mulVec<1>(const double *vec, Tensor3 &result) const
         // snow::StopWatch watch("alloc");
         if (!(result.mShape[0] == mShape[0] && result.mShape[1] == 1 && result.mShape[2] == mShape[2]))
             result.resize({ mShape[0], 1, mShape[2] });
-        result.setZero();
+        result.zero();
     }
-    const int shape12 = mShape[1] * mShape[2];
-	for (int i = 0, c = 0, c0 = 0; i < mShape[0]; ++i, c += mShape[2], c0 += shape12) {
-		for (int j = 0, c1= 0; j < mShape[1]; ++j, c1 += mShape[2]) {
-            snow::addwb(&result.mDataPtr[c], &mDataPtr[c0+c1], vec[j], mShape[2]);
+    const int shape12 = mMemShape[1] * mMemShape[2];
+	for (int i = 0, c = 0, c0 = 0; i < mShape[0]; ++i, c += result.mMemShape[2], c0 += shape12) {
+		for (int j = 0, c1= 0; j < mShape[1]; ++j, c1 += mMemShape[2]) {
+            snow::addWB(&result.mDataPtr[c], &mDataPtr[c0+c1], vec[j], mShape[2]);
 		}
 	}
 }
@@ -184,18 +155,17 @@ inline void Tensor3::mulVec<2>(const double *vec, Tensor3 &result) const
         // snow::StopWatch watch("alloc");
         if (!(result.mShape[0] == mShape[0] && result.mShape[1] == mShape[1] && result.mShape[2] == 1))
             result.resize({ mShape[0], mShape[1], 1 });
-        result.setZero();
+        result.zero();
     }
-    const int shape12 = mShape[1] * mShape[2];
-    for (int i = 0, c = 0, c0 = 0; i < mShape[0]; ++i, c += mShape[1], c0 += shape12) {
-    	for (int j = 0, c1 = 0; j < mShape[1]; ++j, c1 += mShape[2]) {
+    const int shape12 = mMemShape[1] * mMemShape[2];
+    for (int i = 0, c = 0, c0 = 0; i < mShape[0]; ++i, c += result.mMemShape[1], c0 += shape12) {
+    	for (int j = 0, c1 = 0; j < mShape[1]; ++j, c1 += mMemShape[2]) {
             result.mDataPtr[c + j] += snow::dot(&mDataPtr[c0 + c1], vec, mShape[2]);
 		}
 	}
 }
 
-inline void Tensor3::mulVec(const double *vec1, const double *vec2, Tensor3 &result) const
-{
+inline void Tensor3::mulVec(const double *vec1, const double *vec2, Tensor3 &result) const {
     Tensor3 tmp;
     if (mShape[2] > mShape[1]) {
         mulVec<2>(vec2, tmp);
@@ -207,122 +177,18 @@ inline void Tensor3::mulVec(const double *vec1, const double *vec2, Tensor3 &res
     }
 }
 
-template <>
-inline void Tensor3::mulMat<1>(const double *mat, int rows, int cols, Tensor3 &result) const
-{
-	assert(rows == mShape[1]);
-	if (!(result.mShape[0] == mShape[0] && result.mShape[1] == cols && result.mShape[2] == mShape[2]))
-		result.resize({ mShape[0], cols, mShape[2] });
-	result.setZero();
-#pragma omp parallel for
-	for (int i = 0; i < mShape[0]; ++i)
-	{
-		int c0 = i * mShape[1] * mShape[2];
-		int r0 = i * cols * mShape[2];
-		for (int j = 0; j < mShape[1]; ++j)
-		{
-			int c1 = j * mShape[2];
-			int idx = j * cols;
-			for (int m = 0; m < cols; ++m)
-			{
-				int r1 = m * mShape[2];
-				for (int k = 0; k < mShape[2]; ++k)
-				{
-					result.mDataPtr[r0 + r1 + k] += mDataPtr[c0 + c1 + k] * mat[idx + m];
-				}
-			}
-		}
-	}
-}
-
-template <>
-inline void Tensor3::mulMat<2>(const double *mat, int rows, int cols, Tensor3 &result) const
-{
-	assert(rows == mShape[2]);
-	if (!(result.mShape[0] == mShape[0] && result.mShape[1] == mShape[1] && result.mShape[2] == cols))
-		result.resize({ mShape[0], mShape[1], cols });
-	result.setZero();
-#pragma omp parallel for
-	for (int i = 0; i < mShape[0]; ++i)
-	{
-		int c0 = i * mShape[1] * mShape[2];
-		int r0 = i * mShape[1] * cols;
-		for (int j = 0; j < mShape[1]; ++j)
-		{
-			int c1 = j * mShape[2];
-			int r1 = j * cols;
-			for (int k = 0; k < mShape[2]; ++k)
-			{
-				int idx = k * cols;
-				for (int m = 0; m < cols; ++m)
-				{
-					result.mDataPtr[r0 + r1 + m] += mDataPtr[c0 + c1 + k] * mat[idx + m];
-				}
-			}
-		}
-	}
-}
-
-template <>
-inline void Tensor3::unfold<1>(Tensor3 &result)
-{
-	if (!(result.mShape[0] == mShape[1] && result.mShape[1] == mShape[2] * mShape[0] && result.mShape[2] == 1))
-		result.resize({ mShape[1], mShape[2] * mShape[0], 1 });
-	result.setZero();
-#pragma omp parallel for
-	for (int i = 0; i < mShape[0]; ++i)
-	{
-		int c0 = i * mShape[1] * mShape[2];
-		for (int j = 0; j < mShape[1]; ++j)
-		{
-			int c1 = j * mShape[2];
-			int r0 = j * mShape[2] * mShape[0];
-			for (int k = 0; k < mShape[2]; ++k)
-			{
-				result.mDataPtr[r0 + k * mShape[0] + i] = mDataPtr[c0 + c1 + k];
-			}
-		}
-	}
-}
-
-template <>
-inline void Tensor3::unfold<2>(Tensor3 &result)
-{
-	if (!(result.mShape[0] == mShape[2] && result.mShape[1] == mShape[0] * mShape[1] && result.mShape[2] == 1))
-		result.resize({ mShape[2], mShape[0] * mShape[1], 1 });
-	result.setZero();
-	int shape01 = mShape[0] * mShape[1];
-#pragma omp parallel for
-	for (int i = 0; i < mShape[0]; ++i)
-	{
-		int c0 = i * mShape[1] * mShape[2];
-		int r1 = i * mShape[1];
-		for (int j = 0; j < mShape[1]; ++j)
-		{
-			int c1 = j * mShape[2];
-			for (int k = 0; k < mShape[2]; ++k)
-			{
-				result.mDataPtr[k * shape01 + r1 + j] = mDataPtr[c0 + c1 + k];
-			}
-		}
-	}
-}
-
-inline void Tensor3::mul(double scale, Tensor3 &result) const
-{
-	if (!(result.mShape == mShape))
-		result.resize(mShape);
-#pragma omp parallel for
-	for (int i = 0; i < mShape[0]; ++i)
-	{
-		int c0 = i * mShape[1] * mShape[2];
-		for (int j = 0; j < mShape[1]; ++j)
-		{
-			int c1 = j * mShape[2];
-			for (int k = 0; k < mShape[2]; ++k)
-			{
-				result.mDataPtr[c0 + c1 + k] = mDataPtr[c0 + c1 + k] * scale;
-			}
+inline void Tensor3::mul(double scale, Tensor3 &result) const {
+    
+    if (!(result.mShape == mShape))
+        result.resize(mShape);
+    
+    int shape12 = mMemShape[1] * mMemShape[2];
+	for (int i = 0, c0 = 0; i < mShape[0]; ++i, c0 += shape12) {
+		for (int j = 0, c1 = 0; j < mShape[1]; ++j, c1 += mMemShape[2]) {
+			// for (int k = 0; k < mShape[2]; ++k) {
+			// 	result.mDataPtr[c0 + c1 + k] = mDataPtr[c0 + c1 + k] * scale;
+			// }
+            snow::storeWB(&result.mDataPtr[c0 + c1], &mDataPtr[c0 + c1], scale, mShape[2]);
 		}
 	}
 }
