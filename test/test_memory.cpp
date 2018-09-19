@@ -7,7 +7,7 @@ class Int {
 public:
     int x;
     Int() : x(0) {}
-    // ~Int() { printf("~Int()\n");}
+    virtual ~Int() { }
 };
 
 int main() {
@@ -21,8 +21,29 @@ int main() {
 
     Int * arr1 = arena.alloc<Int>(5);
     arena.free<Int>(arr1);
-    arr1 = arena.alloc<Int>(1000000);
+    arr1 = arena.alloc<Int>(100);
+    printf("arena meta info: from %X, size %d\n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
+    arena.free(arr1);
+    arr1 = new Int[100];
+    printf("new   meta info: size0 %d, size1 %d \n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
+    {
+        snow::StopWatch watch("arena");
+        for (int i = 0; i < 10; ++i) {
+            if (i % 2) arr1 = arena.alloc<Int>(10000000); else arr1 = arena.alloc<Int>(1000000);
+            if ((uintptr_t)arr1 % 32 != 0) printf("[arena]: error not aligned with 32!\n");
+            arena.free<Int>(arr1);
+        }
+    }
+    {
+        snow::StopWatch watch("new");
+        for (int i = 0; i < 10; ++i) {
+            if (i % 2) arr1 = new Int[10000000]; else arr1 = new Int[1000000];
+            if ((uintptr_t)arr1 % 32 != 0) printf("[new]: error not aligned with 32!\n");
+            delete[] arr1;
+        }
+    }
 
+    arr1 = arena.alloc<Int>(10000000);
     for (int i = 0; i < 5; ++i) { printf("%d ", arr1[i].x); if (i % 10 == 9) printf("\n"); } printf("\n");
     for (int i = 0; i < 5; ++i) { printf("%d ", arr[i].x); if (i % 10 == 9) printf("\n"); } printf("\n");
 

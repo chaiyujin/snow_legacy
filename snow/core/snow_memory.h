@@ -141,7 +141,8 @@ public:
     template <typename T>
     T *alloc(uint32_t count=1) {
         T *ret = (T*)this->alloc(count * sizeof(T));
-        for (uint32_t i = 0; i < count; ++i) new (&ret[i]) T();
+        // for (uint32_t i = 0; i < count; ++i) new (&ret[i]) T();  // too slow
+        ret = new (ret) T[count];  // faster
         return ret;
     }
 
