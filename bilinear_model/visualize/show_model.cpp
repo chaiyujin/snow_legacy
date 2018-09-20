@@ -85,7 +85,7 @@ void ShowWindow::draw() {
         const char *exprName = "FACS";
         const float vmin = 0.0, vmax = 1.0;
 #else
-        const char * = "expression";
+        const char *exprName = "expression";
         const float vmin = -3.0, vmax = 3.0;
 #endif
         ImGui::Begin(exprName, nullptr, ImGuiWindowFlags_NoResize);

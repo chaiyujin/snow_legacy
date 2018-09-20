@@ -3,15 +3,18 @@
 #include <ctype.h>
 #include <iostream>
 #include <iomanip>
-// third-party
+// glm
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+// eigen
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 // self defined
-#include "math_types.h"
+#include "extypes.h"
 
 namespace snow {
 
@@ -38,14 +41,3 @@ inline glm::quat quatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float
 }
 
 }
-
-/* glm related stream functions */
-inline std::ostream &operator<<(std::ostream &out, const glm::vec3 & vec) { out << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]"; return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::vec2 & vec) { out << "[" << vec.x << ", " << vec.y << "]"; return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::mat4 &mat) { for (int r = 0; r < 4; ++r) { for (int c = 0; c < 4; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==3)? "]\n": ", "); }} return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::mat3 &mat) { for (int r = 0; r < 3; ++r) { for (int c = 0; c < 3; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==2)? "]\n": ", "); }} return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::dvec3 & vec) { out << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]"; return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::dvec2 & vec) { out << "[" << vec.x << ", " << vec.y << "]"; return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::dmat4 &mat) { for (int r = 0; r < 4; ++r) { for (int c = 0; c < 4; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==3)? "]\n": ", "); }} return out; }
-inline std::ostream &operator<<(std::ostream &out, const glm::dmat3 &mat) { for (int r = 0; r < 3; ++r) { for (int c = 0; c < 3; ++c) { out << ((c==0)?"[":"") << mat[c][r] << ((c==2)? "]\n": ", "); }} return out; }
-

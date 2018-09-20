@@ -83,7 +83,7 @@ public:
 private:
     double *            mDataPtr;
     bool                mIsSub;
-    int                    mSize;
+    int                 mSize;
     int                 mMemSize;
     std::vector<int>    mShape;
     std::vector<int>    mMemShape;
@@ -124,24 +124,11 @@ private:
     }
 };
 
-
-inline std::ostream &operator<<(std::ostream &out, const std::vector<int> &v)
-{
-    out << "[ ";
-    for (int i = 0; i < v.size(); ++i)
-    {
-        out << v[i];
-        if (i == v.size() - 1) out << " ]"; else out << " , ";
-    }
-    return out;
-}
-
 template <>
 inline void Tensor3::mulVec<1>(const double *vec, Tensor3 &result) const {
     if (!(result.mShape[0] == mShape[0] && result.mShape[1] == 1 && result.mShape[2] == mShape[2]))
         result.resize({ mShape[0], 1, mShape[2] });
     result.zero();
-
     const int src12 = mMemShape[1]        * mMemShape[2];
     const int tar12 = result.mMemShape[1] * result.mMemShape[2];
     for (int i = 0, r0 = 0, c0 = 0; i < mShape[0]; ++i, r0 += tar12, c0 += src12) {
@@ -175,6 +162,7 @@ inline void Tensor3::mul(double scale, Tensor3 &result) const {
     
     if (!(result.mShape == mShape))
         result.resize(mShape);
+    result.zero();
     int shape12 = mMemShape[1] * mMemShape[2];
     for (int i = 0, c0 = 0; i < mShape[0]; ++i, c0 += shape12) {
         for (int j = 0, c1 = 0; j < mShape[1]; ++j, c1 += mMemShape[2]) {

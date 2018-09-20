@@ -16,6 +16,7 @@ Expect the third-party libraries, there are some useful tools:
     - string operation
     - [ ] stb_image
     - stream, frame, input (for data streaming)
+- [ ] Functional Programming
 - OpenGL: (optional)
     - GUI: glad, SDL2, ImGui
     - Model:

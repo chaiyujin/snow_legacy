@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.0)
 project(snow VERSION 0.0.2 DESCRIPTION "A simple tool for OpenGL, Gui and FFmpeg.")
+set(CMAKE_CXX_STANDARD 11)
 
 OPTION(SNOW_AVX              "AVX functions" on)
 OPTION(SNOW_RELEASE          "-O3 switch"    on)
 
 OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
+OPTION(SNOW_MODULE_FP        "Build with module functional programming" off)
+
+if (SNOW_MODULE_FP)
+    set(CMAKE_CXX_STANDARD 14)
+endif (SNOW_MODULE_FP)
 
 # ============== Begin ===============
 set(SNOW_SOURCES        "")
@@ -18,15 +24,19 @@ set(SNOW_DEFINITIONS    "")
 # ====================================
 # =========== Module Core ============
 # ====================================
-set(SNOW_CORE_SOURCES
-    "${PROJECT_SOURCE_DIR}/core/snow_memory.cpp")
+set(SNOW_CORE_SOURCES   "")
 set(SNOW_CORE_INCLUDE_DIRS
     # third-party
     "${PROJECT_SOURCE_DIR}/third-party/stb/")
 set(SNOW_CORE_LIBRARIES_DIRS "")
-set(SNOW_CORE_LIBRARIES     "")
+set(SNOW_CORE_LIBRARIES      "")
 # glm
+if (SNOW_AVX)
+    set(GLM_TEST_ENABLE_SIMD_AVX on CACHE BOOL "enable glm avx" FORCE)
+endif (SNOW_AVX)
 add_subdirectory("${PROJECT_SOURCE_DIR}/third-party/glm-stable")
+list(APPEND SNOW_INCLUDE_DIRS   ${GLM_INCLUDE_DIRS})
+list(APPEND SNOW_LIBRARIES      glm)
 # eigen3
 find_package(Eigen3 3.3 REQUIRED)
 list(APPEND SNOW_LIBRARIES      Eigen3::Eigen)
@@ -148,7 +158,6 @@ macro (SNOW_COPY_DLL projectName)
     endforeach(THEDLL ${SNOW_WIN32_DLLS})
 endmacro()
 
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
 # exec and link libaraies
 add_definitions      (${SNOW_DEFINITIONS})
 include_directories  (${SNOW_INCLUDE_DIRS}                  )

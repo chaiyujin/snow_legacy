@@ -9,8 +9,7 @@ namespace snow {
 
     inline bool exists(const std::vector<std::string> &file_list) {
         for (size_t i = 0; i < file_list.size(); ++i)
-            if (!exists(file_list[i]))
-                return false;
+            if (!exists(file_list[i])) return false;
         return true;
     }
 

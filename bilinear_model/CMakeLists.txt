@@ -8,8 +8,6 @@ include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(${SNOW_LIBRARIES_DIRS})
 add_definitions(${SNOW_DEFINITIONS})
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
-
 add_executable(${PROJECT_NAME}
     ./main.cpp
     ./facedb/tensor.cpp

@@ -6,7 +6,6 @@
 #include <map>
 #include <cmath>
 #include <vector>
-#include <iostream>
 #include <stdexcept>
 
 namespace snow {
@@ -38,7 +37,6 @@ template <typename T> inline _int3<T> operator -(const _int3<T> &a, const _int3<
 template <typename T> inline _int3<T> operator *(const _int3<T> &a, int t)                  { return {a.x * t, a.y * t, a.z * t}; }
 template <typename T> inline _int3<T> operator /(const _int3<T> &a, int t)                  { return {a.x / t, a.y / t, a.z / t}; }
 template <typename T> inline float    euclidean_norm(const _int3<T> &a)                     { return std::sqrt(a.x*a.x + a.y*a.y + a.z*a.z); }
-template <typename T> inline std::ostream& operator<<(std::ostream &out, const _int3<T> &a) { out << "[ " << a.x << " " << a.y << " " << a.z << " ]"; return out; }
 
 template <typename T>
 struct _int2 {
@@ -61,7 +59,6 @@ template <typename T> inline _int2<T> operator -(const _int2<T> &a, const _int2<
 template <typename T> inline _int2<T> operator *(const _int2<T> &a, int t)                  { return {a.x * t, a.y * t}; }
 template <typename T> inline _int2<T> operator /(const _int2<T> &a, int t)                  { return {a.x / t, a.y / t}; }
 template <typename T> inline float    euclidean_norm(const _int2<T> &a)                     { return std::sqrt(a.x*a.x + a.y*a.y); }
-template <typename T> inline std::ostream& operator<<(std::ostream &out, const _int2<T> &a) { out << "[ " << a.x << " " << a.y << " ]"; return out; }
 
 template <typename T>
 struct _float3 {
@@ -90,7 +87,6 @@ template <typename T> inline T          euclidean_norm(const _float3<T> &a)     
 template <typename T> inline _float3<T> normalize(const _float3<T> &a)                          { T t = euclidean_norm(a); return (t > 0) ? a * ((T)1.0 / t): a; }
 template <typename T> inline bool       close(const _float3<T> &a, const _float3<T> &b, T eps=1e-5) { return std::abs(a.x-b.x)<eps && std::abs(a.y-b.y)<eps && std::abs(a.z-b.z)<eps; }
 template <typename T> inline _float3<T> lerp(const _float3<T>& a, const _float3<T>& b, T t)     { return b * t + a * ((T)1.0 - t); }
-template <typename T> inline std::ostream& operator<<(std::ostream &out, const _float3<T> &a)   { out << "[ " << a.x << " " << a.y << " " << a.z << " ]"; return out; }
 
 template <typename T>
 struct _float2 {
@@ -117,7 +113,6 @@ template <typename T> inline T          dot(const _float2<T> &a, const _float2<T
 template <typename T> inline T          cross(const _float2<T> &a, const _float2<T> &b)         { return a.x*b.y-a.y*b.x; }
 template <typename T> inline T          euclidean_norm(const _float2<T> &a)                     { return std::sqrt(a.x*a.x + a.y*a.y); }
 template <typename T> inline bool       close(const _float2<T> &a, const _float2<T> &b, T eps=1e-5) { return std::abs(a.x-b.x)<eps && std::abs(a.y-b.y)<eps; }
-template <typename T> inline std::ostream& operator<<(std::ostream &out, const _float2<T> &a)   { out << "[ " << a.x << " " << a.y << " ]"; return out; }
 
 /* integer types */
 typedef _int3<int32_t> int3;

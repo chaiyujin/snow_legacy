@@ -43,7 +43,7 @@ public:
     }
     
     template <typename T>
-    void updateShowParameters(const std::vector<T> &iden, const std::vector<T> *expr) {
+    void updateShowParameters(const std::vector<T> &iden, const std::vector<T> &expr) {
         updateShowParameters(iden.data(), expr.data());
     }
 };

@@ -13,7 +13,6 @@ set(SOURCES ./main.cpp
 add_executable(AnimeViewer ${SOURCES})
 target_link_libraries(AnimeViewer snow)
 
-message(STATUS "---${SNOW_WIN32_DLLS}")
 if (WIN32)
     SNOW_COPY_DLL(AnimeViewer)
 endif (WIN32)
