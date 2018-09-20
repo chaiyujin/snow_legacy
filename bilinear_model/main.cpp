@@ -8,6 +8,6 @@ int main() {
     snow::App app;
     app.addWindow(new ShowWindow());
     app.run();
-    
+
     return 0;
 }

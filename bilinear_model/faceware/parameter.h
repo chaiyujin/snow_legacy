@@ -168,7 +168,6 @@ public:
 //     void useTrainedScale() { memcpy(&getS(mParamPtr),    &getS(mTrainPtr),    LengthScale * sizeof(double)); }
 
 
-
 // #undef getS
 // #undef getI
 // #undef getE

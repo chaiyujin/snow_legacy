@@ -15,4 +15,7 @@
 #include "media/snow_media.h"
 #endif
 
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+
 #undef main

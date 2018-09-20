@@ -25,7 +25,11 @@ set(SNOW_CORE_INCLUDE_DIRS
     "${PROJECT_SOURCE_DIR}/third-party/stb/")
 set(SNOW_CORE_LIBRARIES_DIRS "")
 set(SNOW_CORE_LIBRARIES     "")
+# glm
 add_subdirectory("${PROJECT_SOURCE_DIR}/third-party/glm-stable")
+# eigen3
+find_package(Eigen3 3.3 REQUIRED)
+list(APPEND SNOW_LIBRARIES      Eigen3::Eigen)
 
 list(APPEND SNOW_SOURCES        ${SNOW_CORE_SOURCES})
 list(APPEND SNOW_INCLUDE_DIRS   ${SNOW_CORE_INCLUDE_DIRS})
