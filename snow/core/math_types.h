@@ -24,6 +24,11 @@ struct _int3 {
     const T *operator&()         const { return &x; }
     T &operator[](int i)               { __CheckRange(i, 0, 3); return (&x)[i]; }
     const T &operator[](int i)   const { __CheckRange(i, 0, 3); return (&x)[i]; }
+
+    const _int3<T>& operator+=(const _int3<T> &b) { x+=b.x; y+=b.y; z+=b.z; return *this; }
+    const _int3<T>& operator-=(const _int3<T> &b) { x-=b.x; y-=b.y; z-=b.z; return *this; }
+    const _int3<T>& operator*=(int t)             { x*=t;   y*=t;   z*=t;   return *this; }
+    const _int3<T>& operator/=(int t)             { x/=t;   y/=t;   z/=t;   return *this; }
 };
 template <typename T> inline bool     operator <(const _int3<T> &a, const _int3<T> &b)      { return (a.x < b.x) || (a.x == b.x && a.y < b.y) || (a.x == b.x && a.y == b.y && a.z < b.z); }
 template <typename T> inline bool     operator==(const _int3<T> &a, const _int3<T> &b)      { return a.x == b.x && a.y == b.y && a.z == b.z; }
@@ -42,6 +47,11 @@ struct _int2 {
     const T *operator&()        const { return &x; }
     T &operator[](int i)              { __CheckRange(i, 0, 2); return (&x)[i]; }
     const T &operator[](int i)  const { __CheckRange(i, 0, 2); return (&x)[i]; }
+
+    const _int2<T>& operator+=(const _int2<T> &b) { x+=b.x; y+=b.y; return *this; }
+    const _int2<T>& operator-=(const _int2<T> &b) { x-=b.x; y-=b.y; return *this; }
+    const _int2<T>& operator*=(int t)             { x*=t;   y*=t;   return *this; }
+    const _int2<T>& operator/=(int t)             { x/=t;   y/=t;   return *this; }
 };
 template <typename T> inline bool     operator <(const _int2<T> &a, const _int2<T> &b)      { return (a.x < b.x) || (a.x == b.x && a.y < b.y); }
 template <typename T> inline bool     operator==(const _int2<T> &a, const _int2<T> &b)      { return a.x == b.x && a.y == b.y; }
@@ -60,6 +70,11 @@ struct _float3 {
     const T *operator&()        const { return &x; }
     T &operator[](int i)              { __CheckRange(i, 0, 3); return (&x)[i]; }
     const T &operator[](int i)  const { __CheckRange(i, 0, 3); return (&x)[i]; }
+
+    const _float3<T>& operator+=(const _float3<T> &b)       { x+=b.x;  y+=b.y;  z+=b.z;  return *this; }
+    const _float3<T>& operator-=(const _float3<T> &b)       { x-=b.x;  y-=b.y;  z-=b.z;  return *this; }
+    template <typename U> const _float3<T>& operator*=(U t) { x*=(T)t; y*=(T)t; z*=(T)t; return *this; }
+    template <typename U> const _float3<T>& operator/=(U t) { x/=(T)t; y/=(T)t; z/=(T)t; return *this; }
 };
 template <typename T> inline bool       isnan(const _float3<T> &a)                              { return std::isnan(a.x) || std::isnan(a.y) || std::isnan(a.z); }
 template <typename T> inline bool       operator <(const _float3<T> &a, const _float3<T> &b)    { return (a.x < b.x) || (a.x == b.x && a.y < b.y) || (a.x == b.x && a.y == b.y && a.z < b.z); }
@@ -84,6 +99,11 @@ struct _float2 {
     const T *operator&()        const { return &x; }
     T &operator[](int i)              { __CheckRange(i, 0, 2); return (&x)[i]; }
     const T &operator[](int i)  const { __CheckRange(i, 0, 2); return (&x)[i]; }
+
+    const _float2<T>& operator+=(const _float3<T> &b)       { x+=b.x;  y+=b.y;  return *this; }
+    const _float2<T>& operator-=(const _float3<T> &b)       { x-=b.x;  y-=b.y;  return *this; }
+    template <typename U> const _float2<T>& operator*=(U t) { x*=(T)t; y*=(T)t; return *this; }
+    template <typename U> const _float2<T>& operator/=(U t) { x/=(T)t; y/=(T)t; return *this; }
 };
 template <typename T> inline bool       isnan(const _float2<T> &a)                              { return std::isnan(a.x) || std::isnan(a.y); }
 template <typename T> inline bool       operator <(const _float2<T> &a, const _float2<T> &b)    { return (a.x < b.x) || (a.x == b.x && a.y < b.y); }

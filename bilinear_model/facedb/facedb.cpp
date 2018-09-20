@@ -377,7 +377,7 @@ void FaceDB::UpdateNormals(const Tensor3 &vertices)
         snow::float3 norm{ 0, 0, 0 };
         for (int i = 0; i < gTrianglesOfPoint[vi].size(); ++i) {
             int f0 = gTrianglesOfPoint[vi][i];
-            norm = norm + gFaceNorms[f0];
+            norm += gFaceNorms[f0];
         }
         norm = norm / (float)gTrianglesOfPoint[vi].size();
         gVertNorms[vi] = snow::normalize(norm);
@@ -405,7 +405,7 @@ snow::float3 FaceDB::GetVertNormal(const Tensor3 &vertice, int id) {
     int cnt = 0;
     snow::float3 norm = { 0, 0, 0 };
     for (int i = 0; i < gTrianglesOfPoint[id].size(); ++i) {
-        norm = norm + GetFaceNormal(vertice, gTrianglesOfPoint[id][i]);
+        norm += GetFaceNormal(vertice, gTrianglesOfPoint[id][i]);
         cnt++;
     }
     norm = norm / (float)cnt;
