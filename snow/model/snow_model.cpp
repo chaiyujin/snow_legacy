@@ -152,7 +152,7 @@ namespace snow {
         //           << center.x << " "
         //           << center.y << " "
         //           << center.z << " " << std::endl;
-        trans = glm::scale(trans, glm::vec3(scale, scale, scale));	// it's a bit too big for our scene, so scale it down
+        trans = glm::scale(trans, glm::vec3(scale, scale, scale));    // it's a bit too big for our scene, so scale it down
         trans = glm::translate(trans, -center); // translate it down so it's at the center of the scene
         initTransform = trans;
         return initTransform;

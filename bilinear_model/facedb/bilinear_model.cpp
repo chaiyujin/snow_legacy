@@ -3,7 +3,7 @@
 snow::MemoryArena Parameter::gArena;
 
 BilinearModel::BilinearModel(size_t count)
-    : Core(FaceDB::core_tensor())
+    : Core(FaceDB::CoreTensor())
     , mTvi1List(0), mTv1eList(0)
     , mTv11List(0), mMeshList(0)
     , mParamScalePtr(new ScaleParameter)
@@ -16,7 +16,7 @@ BilinearModel::BilinearModel(size_t count)
     prepareAllModel();
 }
 BilinearModel::BilinearModel(const BilinearModel &father, int startVertexIndex)
-    : Core(FaceDB::core_tensor())
+    : Core(FaceDB::CoreTensor())
     , mParamScalePtr(father.mParamScalePtr)
     , mParamIdenPtr(father.mParamIdenPtr)
     , mParamPosePtrList(father.mParamPosePtrList)
@@ -52,29 +52,38 @@ void BilinearModel::appendModel(size_t count) {
 
     mParamPosePtrList.push_back(new PoseParameter);
     mParamExprPtrList.push_back(new ExprParameter);
-
 }
 
 void BilinearModel::prepareAllModel() {
     if (mIsChild) throw std::runtime_error("[BilinearModel]: appendModel() should not be child.\n");
 
     for (size_t i = 0; i < mCount; ++i) {
-        mTvi1List[i].resize({ FaceDB::ndim_vert(), FaceDB::ndim_iden(), 1                   });
-        mTv1eList[i].resize({ FaceDB::ndim_vert(), 1,                   FaceDB::ndim_expr() });
-        mTv11List[i].resize({ FaceDB::ndim_vert(), 1,                   1,                  });
-        mMeshList[i].resize({ FaceDB::ndim_vert(), 1,                   1,                  });
+        mTvi1List[i].resize({ FaceDB::NumDimVert(), FaceDB::NumDimIden(), 1                   });
+        mTv1eList[i].resize({ FaceDB::NumDimVert(), 1,                   FaceDB::NumDimExpr() });
+        mTv11List[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
+        mMeshList[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
     }
 
 }
 
-void BilinearModel::updateIdenOnCore(size_t i, const double *iden) {
-    Core.mulVec<1>(iden, mTv1eList[i]);
+#ifdef PARAMETER_FACS
+void BilinearModel::updateExprOnCore(size_t i, const double *expr) {
+    Core.mulVec<2>(ExprParameter::FACS2Expr(expr).data(), mTvi1List[i]);
 }
+void BilinearModel::updateExpr(size_t i, const double *expr) {
+    mTv1eList[i].mulVec<2>(ExprParameter::FACS2Expr(expr).data(), mTv11List[i]);
+}
+#else
 void BilinearModel::updateExprOnCore(size_t i, const double *expr) {
     Core.mulVec<2>(expr, mTvi1List[i]);
 }
 void BilinearModel::updateExpr(size_t i, const double *expr) {
     mTv1eList[i].mulVec<2>(expr, mTv11List[i]);
+}
+#endif
+
+void BilinearModel::updateIdenOnCore(size_t i, const double *iden) {
+    Core.mulVec<1>(iden, mTv1eList[i]);
 }
 void BilinearModel::updateIden(size_t i, const double *iden) {
     mTvi1List[i].mulVec<1>(iden, mTv11List[i]);
@@ -83,7 +92,7 @@ void BilinearModel::updateScale(size_t i, const double *scale) {
     mTv11List[i].mul(*scale, mMeshList[i]);
 }
 void BilinearModel::rotateYXZ(size_t index, const double *rotateYXZ) {
-	double *data;
+    double *data;
     glm::dmat4 rmat = glm::eulerAngleYXZ(rotateYXZ[0], rotateYXZ[1], rotateYXZ[2]);
     for (int i = 0; i < mMeshList[index].shape(0); i += 3) {
         data = mMeshList[index].data(i);

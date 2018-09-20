@@ -19,10 +19,10 @@ struct VideoFormat {
 };
 
 struct AudioFormat {
-    AVSampleFormat	mSampleFmt;
-    uint64_t		mChLayout;
-    uint16_t		mChannels;
-    uint32_t		mSampleRate;
+    AVSampleFormat    mSampleFmt;
+    uint64_t        mChLayout;
+    uint16_t        mChannels;
+    uint32_t        mSampleRate;
 
     AudioFormat(AVSampleFormat sampleFmt = AV_SAMPLE_FMT_S16,
         uint64_t chLayout = AV_CH_LAYOUT_MONO,
@@ -37,28 +37,28 @@ struct AudioFormat {
 };
 
 struct InputStream {
-    AVMediaType		mType;
-    AVCodec	*		mDecPtr;
+    AVMediaType        mType;
+    AVCodec    *        mDecPtr;
     AVCodecContext *mDecCtxPtr;
-    AVStream *		mStreamPtr;
+    AVStream *        mStreamPtr;
     /* -- pre alloc frames -- */
-    AVFrame	*		mDecodeFramePtr;
-    AVFrame *		mTmpFramePtr;
-    SwsContext *	mSwsCtxPtr;        // video convert context
-    SwrContext *	mSwrCtxPtr;        // audio convert context
+    AVFrame    *        mDecodeFramePtr;
+    AVFrame *        mTmpFramePtr;
+    SwsContext *    mSwsCtxPtr;        // video convert context
+    SwrContext *    mSwrCtxPtr;        // audio convert context
     /* -- sync timestamps -- */
-    int64_t			mStart;			/* time when read started */
-    int64_t			mNextDts;		/* predicted dts of the next packet read for this stream or
+    int64_t            mStart;            /* time when read started */
+    int64_t            mNextDts;        /* predicted dts of the next packet read for this stream or
                                     (when there are several frames in a packet) of the next
                                     frame in current packet (in AV_TIME_BASE units) */
-    int64_t			mDts;			///< dts of the last packet read for this stream (in AV_TIME_BASE units)
-    int64_t			mNextPts;		///< synthetic pts for the next decode frame (in AV_TIME_BASE units)
-    int64_t			mPts;			///< current pts of the decoded frame  (in AV_TIME_BASE units)
-    int64_t			mMinPts, mMaxPts;
-    int				mNumSamples;
+    int64_t            mDts;            ///< dts of the last packet read for this stream (in AV_TIME_BASE units)
+    int64_t            mNextPts;        ///< synthetic pts for the next decode frame (in AV_TIME_BASE units)
+    int64_t            mPts;            ///< current pts of the decoded frame  (in AV_TIME_BASE units)
+    int64_t            mMinPts, mMaxPts;
+    int                mNumSamples;
 
-    int				mVideoStreamIdx;  // stream index in all video streams
-    int				mAudioStreamIdx;  // stream index in all audio streams
+    int                mVideoStreamIdx;  // stream index in all video streams
+    int                mAudioStreamIdx;  // stream index in all audio streams
 
     InputStream() : mDecPtr(NULL), mDecCtxPtr(NULL)
                   , mDecodeFramePtr(NULL), mTmpFramePtr(NULL)
@@ -103,7 +103,7 @@ public:
 class AudioFrame : public FrameBase {
 public:
     int     mNunSamples;
-    int	    mBytePerSample;
+    int        mBytePerSample;
     AudioFrame() :  mNunSamples(0) {}
     bool isNull() const { return mNunSamples == 0 || mTimestamp == SNOW_NONE_PTS; }
     void fromAVFrame(AVFrame *frame, int64_t pts, int nb_samples, int byte_per_sample) {
@@ -146,13 +146,13 @@ protected:
     static snow::color_map      gJetCmap;
     std::string                 mFilename;
     std::vector<InputStream *>  mStreamPtrList;
-    AVFormatContext	*			mFmtCtxPtr;
-	bool						mErrorAgain;
-	AudioFormat					mDstAudioFmt;
+    AVFormatContext    *            mFmtCtxPtr;
+    bool                        mErrorAgain;
+    AudioFormat                    mDstAudioFmt;
     bool                        mSyncVideoStreams;
 
-	std::vector<SafeQueue<VideoFrame>*>   mVideoQueues;
-	std::vector<SafeQueue<AudioFrame>*>   mAudioQueues;
+    std::vector<SafeQueue<VideoFrame>*>   mVideoQueues;
+    std::vector<SafeQueue<AudioFrame>*>   mAudioQueues;
 
     // mutex for format context ptr
     std::mutex                  mFmtCtxMutex;

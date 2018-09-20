@@ -118,55 +118,55 @@ template <typename T> T clamp(T x, const T &vmin, const T &vmax) { return (x < v
 
 class color_map {
 public:
-	color_map() {}
-	color_map(std::map<float, float3> map, int steps = 4000) : _map(map) { initialize(steps); }
-	color_map(const std::vector<float3>& values, int steps = 4000) { for (size_t i = 0; i < values.size(); i++) { _map[(float)i / (values.size() - 1)] = values[i];} initialize(steps);}
-	float min_key() const { return _min; }
-	float max_key() const { return _max; }
-	inline float3 get(float value) const { if (_max == _min) return *_data; auto t = (value - _min) / (_max - _min); t = clamp(t, 0.f, 1.f); return _data[(int)(t * (_size - 1))]; }
+    color_map() {}
+    color_map(std::map<float, float3> map, int steps = 4000) : _map(map) { initialize(steps); }
+    color_map(const std::vector<float3>& values, int steps = 4000) { for (size_t i = 0; i < values.size(); i++) { _map[(float)i / (values.size() - 1)] = values[i];} initialize(steps);}
+    float min_key() const { return _min; }
+    float max_key() const { return _max; }
+    inline float3 get(float value) const { if (_max == _min) return *_data; auto t = (value - _min) / (_max - _min); t = clamp(t, 0.f, 1.f); return _data[(int)(t * (_size - 1))]; }
 
     static color_map jet() { return color_map({ { 0, 0, 255 }, { 0, 255, 255 }, { 255, 255, 0 }, { 255, 0, 0 }, { 50, 0, 0 } }); }
 
 private:
-	float3 calc(float value) const {
-		if (_map.size() == 0) return{ value, value, value };
-		// if we have exactly this value in the map, just return it
-		if (_map.find(value) != _map.end()) return _map.at(value);
-		// if we are beyond the limits, return the first/last element
-		if (value < _map.begin()->first)   return _map.begin()->second;
-		if (value > _map.rbegin()->first)  return _map.rbegin()->second;
+    float3 calc(float value) const {
+        if (_map.size() == 0) return{ value, value, value };
+        // if we have exactly this value in the map, just return it
+        if (_map.find(value) != _map.end()) return _map.at(value);
+        // if we are beyond the limits, return the first/last element
+        if (value < _map.begin()->first)   return _map.begin()->second;
+        if (value > _map.rbegin()->first)  return _map.rbegin()->second;
 
-		auto lower = _map.lower_bound(value) == _map.begin() ? _map.begin() : --(_map.lower_bound(value));
-		auto upper = _map.upper_bound(value);
+        auto lower = _map.lower_bound(value) == _map.begin() ? _map.begin() : --(_map.lower_bound(value));
+        auto upper = _map.upper_bound(value);
 
-		auto t = (value - lower->first) / (upper->first - lower->first);
-		auto c1 = lower->second;
-		auto c2 = upper->second;
-		return lerp(c1, c2, t);
-	}
+        auto t = (value - lower->first) / (upper->first - lower->first);
+        auto c1 = lower->second;
+        auto c2 = upper->second;
+        return lerp(c1, c2, t);
+    }
 
-	void initialize(int steps) {
-		if (_map.size() == 0) return;
+    void initialize(int steps) {
+        if (_map.size() == 0) return;
 
-		_min = _map.begin()->first;
-		_max = _map.rbegin()->first;
+        _min = _map.begin()->first;
+        _max = _map.rbegin()->first;
 
-		_cache.resize(steps + 1);
-		for (int i = 0; i <= steps; i++) {
-			auto t = (float)i / steps;
-			auto x = _min + t*(_max - _min);
-			_cache[i] = calc(x);
-		}
+        _cache.resize(steps + 1);
+        for (int i = 0; i <= steps; i++) {
+            auto t = (float)i / steps;
+            auto x = _min + t*(_max - _min);
+            _cache[i] = calc(x);
+        }
 
-		// Save size and data to avoid STL checks penalties in DEBUG
-		_size = _cache.size();
-		_data = _cache.data();
-	}
+        // Save size and data to avoid STL checks penalties in DEBUG
+        _size = _cache.size();
+        _data = _cache.data();
+    }
 
-	float                   _min, _max;
-	std::map<float, float3> _map;
-	std::vector<float3>     _cache;
-	size_t _size; float3*   _data;
+    float                   _min, _max;
+    std::map<float, float3> _map;
+    std::vector<float3>     _cache;
+    size_t _size; float3*   _data;
 };
 
 }

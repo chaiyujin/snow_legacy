@@ -43,7 +43,7 @@ void Tensor3::resize(const std::vector<int> & shape) {
     mSize  = mShape[0] * mShape[1] * mShape[2];
 
     /* check if it is necessary to alloc new memory */ {
-        auto tmp  = shape;
+        std::vector<int> tmp  = shape;
         alignShape(tmp);
         if (tmp[0] * tmp[1] * tmp[2] != mMemSize) {
             this->free();

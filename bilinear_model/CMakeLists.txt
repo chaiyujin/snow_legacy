@@ -12,10 +12,10 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 
 add_executable(${PROJECT_NAME}
     ./main.cpp
-    ./faceware/tensor.cpp
-    ./faceware/faceware.cpp
-    ./faceware/bilinear_model.cpp
-    ./faceware/show_model.cpp)
+    ./facedb/tensor.cpp
+    ./facedb/facedb.cpp
+    ./facedb/bilinear_model.cpp
+    ./visualize/show_model.cpp)
 target_link_libraries(${PROJECT_NAME}
     snow                    # link snow
 )

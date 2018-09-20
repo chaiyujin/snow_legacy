@@ -1,9 +1,9 @@
 
-#include "faceware/faceware.h"
-#include "faceware/show_model.h"
+#include "facedb/facedb.h"
+#include "visualize/show_model.h"
 
 int main() {
-    FaceDB::read_raw_information("../../assets/fw");
+    FaceDB::Initialize("../../assets/fw");
 
     snow::App app;
     app.addWindow(new ShowWindow());

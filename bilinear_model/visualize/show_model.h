@@ -2,9 +2,9 @@
 #include <snow.h>
 #include <string>
 #include <vector>
-#include "tensor.h"
-#include "faceware.h"
-#include "bilinear_model.h"
+#include "../facedb/tensor.h"
+#include "../facedb/facedb.h"
+#include "../facedb/bilinear_model.h"
 
 typedef std::vector<glm::vec3> Vertices;
 
@@ -40,5 +40,10 @@ public:
         }
         mBilinearModel.updateMesh();
         mGLModel.updateFromTensor(mBilinearModel.mesh(0));
+    }
+    
+    template <typename T>
+    void updateShowParameters(const std::vector<T> &iden, const std::vector<T> *expr) {
+        updateShowParameters(iden.data(), expr.data());
     }
 };

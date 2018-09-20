@@ -8,10 +8,10 @@ Vertices read_vl(std::string filepath) {
     std::vector<glm::vec3> ret;
     FILE *fp = fopen(filepath.c_str(), "rb");
     if (fp != nullptr) {
-        uint32_t n_vertices;
+        uint32_t nVertices;
         size_t n_read;
-        n_read = fread(&n_vertices, sizeof(uint32_t), 1, fp);
-        for (uint32_t i = 0; i < n_vertices; ++i) {
+        n_read = fread(&nVertices, sizeof(uint32_t), 1, fp);
+        for (uint32_t i = 0; i < nVertices; ++i) {
             float v[3];
             n_read = fread(v, sizeof(float), 3, fp);
             ret.emplace_back(v[0], v[1], v[2]);
