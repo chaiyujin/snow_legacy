@@ -1,17 +1,15 @@
 cmake_minimum_required(VERSION 3.0)
 project(snow VERSION 0.0.2 DESCRIPTION "A simple tool for OpenGL, Gui and FFmpeg.")
+# at least c++11
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
 
 OPTION(SNOW_AVX              "AVX functions" on)
 OPTION(SNOW_RELEASE          "-O3 switch"    on)
 
 OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
-OPTION(SNOW_MODULE_FP        "Build with module functional programming" off)
-
-if (SNOW_MODULE_FP)
-    set(CMAKE_CXX_STANDARD 14)
-endif (SNOW_MODULE_FP)
+OPTION(SNOW_MODULE_FP        "Build with module functional programming" on)
 
 # ============== Begin ===============
 set(SNOW_SOURCES        "")
@@ -55,6 +53,18 @@ if (SNOW_AVX)
     list(APPEND SNOW_DEFINITIONS    "-mavx")
     list(APPEND SNOW_DEFINITIONS    "-DSNOW_AVX")
 endif (SNOW_AVX)
+
+
+# ====================================
+# =========== Module Core ============
+# ====================================
+if (SNOW_MODULE_FP)
+    # c++ 14
+    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 14 PARENT_SCOPE)
+    list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_LIBFP")
+    list(APPEND SNOW_INCLUDE_DIRS ${SNOW_FP_INCLUDE_DIRS})
+endif (SNOW_MODULE_FP)
 
 # ====================================
 # ========== Module OpenGL ===========
@@ -162,5 +172,5 @@ endmacro()
 add_definitions      (${SNOW_DEFINITIONS})
 include_directories  (${SNOW_INCLUDE_DIRS}                  )
 link_directories     (${SNOW_LIBRARIES_DIRS}                )
-add_library          (${PROJECT_NAME} SHARED ${SNOW_SOURCES})
+add_library          (${PROJECT_NAME} STATIC ${SNOW_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${SNOW_LIBRARIES}     )

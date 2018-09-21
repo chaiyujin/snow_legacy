@@ -15,4 +15,8 @@
 #include "media/snow_media.h"
 #endif
 
+#ifdef SNOW_MODULE_LIBFP
+#include "libfp/snow_libfp.h"
+#endif
+
 #undef main

@@ -34,4 +34,5 @@ pybind11_add_module(AnimeViewer_pybind
     ./facedb/bilinear_model.cpp
     ./facedb/visualize.cpp
 )
+set_target_properties(snow PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(AnimeViewer_pybind PRIVATE "$<$<NOT:$<CONFIG:Debug>>:snow>")
