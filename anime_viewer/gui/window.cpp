@@ -1,3 +1,4 @@
+#include "glsl.h"
 #include "window.h"
 
 double gSeconds = 0;
@@ -7,81 +8,10 @@ double gTimeClock = 0;
 
 std::map<std::string, VisWindow *> Application::gWindowMap;
 snow::App                         *Application::gAppPtr = nullptr;
+ModelType                          Application::gModelType = ModelType::Obj;
 
 PublicData  VisWindow::gShared;
 bool        VisWindow::gAudiable = false;
-
-std::string VERT_GLSL =
-"    layout (location = 0) in vec3 aPos;"
-"    layout (location = 1) in vec3 aNormal;"
-"    layout (location = 2) in vec2 aTexCoords;"
-
-"    out vec2 TexCoords;"
-"    out vec3 FragPos;"
-"    out vec3 Normal;"
-
-"    uniform mat4 model;"
-"    uniform mat4 view;"
-"    uniform mat4 projection;"
-"    uniform mat4 normal;"
-
-"    void main()"
-"    {"
-"        TexCoords = aTexCoords;  "  
-"        gl_Position = projection * view * model * vec4(aPos, 1.0);"
-"        FragPos = vec3(model * vec4(aPos, 1.0));"
-"        Normal = mat3(normal) * aNormal;"
-"    }";
-
-std::string FRAG_GLSL =
-"    out vec4 FragColor;"
-
-"    in vec2 TexCoords;"
-"    in vec3 FragPos;"
-"    in vec3 Normal;"
-
-"    uniform vec3        lightPos;"
-"    uniform vec3        lightColor;"
-"    uniform sampler2D   texture_diffuse1;"
-
-"    void main()"
-"    {   "
-"        float ambientStrength = 0.1;"
-"        vec3 ambient = ambientStrength * lightColor;"
-
-"        vec3 norm = normalize(Normal);"
-"        vec3 lightDir = normalize(lightPos - FragPos);"
-"        float diff = max(dot(norm, lightDir), 0.0);"
-"        vec3 diffuse = diff * lightColor;"
-
-"        vec3 result = (ambient + diffuse);"
-"        FragColor = vec4(result, 1.0) * texture(texture_diffuse1, TexCoords);"
-"    }";
-
-std::string FRAG_NOTEX_GLSL =
-"    out vec4 FragColor;"
-
-"    in vec2 TexCoords;"
-"    in vec3 FragPos;"
-"    in vec3 Normal;"
-
-"    uniform vec3        lightPos;"
-"    uniform vec3        lightColor;"
-"    uniform sampler2D   texture_diffuse1;"
-
-"    void main()"
-"    {   "
-"        float ambientStrength = 0.1;"
-"        vec3 ambient = ambientStrength * lightColor;"
-
-"        vec3 norm = normalize(Normal);"
-"        vec3 lightDir = normalize(lightPos - FragPos);"
-"        float diff = max(dot(norm, lightDir), 0.0);"
-"        vec3 diffuse = diff * lightColor;"
-
-"        vec3 result = (ambient + diffuse);"
-"        FragColor = vec4(result, 1.0);"
-"    }";
 
 /* static methods */
 
@@ -164,11 +94,11 @@ void VisWindow::terminate() {
 /* non-static */
 
 void VisWindow::releaseObj() {
-    if (mObjMeshPtr) {
-        delete mObjMeshPtr;
+    if (mModelPtr) {
+        delete mModelPtr;
         delete mShaderPtr;
         delete mCameraPtr;
-        mObjMeshPtr = nullptr;
+        mModelPtr = nullptr;
         mShaderPtr  = nullptr;
         mCameraPtr  = nullptr;
     }
@@ -179,22 +109,24 @@ void VisWindow::setObj(std::string filepath) {
         std::cerr << "No such file: " << filepath << std::endl;
         return;
     }
+    if (mModelType != ModelType::Obj)
+        throw std::runtime_error("setObj() is not supported for Obj Model");
     this->glMakeCurrent();  // important !!
     this->releaseObj();
-    this->mObjMeshPtr = new ObjMesh(filepath);
-    this->mShaderPtr  = new snow::Shader();
-    if (this->mObjMeshPtr->textures_loaded.size() == 0)
-        this->mShaderPtr->buildFromCode(VERT_GLSL, FRAG_NOTEX_GLSL);
-    else
-        this->mShaderPtr->buildFromCode(VERT_GLSL, FRAG_GLSL);
-    // camera
+    
+    this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
     this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
+    this->mShaderPtr = new snow::Shader();
+    this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
     this->mPrivate.mObjPath = filepath;
     std::cout << "[AnimeViewer]: Open mesh: " << filepath << std::endl;
 }
 
 void VisWindow::setAnime(const std::vector<Vertices> &anime) {
+    if (mModelType != ModelType::Obj)
+        throw std::runtime_error("setAnime() is not supported for Obj Model");
     mPrivate.mAnime = anime;
+    mPrivate.mFrames = (int)anime.size();
     if (anime.size() > gShared.gMaxFrames) {
         gShared.gMaxFrames = (int)anime.size();
     }
@@ -236,6 +168,38 @@ void VisWindow::setTexture(std::string title, uint8_t *data, int rows, int cols)
     }
 }
 
+/* for bilinear model */
+void VisWindow::setIden(const std::vector<double> &iden) {
+    if (iden.size() != FaceDB::LengthIdentity)
+        throw std::runtime_error("<iden> size() is not correct!");
+    if (mModelType != ModelType::Bilinear)
+        throw std::runtime_error("setIden() is not supported for Bilinear Model");
+    this->glMakeCurrent();
+
+    if (mModelPtr == nullptr) {
+        this->mModelPtr  = (snow::Model *) (new ShowModel());
+        this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 1.f, 0.f));
+        this->mShaderPtr = new snow::Shader();
+        this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
+    }
+    
+    mPrivate.mIden = iden;
+    ((ShowModel *)mModelPtr)->updateIden(mPrivate.mIden);
+}
+
+void VisWindow::setExprList(const std::vector<std::vector<double>> &exprList) {
+    if (exprList.size() == 0) return;
+    if (exprList[0].size() != FaceDB::LengthExpression)
+        throw std::runtime_error("<expr> size() is not correct!");
+    if (mModelType != ModelType::Bilinear)
+        throw std::runtime_error("setExprList() is not supported for Bilinear Model");
+    mPrivate.mExprList = exprList;
+    mPrivate.mFrames = (int)exprList.size();
+    if (exprList.size() > gShared.gMaxFrames) {
+        gShared.gMaxFrames = (int)exprList.size();
+    }
+}
+
 /* overwrite events */
 
 void VisWindow::processEvent(SDL_Event &event) {
@@ -245,7 +209,7 @@ void VisWindow::processEvent(SDL_Event &event) {
 
 void VisWindow::draw() {
     glEnable(GL_DEPTH_TEST);
-    if (mObjMeshPtr == nullptr) {
+    if (mModelPtr == nullptr) {
         ImGui::Begin(""); ImGui::Text("No mesh!"); ImGui::End();
         return;
     }
@@ -259,12 +223,12 @@ void VisWindow::draw() {
         mShaderPtr->setMat4("projection", projection);
         mShaderPtr->setMat4("view", view);
         // model, normal
-        glm::mat4 model = mObjMeshPtr->autoModelTransform(projection * view);
+        glm::mat4 model = mModelPtr->autoModelTransform(projection * view, 0.3);
         glm::mat4 normal = glm::transpose(glm::inverse(model));
         mShaderPtr->setMat4("model", model);
         mShaderPtr->setMat4("normal", normal);
         // draw model
-        mObjMeshPtr->draw(*mShaderPtr);
+        mModelPtr->draw(*mShaderPtr);
     }
 
     /* draw text at bottom */ if (mPrivate.mText.length() > 0) {
@@ -276,7 +240,7 @@ void VisWindow::draw() {
         ImGui::End();
     }
 
-    /* draw player controller on top */ if (mPrivate.mAnime.size() > 0) {
+    /* draw player controller on top */ if (mPrivate.mFrames > 0) {
         // position and size, on top of window
         int height = ImGui::GetItemsLineHeightWithSpacing() * 3 + ImGui::GetStyle().WindowPadding.y * 2;
         ImGui::SetNextWindowPos(ImVec2(0, 0),0);
@@ -329,7 +293,7 @@ void VisWindow::draw() {
         }
 
         // pause or play
-        if ((gPlaying && ImGui::Button("Pause")) || gShared.gCurrentFrame >= mPrivate.mAnime.size()) {
+        if ((gPlaying && ImGui::Button("Pause")) || gShared.gCurrentFrame >= mPrivate.mFrames) {
             if (gAudiable) SDL_PauseAudio(1);
             gPlaying = false;
         }
@@ -358,8 +322,16 @@ void VisWindow::draw() {
 
         /* update frame */ {
             int idx = gShared.gCurrentFrame;
-            if (idx < mPrivate.mAnime.size())
-                mObjMeshPtr->modifyPosition(mPrivate.mAnime.at(idx));
+            switch (mModelType) {
+            case ModelType::Obj:
+                if (idx < mPrivate.mAnime.size()) mModelPtr->modify(&mPrivate.mAnime.at(idx));
+                break;
+            case ModelType::Bilinear:
+                if (idx < mPrivate.mExprList.size()) mModelPtr->modify(&mPrivate.mExprList.at(idx));
+                break;
+            default:
+                throw std::runtime_error("Unknown model type.");
+            }
             // update scroll image
             for (auto it = mPrivate.mScrollImageMap.begin(); it != mPrivate.mScrollImageMap.end(); ++it) {
                 int r = idx * it->second.mHopLength;

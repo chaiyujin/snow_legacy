@@ -44,6 +44,9 @@ namespace snow {
             }
             textures_loaded.clear();
         }
+        // modify with given user data
+        virtual void modify(const void *userData) {}
+
         void draw(Shader &shader) {
             for (size_t i = 0; i < meshes.size(); ++i) {
                 meshes[i]->draw(shader);

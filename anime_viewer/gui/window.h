@@ -2,7 +2,8 @@
 #include <snow.h>
 #include <string>
 #include <vector>
-#include "biwi_obj.h"
+#include "../obj/biwi_obj.h"
+#include "../facedb/visualize.h"
 
 typedef std::vector<int16_t> S16Signal;
 
@@ -65,10 +66,21 @@ struct PublicData {
 struct PrivateData {
     std::string                         mText;
     std::string                         mObjPath;
-    std::vector<Vertices>               mAnime;
     std::map<std::string, ScrollImage>  mScrollImageMap;
+    // for modeltype: obj
+    std::vector<Vertices>               mAnime;     
+    // for modeltype: bilinear
+    std::vector<double>                 mIden;      
+    std::vector<std::vector<double>>    mExprList;
+    int                                 mFrames;
+    PrivateData()
+        : mText(""), mObjPath(""), mScrollImageMap()
+        , mAnime(0), mIden(0), mExprList(0), mFrames(0) {}
+};
 
-    PrivateData(): mText(""), mObjPath(""), mAnime(0), mScrollImageMap() {}
+enum ModelType {
+    Obj      = 0,
+    Bilinear = 1
 };
 
 class VisWindow : public snow::AbstractWindow {
@@ -76,9 +88,11 @@ private:
     // ui and play related
     static PublicData    gShared;
     static bool          gAudiable;
+
+    ModelType            mModelType;
     PrivateData          mPrivate;
     // window specific
-    ObjMesh             *mObjMeshPtr;
+    snow::Model         *mModelPtr;
     snow::Shader        *mShaderPtr;
     snow::ArcballCamera *mCameraPtr;
 
@@ -91,10 +105,11 @@ private:
 
 public:
 
-    VisWindow(const char *title="")
+    VisWindow(ModelType type, const char *title="")
         : AbstractWindow(title)
+        , mModelType(type)
         , mPrivate()
-        , mObjMeshPtr(nullptr)
+        , mModelPtr(nullptr)
         , mShaderPtr(nullptr)
         , mCameraPtr(nullptr)    
     {}
@@ -110,10 +125,13 @@ public:
     void setAnime(const std::vector<Vertices> &data);
     void addScrollImage(std::string title, const ScrollImage &scrollImage);
     void setText(std::string sentence) { mPrivate.mText = sentence; }
+    void setIden(const std::vector<double> &iden);
+    void setExprList(const std::vector<std::vector<double>> &exprList);
 };
 
 class Application {
 private:
+    static ModelType                          gModelType;
     static snow::App                         *gAppPtr;
     static std::map<std::string, VisWindow *> gWindowMap;
     static VisWindow *getWindow(std::string name, bool create=false) {
@@ -124,15 +142,16 @@ private:
         }
         else if (create) {
             // create on missing
-            ret = new VisWindow(name.c_str());
+            ret = new VisWindow(gModelType, name.c_str());
             // gWindowMap.insert(std::pair<std::string, VisWindow *>(name, ret));
             gWindowMap.insert({name, ret});
         }
         return ret;
     }
 public:
-    static void newAPP() {
+    static void newAPP(ModelType type) {
         terminate();
+        gModelType = type;
         gAppPtr = new snow::App();
         std::cout << "[AnimeViewer]: > Begin----\n";
     }
@@ -190,5 +209,19 @@ public:
             throw std::runtime_error("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->addScrollImage(title, scrollImage);
+    }
+
+    static void setIden(std::string window, const std::vector<double> &iden) {
+        if (gAppPtr == nullptr)
+            throw std::runtime_error("You forget newAPP() first!");
+        VisWindow *win = getWindow(window, true);
+        win->setIden(iden);
+    }
+
+    static void setExprList(std::string window, const std::vector<std::vector<double>> &exprList) {
+        if (gAppPtr == nullptr)
+            throw std::runtime_error("You forget newAPP() first!");
+        VisWindow *win = getWindow(window, true);
+        win->setExprList(exprList);
     }
 };

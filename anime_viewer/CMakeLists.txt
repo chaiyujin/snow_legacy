@@ -8,8 +8,13 @@ link_directories(${SNOW_LIBRARIES_DIRS})
 add_definitions(${SNOW_DEFINITIONS})
 
 set(SOURCES ./main.cpp
-            ./biwi_obj.cpp
-            ./window.cpp)
+            ./gui/window.cpp
+            ./obj/biwi_obj.cpp
+            ./facedb/tensor.cpp
+            ./facedb/facedb.cpp
+            ./facedb/bilinear_model.cpp
+            ./facedb/visualize.cpp
+)
 add_executable(AnimeViewer ${SOURCES})
 target_link_libraries(AnimeViewer snow)
 
