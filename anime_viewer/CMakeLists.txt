@@ -7,13 +7,14 @@ include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(${SNOW_LIBRARIES_DIRS})
 add_definitions(${SNOW_DEFINITIONS})
 
-set(SOURCES ./main.cpp
-            ./gui/window.cpp
-            ./obj/biwi_obj.cpp
-            ./facedb/tensor.cpp
-            ./facedb/facedb.cpp
-            ./facedb/bilinear_model.cpp
-            ./facedb/visualize.cpp
+set(SOURCES 
+    ./main.cpp
+    ./gui/window.cpp
+    ./obj/biwi_obj.cpp
+    ./facedb/tensor.cpp
+    ./facedb/facedb.cpp
+    ./facedb/bilinear_model.cpp
+    ./facedb/visualize.cpp
 )
 add_executable(AnimeViewer ${SOURCES})
 target_link_libraries(AnimeViewer snow)
@@ -23,9 +24,14 @@ if (WIN32)
 endif (WIN32)
 
 # === Python Binding ===
-# 
-# add_subdirectory(../pybind11 ext/pybind11/)
-# pybind11_add_module(AnimeViewer ./pybind.cpp
-#                                 ./biwi_obj.cpp
-#                                 ./window.cpp)
-# target_link_libraries(AnimeViewer PRIVATE "$<$<NOT:$<CONFIG:Debug>>:snow>")
+add_subdirectory(../pybind11 ext/pybind11/)
+pybind11_add_module(AnimeViewer_pybind
+    ./pybind.cpp
+    ./gui/window.cpp
+    ./obj/biwi_obj.cpp
+    ./facedb/tensor.cpp
+    ./facedb/facedb.cpp
+    ./facedb/bilinear_model.cpp
+    ./facedb/visualize.cpp
+)
+target_link_libraries(AnimeViewer_pybind PRIVATE "$<$<NOT:$<CONFIG:Debug>>:snow>")

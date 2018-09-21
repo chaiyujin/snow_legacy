@@ -1,9 +1,19 @@
+/**
+ * Pybind11 for anime viewer
+ * */
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "gui/window.h"
 
 namespace py = pybind11;
+
+std::vector<double> vector_from_numpy(py::array_t<double> &data) {
+    assert(data.ndim() == 1);
+    std::vector<double> ret(data.shape(0));
+    memcpy(ret.data(), data.data(), sizeof(double) * data.shape(0));
+    return ret;
+}
 
 S16Signal audio_from_numpy(py::array_t<int16_t> &data) {
     assert(data.ndim() == 1);
@@ -50,27 +60,27 @@ void terminate() {
     Application::terminate();
 }
 
-void new_app() {
-    Application::newAPP();
+void new_app(std::string type) {
+    if (type == "obj")
+        Application::newAPP(ModelType::Obj);
+    else if (type == "bilinear")
+        Application::newAPP(ModelType::Bilinear);
+    else
+        throw std::runtime_error("[anime_viewer]: new_app(type), type should be `obj` or `bilinear`");
 }
 
 void run(double fps) {
     Application::run(fps);
 }
 
+/**
+ * =========================================
+ *              window private
+ * =========================================
+ **/
+
 void set_text(std::string window, std::string text) {
     Application::setText(window, text);
-}
-
-/* window private */
-
-void set_obj(std::string window, std::string filename) {
-    Application::setObj(window, filename);
-}
-
-void set_anime(std::string window, py::array_t<float> &anime) {
-    std::vector<Vertices> frames = anime_from_numpy(anime);
-    Application::setAnime(window, frames);
 }
 
 void add_audio(std::string tag, py::array_t<int16_t> &audio, int samplerate) {
@@ -88,15 +98,48 @@ void add_scroll_image(std::string window, std::string title,
     Application::addScrollImage(window, title, scroll_image);
 }
 
+/* for ModelType::Obj */
+
+void set_obj(std::string window, std::string filename) {
+    Application::setObj(window, filename);
+}
+
+void set_anime(std::string window, py::array_t<float> &anime) {
+    std::vector<Vertices> frames = anime_from_numpy(anime);
+    Application::setAnime(window, frames);
+}
+
+/* for ModelType::Bilinear */
+void set_iden(std::string window, py::array_t<double> &iden) {
+    std::vector<double> _iden = vector_from_numpy(iden);
+    Application::setIden(window, _iden);
+}
+
+void set_expr_list(std::string window, py::array_t<double> &exprList) {
+    assert(exprList.ndim() == 2);
+    std::vector<std::vector<double>> _exprList;
+    for (size_t i = 0; i < exprList.shape(0); ++i) {
+        std::vector<double> expr(exprList.shape(1));
+        memcpy(expr.data(), exprList.data(i), sizeof(double) * expr.size());
+        _exprList.push_back(expr);
+    }
+    Application::setExprList(window, _exprList);
+}
+
 PYBIND11_MODULE(AnimeViewer, m) {
     m.doc() = "pybind11 AnimeViewer plugin"; // optional module docstring
 
-    m.def("new_app",            &new_app, "");
-    m.def("set_text",           &set_text, "");
-    m.def("add_audio",          &add_audio, "");
-    m.def("set_obj",            &set_obj, "");
-    m.def("set_anime",          &set_anime, "");
-    m.def("add_scroll_image",   &add_scroll_image, "");
-    m.def("run",                &run, "");
-    m.def("terminate",          &terminate, "");
+    m.def("new_app",            &new_app,           "create a new app for `obj` or `bilinear`");
+    m.def("set_text",           &set_text,          "set the text for certain window");
+    m.def("add_audio",          &add_audio,         "add audio for entire app");
+    m.def("add_scroll_image",   &add_scroll_image,  "");
+    // for ModelType::Obj
+    m.def("set_obj",            &set_obj,           "set obj for certain window");
+    m.def("set_anime",          &set_anime,         "set anime for certain window");
+    // for ModelType::Bilinear
+    m.def("set_iden",           &set_iden,          "set iden for certain window");
+    m.def("set_expr_list",      &set_expr_list,     "set expr list for certain window");
+    // run or terminate
+    m.def("run",                &run,               "run app with given fps");
+    m.def("terminate",          &terminate,         "terminate app");
 }
