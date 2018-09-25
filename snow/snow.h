@@ -14,6 +14,7 @@
 #ifdef SNOW_MODULE_FFMPEG
 #include "media/snow_media.h"
 #endif
+#include "media/snow_wav.h"
 
 #ifdef SNOW_MODULE_LIBFP
 #include "libfp/snow_libfp.h"

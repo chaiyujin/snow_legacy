@@ -22,10 +22,10 @@ int main() {
     Int * arr1 = arena.alloc<Int>(5);
     arena.free<Int>(arr1);
     arr1 = arena.alloc<Int>(100);
-    printf("arena meta info: from %X, size %d\n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
+    // printf("arena meta info: from %X, size %d\n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
     arena.free(arr1);
     arr1 = new Int[100];
-    printf("new   meta info: size0 %d, size1 %d \n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
+    // printf("new   meta info: size0 %d, size1 %d \n", *(size_t *)((void *)arr1 - 16), *(size_t *)((void *)arr1 - 8));
     {
         snow::StopWatch watch("arena");
         for (int i = 0; i < 10; ++i) {

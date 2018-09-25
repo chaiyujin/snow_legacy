@@ -148,6 +148,9 @@ if (SNOW_MODULE_FFMPEG)
     list(APPEND SNOW_LIBRARIES          "${FFMPEG_LIBRARIES}")
     
 endif (SNOW_MODULE_FFMPEG)
+# easy media
+list(APPEND SNOW_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_wav.cpp")
+
 
 # === CACHE ===
 set(SNOW_SOURCES        "${SNOW_SOURCES}"        CACHE INTERNAL "snow sources")

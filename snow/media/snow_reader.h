@@ -19,7 +19,7 @@ struct VideoFormat {
 };
 
 struct AudioFormat {
-    AVSampleFormat    mSampleFmt;
+    AVSampleFormat  mSampleFmt;
     uint64_t        mChLayout;
     uint16_t        mChannels;
     uint32_t        mSampleRate;
