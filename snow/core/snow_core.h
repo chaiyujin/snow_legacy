@@ -7,6 +7,6 @@
 #include "snow_memory.h"
 #include "snow_watch.h"
 #include "snow_iostream.h"
-#include "snow_filesystem.h"
+#include "snow_path.h"
 
 #include "snow_simd.h"

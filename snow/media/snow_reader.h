@@ -176,6 +176,7 @@ public:
     void    seek(int64_t ms);
     void    clearQueues();
     void    setSyncVideoStreams(bool flag) { mSyncVideoStreams = flag; }
+    const std::vector<float> & audioTrack(int i) { return mWavTracks[i].channel(0); }
     
     std::vector<std::shared_ptr<StreamBase>> getStreams();
     std::unique_ptr<FrameBase> readFrame(const StreamBase *st);

@@ -464,8 +464,14 @@ void MediaReader::preReadAudioTracks() {
     while (processInput(MediaType::Audio) !=  AVERROR_EOF) ;
     int iTrack = 0;
     for (auto *q : mAudioQueues) {
+        bool invalid = false;
         std::vector<float> track;
         int64_t startTime = q->front().timestamp();
+        // padding zero for starttime
+        const int padding = startTime * mDstAudioFmt.mSampleRate / 1000;
+        startTime -= padding * 1000 / mDstAudioFmt.mSampleRate;
+        for (int i = 0; i < padding; ++i) track.push_back(0.0f);
+        // read from frames
         while (q->size()) {
             AudioFrame frame = q->frontAndPop();
             if (frame.isNull()) break;
@@ -487,14 +493,15 @@ void MediaReader::preReadAudioTracks() {
             }
             else {
                 printf("only support uint8_t and int16_t audio, not bytes %d!\n", frame.mBytePerSample);
+                invalid = true;
                 break;
             }
         }
-        if (track.size()) {
+        if (!invalid) {
             mWavTracks.emplace_back();
             mWavTracks.back().setSampleRate(mDstAudioFmt.mSampleRate);
             mWavTracks.back().addChannel(track);
-            // mWavTracks.back().write(std::string("../../assets/test") + std::to_string(iTrack) + ".wav");
+            // mWavTracks.back().write(std::string("../../../assets/test") + std::to_string(iTrack) + ".wav");
             // printf("[MediaReader]: Audio track %d: start at %d, has %d samples, %d sr\n",
             //        iTrack, startTime, track.size(), mDstAudioFmt.mSampleRate);
         }

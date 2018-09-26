@@ -71,7 +71,7 @@ public:
         int32_t         mSize;
     };
 
-    WavPCM() : mStartTime(0) { mHeader.mSampleRate = 0; }
+    WavPCM() { mHeader.mSampleRate = 0; }
 
     bool read (const std::string &path);
     bool write(const std::string &path);
@@ -82,13 +82,11 @@ public:
     const std::vector<float> &  channel(int i)    const { return mData[i];             }
     size_t                      numChannels()     const { return mData.size();         }
     uint32_t                    sampleRate()      const { return mHeader.mSampleRate;  }
-    int64_t                     startTime()       const { return mStartTime;           }
     void                        dumpHeader()      const;
 
 private:
     std::vector<std::vector<float>>   mData;
     Header                            mHeader;
-    int64_t                           mStartTime;
 };
 
 }

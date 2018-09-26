@@ -126,7 +126,7 @@ void set_expr_list(std::string window, py::array_t<double> &exprList) {
     Application::setExprList(window, _exprList);
 }
 
-PYBIND11_MODULE(AnimeViewer, m) {
+PYBIND11_MODULE(AnimeViewer11, m) {
     m.doc() = "pybind11 AnimeViewer plugin"; // optional module docstring
 
     m.def("new_app",            &new_app,           "create a new app for `obj` or `bilinear`");
