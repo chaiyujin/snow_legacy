@@ -4,6 +4,8 @@
 
 #include "data.h"
 
+extern int SampleRate;
+
 void setAudioTrack(int track);
 void setSampleRate(int sr); 
 void collectVideo(const std::string &filename,
