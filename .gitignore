@@ -6,3 +6,4 @@
 *assets/
 third_party/
 pybind11/
+*.py[cod]

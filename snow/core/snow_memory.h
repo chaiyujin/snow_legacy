@@ -130,6 +130,9 @@ public:
         if (mCurBlockPtr) delete mCurBlockPtr;
         for (auto *block : mUsedBlocks)      delete block;
         for (auto *block : mAvailableBlocks) delete block;
+        mCurBlockPtr = nullptr;
+        mUsedBlocks.clear();
+        mAvailableBlocks.clear();
     }
 
     void *alloc(uint32_t size) {
@@ -174,6 +177,7 @@ public:
     template <typename T>
     void free(T *ptr) {
         if (ptr == nullptr) return;
+        if (mCurBlockPtr == nullptr) return;
         const int count = Block::querySize(ptr) / sizeof(T);
         for (uint32_t i = 0; i < count; ++i) ptr[i].~T();
         Block * block = Block::free(ptr);
