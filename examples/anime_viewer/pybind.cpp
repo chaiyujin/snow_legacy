@@ -126,9 +126,14 @@ void set_expr_list(std::string window, py::array_t<double> &exprList) {
     Application::setExprList(window, _exprList);
 }
 
-PYBIND11_MODULE(AnimeViewer11, m) {
+void initialize_bilinear(std::string root_dir) {
+    FaceDB::Initialize(root_dir);
+}
+
+PYBIND11_MODULE(anime_viewer11, m) {
     m.doc() = "pybind11 AnimeViewer plugin"; // optional module docstring
 
+    m.def("initialize_bilinear",&initialize_bilinear,"");
     m.def("new_app",            &new_app,           "create a new app for `obj` or `bilinear`");
     m.def("set_text",           &set_text,          "set the text for certain window");
     m.def("add_audio",          &add_audio,         "add audio for entire app");

@@ -19,6 +19,7 @@ public:
 
     bool isNull() const { return !mDataPtr; }
     void resize(const std::vector<int> & shape);
+    const Tensor3 &operator=(const Tensor3 &b);
 
     template <typename T>
     void unfoldData(T *data, int unfold_mode, bool is_data_colmajor=true) {

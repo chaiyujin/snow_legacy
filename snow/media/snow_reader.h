@@ -156,6 +156,8 @@ protected:
     std::vector<SafeQueue<AudioFrame>*> mAudioQueues;
     // mutex for format context ptr
     std::mutex                          mFmtCtxMutex;
+    // fps
+    double                              mFPS;
     // pre-read audio tracks
     std::vector<WavPCM>                 mWavTracks;
 
@@ -176,6 +178,7 @@ public:
     void    seek(int64_t ms);
     void    clearQueues();
     void    setSyncVideoStreams(bool flag) { mSyncVideoStreams = flag; }
+    double  fps() const { return mFPS; }
     const std::vector<float> & audioTrack(int i) { return mWavTracks[i].channel(0); }
     
     std::vector<std::shared_ptr<StreamBase>> getStreams();

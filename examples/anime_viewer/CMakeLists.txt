@@ -25,7 +25,7 @@ endif (WIN32)
 
 # === Python Binding ===
 add_subdirectory(../../pybind11 ext/pybind11/)
-pybind11_add_module(AnimeViewer11
+pybind11_add_module(anime_viewer11
     ./pybind.cpp
     ./gui/window.cpp
     ./obj/biwi_obj.cpp
@@ -35,4 +35,4 @@ pybind11_add_module(AnimeViewer11
     ./facedb/visualize.cpp
 )
 set_target_properties(snow PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(AnimeViewer11 PRIVATE "$<$<NOT:$<CONFIG:Debug>>:snow>")
+target_link_libraries(anime_viewer11 PRIVATE "$<$<NOT:$<CONFIG:Debug>>:snow>")

@@ -85,7 +85,9 @@ MediaReader::MediaReader(const std::string &filename)
     : mFilename(filename)
     , mFmtCtxPtr(nullptr)
     , mErrorAgain(false)
-    , mSyncVideoStreams(true) {}
+    , mSyncVideoStreams(true)
+    , mFPS(0.0)
+    , mWavTracks(0) {}
 
 MediaReader::MediaReader(const MediaReader &b) 
     : mFilename(b.mFilename)
@@ -96,6 +98,8 @@ MediaReader::MediaReader(const MediaReader &b)
     , mSyncVideoStreams(b.mSyncVideoStreams)
     , mVideoQueues(b.mVideoQueues)
     , mAudioQueues(b.mAudioQueues)
+    , mFPS(b.mFPS)
+    , mWavTracks(b.mWavTracks)
     {}
 
 MediaReader::~MediaReader() {
@@ -151,8 +155,16 @@ bool MediaReader::open() {
 
         /* Reencode video & audio and remux subtitles etc. */
         if (codec_ctx->codec_type == AVMEDIA_TYPE_VIDEO || codec_ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-            if (codec_ctx->codec_type == AVMEDIA_TYPE_VIDEO)
+            if (codec_ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
                 codec_ctx->framerate = av_guess_frame_rate(mFmtCtxPtr, stream, NULL);
+                double fps = (double)codec_ctx->framerate.num / (double)codec_ctx->framerate.den;
+                if (mFPS == 0.0) mFPS = fps;
+                else if (abs(mFPS - fps) > 1e-6) {
+                    av_log(NULL, AV_LOG_ERROR, "Video tracks have different fps %f %f\n", mFPS, fps);
+                    close();
+                    return false;
+                }
+            }
             /* Open decoder */
             ret = avcodec_open2(codec_ctx, dec, NULL);
             if (ret < 0) {

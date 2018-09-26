@@ -7,7 +7,7 @@ bool   gPlaying = false;
 double gTimeClock = 0;
 
 std::map<std::string, VisWindow *> Application::gWindowMap;
-snow::App                         *Application::gAppPtr = nullptr;
+snow::App *                        Application::gAppPtr = nullptr;
 ModelType                          Application::gModelType = ModelType::Obj;
 
 PublicData  VisWindow::gShared;

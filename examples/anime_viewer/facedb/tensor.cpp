@@ -34,6 +34,15 @@ Tensor3::~Tensor3() {
     if (!mIsSub) this->free();
 }
 
+const Tensor3 &Tensor3::operator=(const Tensor3 &b) {
+    if (mIsSub) throw std::runtime_error("[Tensor3]: operator = not allowed for sub-tensor!\n");
+    this->free();
+    mShape = b.mShape;
+    this->alloc(mShape);
+    // mMemSize == b.mMemsize
+    memcpy(mDataPtr, b.mDataPtr, sizeof(double) * mMemSize);
+}
+
 void Tensor3::resize(const std::vector<int> & shape) {
     static const int align_1 = Alignment - 1;
     if (shape.size() != 3) throw std::runtime_error("[Tensor3]: resize() shape is not 3 dims!\n");

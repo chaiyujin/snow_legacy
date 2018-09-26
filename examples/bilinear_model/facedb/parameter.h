@@ -109,8 +109,11 @@ public:
 
     static Eigen::VectorXd FACS2Expr(const double *facs) {
         Eigen::VectorXd E_BS = Eigen::Map<const Eigen::Matrix<double, -1, 1>>(facs, FaceDB::ExprUT().cols());
-        // E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#ifdef USE_50_25
+        E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#else
         E_BS[0] = 1;
+#endif
         return FaceDB::ExprUT() * E_BS;
     }
     static void FACS2Expr(const double *facs, double *expr) {

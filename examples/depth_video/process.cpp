@@ -1,4 +1,3 @@
-#define SNOW_MODULE_FFMPEG
 #include "process.h"
 #include <sstream>
 
@@ -8,7 +7,7 @@ int AudioTrack = 0;
 void setAudioTrack(int track) { AudioTrack = track; }
 void setSampleRate(int sr)    { SampleRate = sr;    }
 
-void collectVideo(const std::string &filename,
+double collectVideo(const std::string &filename,
                   std::vector<ModelFrame> &modelFrames,
                   std::vector<float> &audioTrack) {
     snow::MediaReader::initializeFFmpeg();
@@ -16,7 +15,7 @@ void collectVideo(const std::string &filename,
     reader.setDstAudioSampleRate(SampleRate);
     if (!reader.open()) {
         printf("%s is not opened!\n", filename.c_str());
-        return;
+        return -1.0;
     }
 
     audioTrack.clear();
@@ -30,7 +29,7 @@ void collectVideo(const std::string &filename,
         std::ifstream fin(paramFile);
         if (!fin.is_open()) {
             printf("%s has no bilinear parameters.\n", paramFile.c_str());
-            return;
+            return -1.0;
         }
         std::string str;
         int id; double val;
@@ -85,6 +84,8 @@ void collectVideo(const std::string &filename,
             }
         }
     }
+    double fps = reader.fps();
     // close
     reader.close();
+    return fps;
 }

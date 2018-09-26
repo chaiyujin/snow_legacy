@@ -32,6 +32,7 @@ const std::vector<int> FaceDB::gLandmarks73({
 });
 
 void FaceDB::Initialize(std::string dir) {
+
     if (dir[dir.length() - 1] != '/' && dir[dir.length() - 1] != '\\')
         dir += '/';
     std::string tensor_path = dir + "tensor.bin";
@@ -119,8 +120,11 @@ void FaceDB::Initialize(std::string dir) {
             gTensorShape[1] = l; gOriginShape[1] = 150;
             gTensorShape[2] = m; gOriginShape[2] = 47;
 
+            // Tensor3 tmp;
             gCoreTensor.resize({ n, l, m });
-            gCoreTensor.unfold_data(tmp_tensor, 2);
+            gCoreTensor.unfoldData<double>(tmp_tensor, 2);
+
+            // tmp.mul(-1, gCoreTensor);
 
             std::cout << " core  shape: " << gTensorShape << std::endl;
             std::cout << "origin shape: " << gOriginShape << std::endl;
@@ -136,21 +140,22 @@ void FaceDB::Initialize(std::string dir) {
             fin.read(reinterpret_cast<char*>(&ndims), sizeof(int));
             std::cout << "identity prior dim = " << ndims << std::endl;
 
-            _iden_avg.resize(ndims);
-            _iden_0.resize(ndims);
-            sigma_Wid.resize(ndims, ndims);
+            // _iden_avg.resize(ndims);
+            // _iden_0.resize(ndims);
+            // sigma_Wid.resize(ndims, ndims);
 
-            fin.read(reinterpret_cast<char*>(_iden_avg.data()), sizeof(double)*ndims);
-            fin.read(reinterpret_cast<char*>(_iden_0.data()), sizeof(double)*ndims);
-            fin.read(reinterpret_cast<char*>(sigma_Wid.data()), sizeof(double)*ndims*ndims);
-            _iden_inv_sigma = sigma_Wid.inverse();
-            // Take the diagonal
-            _iden_inv_sigma_diag = Eigen::VectorXd(ndims);
-            for (int i = 0; i<ndims; ++i) {
-                _iden_inv_sigma_diag(i) = _iden_inv_sigma(i, i);
-            }
-            /*std::cout << _iden_avg << std::endl;
-            std::cout << _iden_inv_sigma_diag << std::endl;*/
+            // fin.read(reinterpret_cast<char*>(_iden_avg.data()), sizeof(double)*ndims);
+            // fin.read(reinterpret_cast<char*>(_iden_0.data()), sizeof(double)*ndims);
+            // fin.read(reinterpret_cast<char*>(sigma_Wid.data()), sizeof(double)*ndims*ndims);
+            // _iden_inv_sigma = sigma_Wid.inverse();
+            // // Take the diagonal
+            // _iden_inv_sigma_diag = Eigen::VectorXd(ndims);
+            // for (int i = 0; i<ndims; ++i) {
+            //     _iden_inv_sigma_diag(i) = _iden_inv_sigma(i, i);
+            // }
+
+            fin.seekg(sizeof(double)*ndims*(ndims+2), std::ios::cur);
+
             int m, n;
             fin.read(reinterpret_cast<char*>(&m), sizeof(int));
             fin.read(reinterpret_cast<char*>(&n), sizeof(int));
@@ -169,12 +174,12 @@ void FaceDB::Initialize(std::string dir) {
             }
 
 
-            _iden_max.resize(n);
-            _iden_min.resize(n);
-            for (int i = 0; i<n; ++i) {
-                _iden_max(i) = _iden_avg(i) + (gIdenUT.row(i).maxCoeff() - _iden_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
-                _iden_min(i) = _iden_avg(i) + (gIdenUT.row(i).minCoeff() - _iden_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
-            }
+            // _iden_max.resize(n);
+            // _iden_min.resize(n);
+            // for (int i = 0; i<n; ++i) {
+            //     _iden_max(i) = _iden_avg(i) + (gIdenUT.row(i).maxCoeff() - _iden_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
+            //     _iden_min(i) = _iden_avg(i) + (gIdenUT.row(i).minCoeff() - _iden_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
+            // }
 
             fin.close();
         }
@@ -188,21 +193,22 @@ void FaceDB::Initialize(std::string dir) {
             fin.read(reinterpret_cast<char*>(&ndims), sizeof(int));
             std::cout << "expr prior dim = " << ndims << std::endl;
 
-            _expr_avg.resize(ndims);
-            _expr_0.resize(ndims);
-            sigma_Wexp.resize(ndims, ndims);
+            // _expr_avg.resize(ndims);
+            // _expr_0.resize(ndims);
+            // sigma_Wexp.resize(ndims, ndims);
 
-            fin.read(reinterpret_cast<char*>(_expr_avg.data()), sizeof(double)*ndims);
-            fin.read(reinterpret_cast<char*>(_expr_0.data()), sizeof(double)*ndims);
-            fin.read(reinterpret_cast<char*>(sigma_Wexp.data()), sizeof(double)*ndims*ndims);
-            _expr_inv_sigma = sigma_Wexp.inverse();
-            // Take the diagonal
-            _expr_inv_sigma_diag = Eigen::VectorXd(ndims);
-            for (int i = 0; i<ndims; ++i) {
-                _expr_inv_sigma_diag(i) = _expr_inv_sigma(i, i);
-            }
-            /*std::cout << _expr_avg << std::endl;
-            std::cout << _expr_inv_sigma_diag << std::endl;*/
+            // fin.read(reinterpret_cast<char*>(_expr_avg.data()), sizeof(double)*ndims);
+            // fin.read(reinterpret_cast<char*>(_expr_0.data()), sizeof(double)*ndims);
+            // fin.read(reinterpret_cast<char*>(sigma_Wexp.data()), sizeof(double)*ndims*ndims);
+            // _expr_inv_sigma = sigma_Wexp.inverse();
+            // // Take the diagonal
+            // _expr_inv_sigma_diag = Eigen::VectorXd(ndims);
+            // for (int i = 0; i<ndims; ++i) {
+            //     _expr_inv_sigma_diag(i) = _expr_inv_sigma(i, i);
+            // }
+
+            fin.seekg(sizeof(double)*ndims*(ndims+2), std::ios::cur);
+
             int m, n;
             fin.read(reinterpret_cast<char*>(&m), sizeof(int));
             fin.read(reinterpret_cast<char*>(&n), sizeof(int));
@@ -210,34 +216,17 @@ void FaceDB::Initialize(std::string dir) {
             gExprUT.resize(n, m);
             fin.read(reinterpret_cast<char*>(gExprUT.data()), sizeof(double)*m*n);
 
-            /*for (int i = 0; i < gExprUT.rows(); ++i)
-            {
-                for (int j = 0; j < gExprUT.cols(); ++j)
-                {
-                    if (abs(gExprUT(i, j)) < 1e-100)
-                        gExprUT(i, j) = 0;
-                    else if (gExprUT(i, j) > 1e100)
-                        gExprUT(i, j) = 1e100;
-                    else if (gExprUT(i, j) < -1e100)
-                        gExprUT(i, j) = -1e100;
-                    else if (std::isnan(gExprUT(i, j)))
-                        gExprUT(i, j) = 0;
-                }
-            }*/
-
-            _expr_max.resize(n);
-            _expr_min.resize(n);
-            for (int i = 0; i<n; ++i) {
-                _expr_max(i) = _expr_avg(i) + (gExprUT.row(i).maxCoeff() - _expr_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
-                _expr_min(i) = _expr_avg(i) + (gExprUT.row(i).minCoeff() - _expr_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
-            }
-
+            // _expr_max.resize(n);
+            // _expr_min.resize(n);
+            // for (int i = 0; i<n; ++i) {
+            //     _expr_max(i) = _expr_avg(i) + (gExprUT.row(i).maxCoeff() - _expr_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
+            //     _expr_min(i) = _expr_avg(i) + (gExprUT.row(i).minCoeff() - _expr_avg(i)) * MAX_ALLOWED_WEIGHT_RANGE;
+            // }
 
             fin.close();
         }
     }
 #endif
-
 
     /* read faces */
     {

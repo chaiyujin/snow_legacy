@@ -11,7 +11,7 @@ struct ModelFrame {
     std::vector<double> mExpr;
 
     void print() {
-        printf("time: %d\n", this->mTimestamp);
+        printf("time: %ld\n", this->mTimestamp);
         printf("rotate: %f %f %f\n", this->mRotation[0], this->mRotation[1], this->mRotation[2]);
         printf("translate: %f %f %f\n", this->mTranslation[0], this->mTranslation[1], this->mTranslation[2]);
         printf("scale: %f\n", this->mScale);
