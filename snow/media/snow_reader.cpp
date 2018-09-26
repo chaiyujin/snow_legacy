@@ -8,9 +8,9 @@ bool            MediaReader::gInitialized = false;
 snow::color_map MediaReader::gJetCmap = snow::color_map::jet();
 
 static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
-                           uint64_t channel_layout,
-                           int sample_rate,
-                           int64_t nb_samples) {
+                                  uint64_t channel_layout,
+                                  int sample_rate,
+                                  int64_t nb_samples) {
     AVFrame *frame = av_frame_alloc();
     int ret;
 
@@ -19,13 +19,13 @@ static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
         exit(1);
     }
 
-    frame->format = sample_fmt;
-    frame->channel_layout = channel_layout;
-    frame->sample_rate = sample_rate;
-    frame->nb_samples = nb_samples;
+    frame->format           = sample_fmt;
+    frame->channel_layout   = channel_layout;
+    frame->sample_rate      = sample_rate;
+    frame->nb_samples       = nb_samples;
 
     if (nb_samples) {
-        ret = av_frame_get_buffer(frame, 0);
+        ret = av_frame_get_buffer(frame, 32);
         if (ret < 0) {
             fprintf(stderr, "Error allocating an audio buffer\n");
             exit(1);
@@ -170,20 +170,18 @@ bool MediaReader::open() {
         st->mMinPts     = INT64_MAX;
         st->mMaxPts     = INT64_MIN;
         if (st->mType == AVMEDIA_TYPE_AUDIO) {
-            // get sampel rate
-            mDstAudioFmt.mSampleRate = codec_ctx->sample_rate;
 
             st->mAudioStreamIdx = audio_streams++;
             mAudioQueues.push_back(new SafeQueue<AudioFrame>());
 
-            int     src_nb_samples = (codec_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) ? 10000 : codec_ctx->frame_size;
-            int64_t dst_nb_samples = av_rescale_rnd(src_nb_samples, mDstAudioFmt.mSampleRate, codec_ctx->sample_rate, AV_ROUND_UP);
+            int     srcNumSamples = 1024;
+            int64_t dstNumSample = av_rescale_rnd(srcNumSamples, mDstAudioFmt.mSampleRate, codec_ctx->sample_rate, AV_ROUND_UP);
 
             st->mTmpFramePtr = alloc_audio_frame(
                 mDstAudioFmt.mSampleFmt,
                 mDstAudioFmt.mChLayout,
                 mDstAudioFmt.mSampleRate,
-                dst_nb_samples);
+                dstNumSample);
             {
                 st->mSwrCtxPtr = swr_alloc();
                 if (!st->mSwrCtxPtr) {
@@ -192,12 +190,14 @@ bool MediaReader::open() {
                 }
 
                 /* set options */
-                av_opt_set_int(st->mSwrCtxPtr, "in_channel_count", codec_ctx->channels, 0);
-                av_opt_set_int(st->mSwrCtxPtr, "in_sample_rate", codec_ctx->sample_rate, 0);
-                av_opt_set_sample_fmt(st->mSwrCtxPtr, "in_sample_fmt", codec_ctx->sample_fmt, 0);
-                av_opt_set_int(st->mSwrCtxPtr, "out_channel_count", mDstAudioFmt.mChannels, 0);
-                av_opt_set_int(st->mSwrCtxPtr, "out_sample_rate", mDstAudioFmt.mSampleRate, 0);
-                av_opt_set_sample_fmt(st->mSwrCtxPtr, "out_sample_fmt", mDstAudioFmt.mSampleFmt, 0);
+                av_opt_set_int(st->mSwrCtxPtr,        "in_channel_layout",  codec_ctx->channel_layout,  0);
+                av_opt_set_int(st->mSwrCtxPtr,        "in_channel_count",   codec_ctx->channels,        0);
+                av_opt_set_int(st->mSwrCtxPtr,        "in_sample_rate",     codec_ctx->sample_rate,     0);
+                av_opt_set_sample_fmt(st->mSwrCtxPtr, "in_sample_fmt",      codec_ctx->sample_fmt,      0);
+                av_opt_set_int(st->mSwrCtxPtr,        "out_channel_layout", mDstAudioFmt.mChLayout,     0);
+                av_opt_set_int(st->mSwrCtxPtr,        "out_channel_count",  mDstAudioFmt.mChannels,     0);
+                av_opt_set_int(st->mSwrCtxPtr,        "out_sample_rate",    mDstAudioFmt.mSampleRate,   0);
+                av_opt_set_sample_fmt(st->mSwrCtxPtr, "out_sample_fmt",     mDstAudioFmt.mSampleFmt,    0);
 
                 /* initialize the resampling context */
                 if ((ret = swr_init(st->mSwrCtxPtr)) < 0) {
@@ -231,7 +231,10 @@ bool MediaReader::open() {
     // av_dump_format(mFmtCtxPtr, 0, mFilename.c_str(), 0);
 
     mStartTime = 0;
-    mDuration  = duration_ms();
+    mDuration  = durationMs();
+
+    // pre read audio tracks
+    preReadAudioTracks();
 
     return true;
 }
@@ -253,7 +256,7 @@ void MediaReader::clearQueues() {
     for (auto *q: mAudioQueues)  q->clear();
 }
 
-int MediaReader::process_input(MediaType request_type) {
+int MediaReader::processInput(MediaType request_type) {
     std::lock_guard<std::mutex> lock(mFmtCtxMutex);
     if (!mFmtCtxPtr) return AVERROR_EOF;
 
@@ -290,26 +293,27 @@ int MediaReader::process_input(MediaType request_type) {
                 pts, st->mDecodeFramePtr->nb_samples,
                 av_get_sample_fmt_name(st->mDecCtxPtr->sample_fmt));
 #endif
-            // compute the converted samples number
-            int dst_nb_samples = av_rescale_rnd(
-                swr_get_delay(st->mSwrCtxPtr, st->mDecCtxPtr->sample_rate) + st->mDecodeFramePtr->nb_samples,
-                mDstAudioFmt.mSampleRate, st->mDecCtxPtr->sample_rate, AV_ROUND_UP);
-            // realloc the temporary frame
-            if (st->mTmpFramePtr->nb_samples < dst_nb_samples) {
-                av_frame_free(&st->mTmpFramePtr);
-                st->mTmpFramePtr = alloc_audio_frame(
-                    mDstAudioFmt.mSampleFmt,
-                    mDstAudioFmt.mChLayout,
-                    mDstAudioFmt.mSampleRate,
-                    dst_nb_samples);
+            int nb_samples = 0;
+            /* resample */ {
+                // compute the converted samples number
+                int dstNumSample = av_rescale_rnd(
+                    swr_get_delay(st->mSwrCtxPtr, st->mDecCtxPtr->sample_rate) + st->mDecodeFramePtr->nb_samples,
+                    mDstAudioFmt.mSampleRate, st->mDecCtxPtr->sample_rate, AV_ROUND_UP);
+                // realloc the temporary frame
+                if (st->mTmpFramePtr->nb_samples < dstNumSample) {
+                    av_frame_free(&st->mTmpFramePtr);
+                    st->mTmpFramePtr = alloc_audio_frame(
+                        mDstAudioFmt.mSampleFmt, mDstAudioFmt.mChLayout,
+                        mDstAudioFmt.mSampleRate, dstNumSample);
+                }
+                // software resample
+                nb_samples = swr_convert(
+                    st->mSwrCtxPtr, st->mTmpFramePtr->data, dstNumSample,
+                    (const uint8_t **)st->mDecodeFramePtr->data, st->mDecodeFramePtr->nb_samples);
             }
-            // software resample
-            swr_convert(st->mSwrCtxPtr, st->mTmpFramePtr->data, dst_nb_samples,
-                        (const uint8_t **)st->mDecodeFramePtr->data, st->mDecodeFramePtr->nb_samples);
-            // send to queue
-            {
+            /* send to queue */ {
                 AudioFrame audio_frame;
-                audio_frame.fromAVFrame(st->mTmpFramePtr, pts, dst_nb_samples, 2);
+                audio_frame.fromAVFrame(st->mTmpFramePtr, pts, nb_samples, 2);
                 mAudioQueues[st->mAudioStreamIdx]->push(audio_frame);
             }
         }
@@ -368,7 +372,7 @@ void MediaReader::syncVideoStreams() {
         // all queues have a frame
         if (count == (int)mVideoQueues.size()) break;
         // need to read frame from video
-        if (process_input() == AVERROR_EOF) { quitEOF(); return; } // end of file return null pair.
+        if (processInput() == AVERROR_EOF) { quitEOF(); return; } // end of file return null pair.
         count = 0;
     } while (count == 0);
 
@@ -377,7 +381,7 @@ void MediaReader::syncVideoStreams() {
         while (abs(q->front().timestamp() - max_pts) > SYNC_EPS && q->front().timestamp() < max_pts) {
             q->pop();
             while (q->size() == 0)
-                if (process_input() == AVERROR_EOF) { quitEOF(); return; }
+                if (processInput() == AVERROR_EOF) { quitEOF(); return; }
         }
     }
 
@@ -390,7 +394,7 @@ void MediaReader::syncVideoStreams() {
     // printf("=====\n");
 }
 
-int64_t MediaReader::duration_ms() {
+int64_t MediaReader::durationMs() {
     return (mFmtCtxPtr)? av_rescale_q(mFmtCtxPtr->duration, AV_TIME_BASE_Q, AVRational{ 1, 1000 }) : 0;
 }
 
@@ -416,14 +420,14 @@ std::unique_ptr<FrameBase> MediaReader::readFrame(const StreamBase *st) {
             if (mVideoQueues[index]->front().isNull()) return nullptr;
         }
         else
-            while (mVideoQueues[index]->size() == 0)   if (process_input() == AVERROR_EOF) return nullptr;
+            while (mVideoQueues[index]->size() == 0)   if (processInput() == AVERROR_EOF) return nullptr;
         return std::unique_ptr<FrameBase> (new VideoFrame(mVideoQueues[index]->frontAndPop()));
     }
     else if (stream->type() == MediaType::Audio) {
         int index = stream->streamIndex();
         // normally read
         while (mAudioQueues[index]->size() == 0)
-            if (process_input() == AVERROR_EOF) return nullptr;
+            if (processInput() == AVERROR_EOF) return nullptr;
         return std::unique_ptr<FrameBase> (new AudioFrame(mAudioQueues[index]->frontAndPop()));
     }
     else {
@@ -433,7 +437,7 @@ std::unique_ptr<FrameBase> MediaReader::readFrame(const StreamBase *st) {
 
 std::vector<std::shared_ptr<StreamBase>> MediaReader::getStreams() {
     std::vector<std::shared_ptr<StreamBase>> ret;
-    int64_t duration = duration_ms();
+    int64_t duration = durationMs();
     for (size_t i = 0; i < mStreamPtrList.size(); ++i) {
         auto * st = mStreamPtrList[i];
         MediaType type  = (st->mType == AVMEDIA_TYPE_VIDEO) ? MediaType::Video : MediaType::Audio;
@@ -451,6 +455,53 @@ std::vector<std::shared_ptr<StreamBase>> MediaReader::getStreams() {
         ret.emplace_back(new MediaStream(streamIndex, type, 0, duration, this, audioFmt, videoFmt));
     }
     return ret;
+}
+
+void MediaReader::preReadAudioTracks() {
+    seek(0);
+    mWavTracks.clear();
+
+    while (processInput(MediaType::Audio) !=  AVERROR_EOF) ;
+    int iTrack = 0;
+    for (auto *q : mAudioQueues) {
+        std::vector<float> track;
+        int64_t startTime = q->front().timestamp();
+        while (q->size()) {
+            AudioFrame frame = q->frontAndPop();
+            if (frame.isNull()) break;
+            if (frame.mBytePerSample == 1) {
+                uint8_t val;
+                const uint8_t *data = frame.data();
+                for (int i = 0; i < frame.mNumSamples; ++i) {
+                    val = data[i];
+                    track.push_back( ((float)val - 128.0f) / 128.0f );
+                }
+            }
+            else if (frame.mBytePerSample == 2) {
+                int16_t val;
+                const int16_t * data = (const int16_t *)frame.data();
+                for (int i = 0; i < frame.mNumSamples; ++i) {
+                    val = data[i];
+                    track.push_back( (float)val / 32767.0f );
+                }
+            }
+            else {
+                printf("only support uint8_t and int16_t audio, not bytes %d!\n", frame.mBytePerSample);
+                break;
+            }
+        }
+        if (track.size()) {
+            mWavTracks.emplace_back();
+            mWavTracks.back().setSampleRate(mDstAudioFmt.mSampleRate);
+            mWavTracks.back().addChannel(track);
+            // mWavTracks.back().write(std::string("../../assets/test") + std::to_string(iTrack) + ".wav");
+            // printf("[MediaReader]: Audio track %d: start at %d, has %d samples, %d sr\n",
+            //        iTrack, startTime, track.size(), mDstAudioFmt.mSampleRate);
+        }
+        ++iTrack;
+    }
+
+    seek(0);
 }
 
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "ffmpeg_head.h"
 #include "../core/snow_core.h"
+#include "snow_wav.h"
 #include <memory>
 #include <vector>
 
@@ -102,13 +103,13 @@ public:
 
 class AudioFrame : public FrameBase {
 public:
-    int     mNunSamples;
-    int        mBytePerSample;
-    AudioFrame() :  mNunSamples(0) {}
-    bool isNull() const { return mNunSamples == 0 || mTimestamp == SNOW_NONE_PTS; }
+    int mNumSamples;
+    int mBytePerSample;
+    AudioFrame() :  mNumSamples(0) {}
+    bool isNull() const { return mNumSamples == 0 || mTimestamp == SNOW_NONE_PTS; }
     void fromAVFrame(AVFrame *frame, int64_t pts, int nb_samples, int byte_per_sample) {
         mType           = MediaType::Audio;
-        mNunSamples     = nb_samples;
+        mNumSamples     = nb_samples;
         mBytePerSample  = byte_per_sample;
         mTimestamp      = pts;
         mDataSize       = nb_samples * byte_per_sample;
@@ -142,30 +143,34 @@ public:
 
 class MediaReader : public InputBase {
 protected:
-    static bool                 gInitialized;
-    static snow::color_map      gJetCmap;
-    std::string                 mFilename;
-    std::vector<InputStream *>  mStreamPtrList;
-    AVFormatContext    *            mFmtCtxPtr;
-    bool                        mErrorAgain;
-    AudioFormat                    mDstAudioFmt;
-    bool                        mSyncVideoStreams;
-
-    std::vector<SafeQueue<VideoFrame>*>   mVideoQueues;
-    std::vector<SafeQueue<AudioFrame>*>   mAudioQueues;
-
+    static bool                         gInitialized;
+    static snow::color_map              gJetCmap;
+    std::string                         mFilename;
+    std::vector<InputStream *>          mStreamPtrList;
+    AVFormatContext *                   mFmtCtxPtr;
+    bool                                mErrorAgain;
+    AudioFormat                         mDstAudioFmt;
+    bool                                mSyncVideoStreams;
+    // vector of queues
+    std::vector<SafeQueue<VideoFrame>*> mVideoQueues;
+    std::vector<SafeQueue<AudioFrame>*> mAudioQueues;
     // mutex for format context ptr
-    std::mutex                  mFmtCtxMutex;
+    std::mutex                          mFmtCtxMutex;
+    // pre-read audio tracks
+    std::vector<WavPCM>                 mWavTracks;
 
-    int64_t duration_ms();
-    int     process_input(MediaType request_type=MediaType::AudioVideo);
+    int64_t durationMs();
+    int     processInput(MediaType request_type=MediaType::AudioVideo);
+    void    preReadAudioTracks();
 public:
-    static void initialize_ffmpeg() { if (!gInitialized) { av_register_all(); gInitialized = true; } }
+    static void initializeFFmpeg() { if (!gInitialized) { av_register_all(); gInitialized = true; } }
 
     MediaReader(const std::string &filename);
     MediaReader(const MediaReader &b);
     ~MediaReader();
 
+    void    setDstAudioSampleRate(int sampleRate) { mDstAudioFmt.mSampleRate = sampleRate; }
+    
     bool    open();
     void    close();
     void    seek(int64_t ms);

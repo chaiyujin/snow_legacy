@@ -1,14 +1,12 @@
 #include "player.h"
 
 bool PlayerWindow::openVideo(const std::string filename) {
-    MediaReader::initialize_ffmpeg();
+    MediaReader::initializeFFmpeg();
     // try to open a new video
     closeVideo();
-    printf("close\n");
     mReaderPtr = new MediaReader(filename);
-    printf("new media\n");
+    mReaderPtr->setDstAudioSampleRate(16000);
     if (!mReaderPtr->open()) return false;
-    printf("open\n");
     mVideoStreamPtr = std::dynamic_pointer_cast<MediaStream> (mReaderPtr->getStreams()[0]);
     printf("get streams %d %d\n", mVideoStreamPtr->videoFormat().mWidth, mVideoStreamPtr->videoFormat().mHeight);
 

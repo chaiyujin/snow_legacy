@@ -71,23 +71,24 @@ public:
         int32_t         mSize;
     };
 
-    WavPCM() { mHeader.mSampleRate = 0; }
+    WavPCM() : mStartTime(0) { mHeader.mSampleRate = 0; }
 
     bool read (const std::string &path);
     bool write(const std::string &path);
-    void setSampleRate(uint32_t sampleRate)        { mHeader.mSampleRate = sampleRate; }
-    void addTrack(const std::vector<float> &track) { mData.push_back(track); }
+    void setSampleRate(uint32_t sampleRate)             { mHeader.mSampleRate = sampleRate; }
+    void addChannel(const std::vector<float> &channel)  { mData.push_back(channel); }
 
-    size_t                      numTracks()  const { return mData.size(); }
-    std::vector<float> &        track(int i)       { return mData[i]; }
-    const std::vector<float> &  track(int i) const { return mData[i]; }
-    uint32_t                    sampleRate() const { return mHeader.mSampleRate; }
-
-    void                        dumpHeader() const;
+    std::vector<float> &        channel(int i)          { return mData[i];             }
+    const std::vector<float> &  channel(int i)    const { return mData[i];             }
+    size_t                      numChannels()     const { return mData.size();         }
+    uint32_t                    sampleRate()      const { return mHeader.mSampleRate;  }
+    int64_t                     startTime()       const { return mStartTime;           }
+    void                        dumpHeader()      const;
 
 private:
     std::vector<std::vector<float>>   mData;
     Header                            mHeader;
+    int64_t                           mStartTime;
 };
 
 }

@@ -82,9 +82,9 @@ bool WavPCM::read(const std::string &path) {
 }
 
 bool WavPCM::write(const std::string &path) {
-    if (mData.size() == 0) { printf("No tracks!\n"); return false; }
-    if (mData.size() > 1) printf("Ignore tracks rather than track-0.\n");
-    if (mHeader.mSampleRate == 0) { printf("Sample rate is not set!\n"); return false; }
+    if (mData.size() == 0)        { printf("No tracks!\n"); return false;               }
+    if (mData.size() > 1)         { printf("Ignore channels rather than channel-0.\n"); }
+    if (mHeader.mSampleRate == 0) { printf("Sample rate is not set!\n"); return false;  }
     // set header
     mHeader.mChunkId[0] = 'R'; mHeader.mChunkId[1] = 'I'; mHeader.mChunkId[2] = 'F'; mHeader.mChunkId[3] = 'F';
     mHeader.mFormat[0]  = 'W'; mHeader.mFormat[1]  = 'A'; mHeader.mFormat[2]  = 'V'; mHeader.mFormat[3]  = 'E';
@@ -96,18 +96,18 @@ bool WavPCM::write(const std::string &path) {
     mHeader.mBlockAlign = 16 * 1 / 8;
     mHeader.mBitsPerSample = 16;  // int16_t
     // calc mChunkSize
-    mHeader.mChunkSize = sizeof(mHeader) + track(0).size() * 2;
+    mHeader.mChunkSize = sizeof(mHeader) + channel(0).size() * 2;
 
     // chunk
     Chunk chunk;
     chunk.mId[0] = 'd'; chunk.mId[1] = 'a'; chunk.mId[2] = 't'; chunk.mId[3] = 'a';
-    chunk.mSize = track(0).size() * 2;
+    chunk.mSize = channel(0).size() * 2;
 
     std::ofstream fout(path, std::ios::binary);
     if (fout.is_open()) {
         fout.write((char *)(&mHeader), sizeof(mHeader));
         fout.write((char *)(&chunk),   sizeof(chunk));
-        for (float x : track(0)) {
+        for (float x : channel(0)) {
             if (x > 1.0)  x = 1.0;
             if (x < -1.0) x = -1.0;
             int16_t sample = x * 32767.0f;
