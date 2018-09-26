@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 set(CMAKE_CXX_STANDARD 11)
 
-project(DepthPlayer)
+project(VideoPlayer)
 # snow
 set(SNOW_MODULE_FFMPEG on CACHE BOOL "enable ffmpeg" FORCE)  # set module on
-add_subdirectory(../snow ext/snow/)
+add_subdirectory(../../snow ext/snow/)
 add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(   ${SNOW_LIBRARIES_DIRS})

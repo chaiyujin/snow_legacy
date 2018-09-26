@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(Bilinear)
 # snow
-add_subdirectory(../snow ext/snow/)
+add_subdirectory(../../snow ext/snow/)
 include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(${SNOW_LIBRARIES_DIRS})
 add_definitions(${SNOW_DEFINITIONS})
