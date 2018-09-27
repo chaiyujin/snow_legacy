@@ -10,6 +10,10 @@ void set_sample_rate(int sr) {
     setSampleRate(sr);
 }
 
+void set_fps(double fps) {
+    setFPS(fps);
+}
+
 py::dict collect_video(const std::string &filepath) {
     std::vector<ModelFrame> frames;
     std::vector<float>      audio;
@@ -44,6 +48,8 @@ py::dict collect_video(const std::string &filepath) {
 PYBIND11_MODULE(depth11, m) {
     m.doc() = "pybind11 depth video plugin"; // optional module docstring
 
+    m.def("set_fps",            &set_fps,           "");
     m.def("set_sample_rate",    &set_sample_rate,   "");
     m.def("collect_video",      &collect_video,     "");
+
 }

@@ -179,7 +179,8 @@ public:
     void    clearQueues();
     void    setSyncVideoStreams(bool flag) { mSyncVideoStreams = flag; }
     double  fps() const { return mFPS; }
-    const std::vector<float> & audioTrack(int i) { return mWavTracks[i].channel(0); }
+    const std::vector<float> & audioTrack(int i) const { return mWavTracks[i].channel(0); }
+    const int64_t              audioTrackStartTime(int i) const { return mWavTracks[i].startTime(); }
     
     std::vector<std::shared_ptr<StreamBase>> getStreams();
     std::unique_ptr<FrameBase> readFrame(const StreamBase *st);

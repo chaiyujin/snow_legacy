@@ -47,7 +47,7 @@ void FaceDB::Initialize(std::string dir) {
         exit(1);
     }
 
-    printf("[FaceDB]: begin to read\n");
+    // printf("[FaceDB]: begin to read\n");
 
     /* read tensor */
     auto tmp_alloc_read = [](float **tmp, FILE **fp, int size) -> void
@@ -90,8 +90,8 @@ void FaceDB::Initialize(std::string dir) {
         delete[] tmp;
         fclose(fp_tensor);
 
-        std::cout << " core  shape: " << gTensorShape << std::endl;
-        std::cout << "origin shape: " << gOriginShape << std::endl;
+        // std::cout << " core  shape: " << gTensorShape << std::endl;
+        // std::cout << "origin shape: " << gOriginShape << std::endl;
     }
 #else
     {
@@ -108,7 +108,7 @@ void FaceDB::Initialize(std::string dir) {
             fin.read(reinterpret_cast<char*>(&(m)), sizeof(int));
             fin.read(reinterpret_cast<char*>(&(n)), sizeof(int));
 
-            std::cout << l << " " << m << " " << n << std::endl;
+            // std::cout << l << " " << m << " " << n << std::endl;
             double *tmp_tensor = new double[l * m * n];
 
             fin.read(reinterpret_cast<char*>(tmp_tensor), sizeof(double)*l*m*n);
@@ -126,8 +126,8 @@ void FaceDB::Initialize(std::string dir) {
 
             // tmp.mul(-1, gCoreTensor);
 
-            std::cout << " core  shape: " << gTensorShape << std::endl;
-            std::cout << "origin shape: " << gOriginShape << std::endl;
+            // std::cout << " core  shape: " << gTensorShape << std::endl;
+            // std::cout << "origin shape: " << gOriginShape << std::endl;
             delete[] tmp_tensor;
         }
 
@@ -138,7 +138,7 @@ void FaceDB::Initialize(std::string dir) {
 
             int ndims;
             fin.read(reinterpret_cast<char*>(&ndims), sizeof(int));
-            std::cout << "identity prior dim = " << ndims << std::endl;
+            // std::cout << "identity prior dim = " << ndims << std::endl;
 
             // _iden_avg.resize(ndims);
             // _iden_0.resize(ndims);
@@ -159,7 +159,7 @@ void FaceDB::Initialize(std::string dir) {
             int m, n;
             fin.read(reinterpret_cast<char*>(&m), sizeof(int));
             fin.read(reinterpret_cast<char*>(&n), sizeof(int));
-            std::cout << "iden_UT size: " << n << 'x' << m << std::endl;
+            // std::cout << "iden_UT size: " << n << 'x' << m << std::endl;
             gIdenUT.resize(n, m);
             fin.read(reinterpret_cast<char*>(gIdenUT.data()), sizeof(double)*m*n);
 
@@ -191,7 +191,7 @@ void FaceDB::Initialize(std::string dir) {
 
             int ndims;
             fin.read(reinterpret_cast<char*>(&ndims), sizeof(int));
-            std::cout << "expr prior dim = " << ndims << std::endl;
+            // std::cout << "expr prior dim = " << ndims << std::endl;
 
             // _expr_avg.resize(ndims);
             // _expr_0.resize(ndims);
@@ -212,7 +212,7 @@ void FaceDB::Initialize(std::string dir) {
             int m, n;
             fin.read(reinterpret_cast<char*>(&m), sizeof(int));
             fin.read(reinterpret_cast<char*>(&n), sizeof(int));
-            std::cout << "expr_UT size: " << n << 'x' << m << std::endl;
+            // std::cout << "expr_UT size: " << n << 'x' << m << std::endl;
             gExprUT.resize(n, m);
             fin.read(reinterpret_cast<char*>(gExprUT.data()), sizeof(double)*m*n);
 
@@ -259,7 +259,7 @@ void FaceDB::Initialize(std::string dir) {
             // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);
-        printf("read face done\n");
+        // printf("read face done\n");
     }
     /* read contours */
     {
@@ -295,7 +295,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             return indices;
         });
-        printf("read contour done\n");
+        // printf("read contour done\n");
     }
     /* read singular values */
     {
@@ -319,7 +319,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        printf("read expr singular done\n");
+        // printf("read expr singular done\n");
     }
     /* read face only mesh */
     {
@@ -345,7 +345,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        printf("read face only mesh done\n");
+        // printf("read face only mesh done\n");
     }
 }
 

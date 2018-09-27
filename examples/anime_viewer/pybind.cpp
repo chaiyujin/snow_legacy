@@ -22,6 +22,15 @@ S16Signal audio_from_numpy(py::array_t<int16_t> &data) {
     return ret;
 }
 
+S16Signal audio_from_numpy(py::array_t<float> &data) {
+    assert(data.ndim() == 1);
+    std::vector<int16_t> ret(data.shape(0));
+    for (size_t i = 0; i < data.shape(0); ++i) {
+        ret[i] = data.data()[i] * 32767.0;
+    }
+    return ret;
+}
+
 ScrollImage scroll_image_from_numpy(py::array_t<uint8_t, py::array::c_style> &data, int win_len, int hop_len) {
     assert(data.ndim() == 3 && data.shape(2) == 3); // rbg
     size_t size = data.shape(0) * data.shape(1) * data.shape(2);
@@ -83,7 +92,12 @@ void set_text(std::string window, std::string text) {
     Application::setText(window, text);
 }
 
-void add_audio(std::string tag, py::array_t<int16_t> &audio, int samplerate) {
+void add_audio_s16(std::string tag, py::array_t<int16_t> &audio, int samplerate) {
+    auto data = audio_from_numpy(audio);
+    Application::addAudio(tag, data, samplerate);
+}
+
+void add_audio_f32(std::string tag, py::array_t<float> &audio, int samplerate) {
     auto data = audio_from_numpy(audio);
     Application::addAudio(tag, data, samplerate);
 }
@@ -136,7 +150,8 @@ PYBIND11_MODULE(anime_viewer11, m) {
     m.def("initialize_bilinear",&initialize_bilinear,"");
     m.def("new_app",            &new_app,           "create a new app for `obj` or `bilinear`");
     m.def("set_text",           &set_text,          "set the text for certain window");
-    m.def("add_audio",          &add_audio,         "add audio for entire app");
+    m.def("add_audio_s16",      &add_audio_s16,     "add audio for entire app");
+    m.def("add_audio_f32",      &add_audio_f32,     "add audio for entire app");
     m.def("add_scroll_image",   &add_scroll_image,  "");
     // for ModelType::Obj
     m.def("set_obj",            &set_obj,           "set obj for certain window");

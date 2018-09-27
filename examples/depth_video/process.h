@@ -6,6 +6,7 @@
 
 extern int SampleRate;
 
+void   setFPS(double fps);
 void   setAudioTrack(int track);
 void   setSampleRate(int sr); 
 double collectVideo(const std::string &filename,

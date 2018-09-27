@@ -513,6 +513,7 @@ void MediaReader::preReadAudioTracks() {
             mWavTracks.emplace_back();
             mWavTracks.back().setSampleRate(mDstAudioFmt.mSampleRate);
             mWavTracks.back().addChannel(track);
+            mWavTracks.back().setStartTime(startTime);
             // mWavTracks.back().write(std::string("../../../assets/test") + std::to_string(iTrack) + ".wav");
             // printf("[MediaReader]: Audio track %d: start at %d, has %d samples, %d sr\n",
             //        iTrack, startTime, track.size(), mDstAudioFmt.mSampleRate);
