@@ -1,3 +1,4 @@
+import numpy as np
 from anime_viewer import anime_viewer11
 from depth_video import depth11
 from bilateral_filter import BilateralFilter1D
@@ -27,7 +28,26 @@ def view_video(video_path):
         anime_viewer11.terminate()
 
 
-for i in range(150):
-    video_path = PATH_DIR + "0-{}-1.mkv".format(i)
-    print(video_path)
-    view_video(video_path)
+def view_test():
+    iden = np.zeros((75))
+    iden[0] = 1.0
+    wav = np.load("wav_0.npy")
+    pred_list = np.swapaxes(np.load("pred_0.npy"), 0, 1)
+    true_list = np.swapaxes(np.load("true_0.npy"), 0, 1)
+    anime_viewer11.initialize_bilinear("../assets/fw/")
+    anime_viewer11.new_app("bilinear")
+    anime_viewer11.set_iden("pred", iden)
+    anime_viewer11.set_expr_list("pred", pred_list)
+    anime_viewer11.set_iden("true", iden)
+    anime_viewer11.set_expr_list("true", true_list)
+    anime_viewer11.add_audio_f32("audio", wav, 20480)
+    anime_viewer11.run(40.0)
+    anime_viewer11.terminate()
+
+view_test()
+
+
+# for i in range(150):
+#     video_path = PATH_DIR + "0-{}-1.mkv".format(i)
+#     print(video_path)
+#     view_video(video_path)
