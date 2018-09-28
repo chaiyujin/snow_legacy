@@ -4,7 +4,7 @@
 #include "tensor.h"
 
 #define PARAMETER_FACS
-// #define USE_75_45
+#define USE_75_45
 
 #ifndef USE_75_45
 #define USE_50_25
