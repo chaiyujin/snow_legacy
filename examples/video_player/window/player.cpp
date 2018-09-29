@@ -1,5 +1,13 @@
 #include "player.h"
 
+static void writeFrameBin(const char *filename, const uint8_t *color, const uint8_t *depth,
+                     int colorSize, int depthSize) {
+    FILE *fp = fopen(filename, "wb");
+    fwrite(color, 1, colorSize, fp);
+    fwrite(depth, 1, depthSize, fp);
+    fclose(fp);
+}
+
 bool PlayerWindow::openVideo(const std::string filename) {
     MediaReader::initializeFFmpeg();
     // try to open a new video
@@ -8,6 +16,7 @@ bool PlayerWindow::openVideo(const std::string filename) {
     mReaderPtr->setDstAudioSampleRate(16000);
     if (!mReaderPtr->open()) return false;
     mVideoStreamPtr = std::dynamic_pointer_cast<MediaStream> (mReaderPtr->getStreams()[0]);
+    mDepthStreamPtr = std::dynamic_pointer_cast<MediaStream> (mReaderPtr->getStreams()[1]);
     printf("get streams %d %d\n", mVideoStreamPtr->videoFormat().mWidth, mVideoStreamPtr->videoFormat().mHeight);
 
     /* first frame */ {
@@ -39,8 +48,17 @@ void PlayerWindow::seek() {
     if (mVideoStreamPtr) {
         mVideoStreamPtr->seek(mPlayerSecond * 1000.0);
         if (mVideoStreamPtr->readFrame()) {
+            mDepthStreamPtr->readFrame();
             const FrameBase *frame = mVideoStreamPtr->framePtr();
             this->updateFrame(*(const VideoFrame*)frame);
+            {
+                const VideoFrame *colorFrame = (const VideoFrame *)mVideoStreamPtr->framePtr();
+                const VideoFrame *depthFrame = (const VideoFrame *)mDepthStreamPtr->framePtr();
+                writeFrameBin("../../../assets/frame.bin",
+                              colorFrame->data(), depthFrame->data(),
+                              colorFrame->mWidth * colorFrame->mHeight * 4,
+                              depthFrame->mWidth * depthFrame->mHeight * 2);
+            }
         }
         else {
             printf("end of video\n");
