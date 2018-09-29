@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-namespace librealsense_ext { class RealSenseSoftwareDevice; }
+namespace librealsense { class RealSenseSoftwareDevice; }
 
 class Image {
     std::shared_ptr<uint8_t> mData;
@@ -67,6 +67,9 @@ public:
     }
 };
 
+/**
+ * Point Cloud in RGB Camera space
+ * */
 class PointCloud {
 	std::vector<snow::float3> mVert;
 	std::vector<snow::float3> mNorm;

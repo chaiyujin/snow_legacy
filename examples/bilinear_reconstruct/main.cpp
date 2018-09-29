@@ -14,13 +14,13 @@ int main() {
     snow::App app;
     ShowWindow *win = new ShowWindow();
     
-    librealsense_ext::RealSenseSoftwareDevice rsdevice("../../../assets/test_frame_params.txt");
+    librealsense::RealSenseSoftwareDevice rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
     Image color(1920, 1080, 4);
     Image depth(640, 480, 2);
-    readFrameBin("../../../assets/test_frame.bin", color.data(), depth.data());
+    readFrameBin("../../../assets/frame.bin", color.data(), depth.data());
     rsdevice.updateFramePair(color.data(), depth.data());
     rsdevice.updatePointCloud();
-    win->setProjMat(rsdevice.colorProjection() * rsdevice.depth2colorTransform());
+    win->setProjMat(rsdevice.colorProjection());
     win->setPointCloud(&rsdevice.pointCloud());
     win->setColor(&color);
     win->setDepth(&depth);

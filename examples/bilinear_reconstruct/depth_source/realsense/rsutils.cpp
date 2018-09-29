@@ -1,21 +1,11 @@
 #include "rsutils.h"
 #include <fstream>
 
-namespace librealsense_ext {
+namespace librealsense {
 
-RealSenseSoftwareDevice::RealSenseSoftwareDevice()
-    : mDevice()
-    , mColorSensor(mDevice.add_sensor("Color"))
-    , mDepthSensor(mDevice.add_sensor("Depth"))
-    , mCount(0) {}
-RealSenseSoftwareDevice::RealSenseSoftwareDevice(std::string paramPath)
-    : RealSenseSoftwareDevice() {
-    this->initFrom(paramPath);
-}
-RealSenseSoftwareDevice::~RealSenseSoftwareDevice() {
-    mColorSensor.stop();
-    mDepthSensor.stop();
-}
+RealSenseSoftwareDevice::RealSenseSoftwareDevice() {}
+RealSenseSoftwareDevice::RealSenseSoftwareDevice(std::string paramPath) : RealSenseSoftwareDevice() { this->initFrom(paramPath); }
+RealSenseSoftwareDevice::~RealSenseSoftwareDevice() {}
 
 void RealSenseSoftwareDevice::initFrom(std::string paramPath) {
     std::ifstream fin(paramPath);
@@ -40,49 +30,31 @@ void RealSenseSoftwareDevice::initFrom(std::string paramPath) {
     mDepthImg.alloc(         mDepthIntrinsics.width, mDepthIntrinsics.height, DEPTH_BPP);
     mAlignedColorImg.alloc(  mDepthIntrinsics.width, mDepthIntrinsics.height, COLOR_BPP);
     mColorizedDepthImg.alloc(mDepthIntrinsics.width, mDepthIntrinsics.height, COLOR_BPP);
-    // add streams
-    mColorProfile = mColorSensor.add_video_stream({
-        RS2_STREAM_COLOR, 0, 0,
-        mColorIntrinsics.width,
-        mColorIntrinsics.height,
-        FPS, COLOR_BPP,
-        RS2_FORMAT_RGBA8,
-        mColorIntrinsics
-    });
-    mDepthProfile = mDepthSensor.add_video_stream({
-        RS2_STREAM_DEPTH, 0, 1,
-        mDepthIntrinsics.width,
-        mDepthIntrinsics.height,
-        FPS, DEPTH_BPP,
-        RS2_FORMAT_Z16,
-        mDepthIntrinsics
-    });
-    mDepthProfile.register_extrinsics_to(mColorProfile, mDepth2ColorExtrinsics);
-    // read sensor parameters
-    for (int i = 0; i < 2; ++i) {
+    // depth scale
+    while (name.substr(0, 5) != "Depth") { std::getline(fin, name); }
+    while (true) {
+        int id; float val;
+        fin >> id;
+        if (id == -1) break;
+        fin >> val;
         std::getline(fin, name);
-        name = name.substr(0, 5);
-        if      (name == "Depth") fin >> mDepthSensor;
-        else if (name == "Color") fin >> mColorSensor;
+        snow::Trim(name);
+        if (name == "Depth Units") {
+            // std::cout << id << " " << val << " " << name << std::endl;
+            mDepthScale = val;
+            break;
+        }
     }
-    mDepthScale = mDepthSensor.get_option(RS2_OPTION_DEPTH_UNITS);
-    // open
-    mDevice.create_matcher(RS2_MATCHER_COUNT);
-    mColorSensor.open(mColorProfile);
-    mDepthSensor.open(mDepthProfile);
-    mColorSensor.start(mSyncer);
-    mDepthSensor.start(mSyncer);
     // close file
     fin.close();
-#ifdef TEST_REALSENSE    
+#ifdef TEST_REALSENSE
     std::cout
         << "==========================\n"
         << "-----   Color Intr   -----\n" << mColorIntrinsics
         << "-----   Depth Intr   -----\n" << mDepthIntrinsics
         << "----- Depth to Color -----\n" << mDepth2ColorExtrinsics
         << "----- Color to Depth -----\n" << mColor2DepthExtrinsics
-        << "-----  Color Sensor  -----\n" << mColorSensor
-        << "-----  Depth Sensor  -----\n" << mDepthSensor
+        << "-----   DepthScale   ----- " << mDepthScale << "\n"
         << "==========================\n";
 #endif
 }
@@ -110,16 +82,18 @@ void RealSenseSoftwareDevice::updatePointCloud() {
             int x = iPixel % mDepthIntrinsics.width;
             int y = iPixel / mDepthIntrinsics.width;
             float pixel[2] = {(float)x, (float)y};
-            snow::float3 tmp;
+            snow::float3 colorSpace;
             snow::float2 pix;
             rs2_deproject_pixel_to_point(&mPointCloud.verticeList()[iPixel], &mDepthIntrinsics, pixel, (float)depthPtr[iPixel] * mDepthScale);
-            rs2_transform_point_to_point(&tmp, &mDepth2ColorExtrinsics, &mPointCloud.verticeList()[iPixel]);
-            rs2_project_point_to_pixel(&pix, &mColorIntrinsics, &tmp);
+            rs2_transform_point_to_point(&colorSpace, &mDepth2ColorExtrinsics, &mPointCloud.verticeList()[iPixel]);
+            rs2_project_point_to_pixel(&pix, &mColorIntrinsics, &colorSpace);
+            // set texture
             mPointCloud.textureCoordList()[iPixel].x = pix.x / (float)mColorIntrinsics.width;
             mPointCloud.textureCoordList()[iPixel].y = pix.y / (float)mColorIntrinsics.height;
-            // _point_cloud._vert[k].x *= 1;
-            // _point_cloud._vert[k].y *= 1;
-            // _point_cloud._vert[k].z *= 1;
+            // set vertice in colorSpace
+            mPointCloud.verticeList()[iPixel].x = colorSpace.x;
+            mPointCloud.verticeList()[iPixel].y = colorSpace.y;
+            mPointCloud.verticeList()[iPixel].z = colorSpace.z;
         }
     }
 }

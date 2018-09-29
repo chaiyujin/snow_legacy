@@ -19,7 +19,7 @@ void write_image(const char *name, const VideoFrame &input_frame) {
 int main() {
     snow::App app;
     PlayerWindow * player = new PlayerWindow();
-    player->openVideo("../../../assets/test.mkv");
+    player->openVideo("../../../assets/test_depth/0-0-1.mkv");
     app.addWindow(player);
     app.run();
 

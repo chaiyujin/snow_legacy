@@ -3,7 +3,8 @@
 
 #include <functional>
 
-namespace snow::libfp {
+namespace snow {
+namespace libfp {
 
 struct FuncWrapper {
 
@@ -20,4 +21,4 @@ decltype(auto) operator|(T &&x, const PipeClosure<F> &p) {
     return p(std::forward<T>(x));
 }
 
-}
+}}

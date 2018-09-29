@@ -1,133 +1,20 @@
 #pragma once
 
-#include <librealsense2/rs.hpp>
-#include <librealsense2/rsutil.h>
-#include <librealsense2/hpp/rs_internal.hpp>
-#include <librealsense2/hpp/rs_sensor.hpp>
-#include <librealsense2/hpp/rs_processing.hpp>
 // stl
 #include <map>
 #include <fstream>
 #include <vector>
 // snow
 #include <snow.h>
+// self
 #include "../data.h"
+#include "librealsense.h"
 
-/**
- * Copy internal functions from librealsense2
- * */
-namespace librealsense {
-    /* align */
-	typedef uint8_t byte;
-
-	template<class GET_DEPTH, class TRANSFER_PIXEL>
-	inline void align_images(const rs2_intrinsics& depth_intrin, const rs2_extrinsics& depth_to_other,
-		                     const rs2_intrinsics& other_intrin, GET_DEPTH get_depth, TRANSFER_PIXEL transfer_pixel)
-    {
-		// Iterate over the pixels of the depth image
-#pragma omp parallel for schedule(dynamic)
-		for (int depth_y = 0; depth_y < depth_intrin.height; ++depth_y)
-		{
-			int depth_pixel_index = depth_y * depth_intrin.width;
-			for (int depth_x = 0; depth_x < depth_intrin.width; ++depth_x, ++depth_pixel_index)
-			{
-				// Skip over depth pixels with the value of zero, we have no depth data so we will not write anything into our aligned images
-				if (float depth = get_depth(depth_pixel_index))
-				{
-					// Map the top-left corner of the depth pixel onto the other image
-					float depth_pixel[2] = { depth_x - 0.5f, depth_y - 0.5f }, depth_point[3], other_point[3], other_pixel[2];
-					rs2_deproject_pixel_to_point(depth_point, &depth_intrin, depth_pixel, depth);
-					rs2_transform_point_to_point(other_point, &depth_to_other, depth_point);
-					rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
-					const int other_x0 = static_cast<int>(other_pixel[0] + 0.5f);
-					const int other_y0 = static_cast<int>(other_pixel[1] + 0.5f);
-
-					// Map the bottom-right corner of the depth pixel onto the other image
-					depth_pixel[0] = depth_x + 0.5f; depth_pixel[1] = depth_y + 0.5f;
-					rs2_deproject_pixel_to_point(depth_point, &depth_intrin, depth_pixel, depth);
-					rs2_transform_point_to_point(other_point, &depth_to_other, depth_point);
-					rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
-					const int other_x1 = static_cast<int>(other_pixel[0] + 0.5f);
-					const int other_y1 = static_cast<int>(other_pixel[1] + 0.5f);
-
-					if (other_x0 < 0 || other_y0 < 0 || other_x1 >= other_intrin.width || other_y1 >= other_intrin.height)
-						continue;
-
-					// Transfer between the depth pixels and the pixels inside the rectangle on the other image
-					for (int y = other_y0; y <= other_y1; ++y)
-					{
-						for (int x = other_x0; x <= other_x1; ++x)
-						{
-							transfer_pixel(depth_pixel_index, y * other_intrin.width + x);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	inline void align_z_to_other(byte* z_aligned_to_other, const uint16_t* z_pixels, float z_scale, const rs2_intrinsics& z_intrin, const rs2_extrinsics& z_to_other, const rs2_intrinsics& other_intrin)
-	{
-		auto out_z = (uint16_t *)(z_aligned_to_other);
-		align_images(z_intrin, z_to_other, other_intrin,
-			[z_pixels, z_scale](int z_pixel_index)
-		{
-			return z_scale * z_pixels[z_pixel_index];
-		},
-			[out_z, z_pixels](int z_pixel_index, int other_pixel_index)
-		{
-			out_z[other_pixel_index] = out_z[other_pixel_index] ?
-				std::min((int)out_z[other_pixel_index], (int)z_pixels[z_pixel_index]) :
-				z_pixels[z_pixel_index];
-		});
-	}
-
-	template<int N> struct bytes { char b[N]; };
-
-	template<int N, class GET_DEPTH>
-	inline void align_other_to_depth_bytes(byte* other_aligned_to_depth, GET_DEPTH get_depth, const rs2_intrinsics& depth_intrin, const rs2_extrinsics& depth_to_other, const rs2_intrinsics& other_intrin, const byte* other_pixels)
-	{
-		auto in_other = (const bytes<N> *)(other_pixels);
-		auto out_other = (bytes<N> *)(other_aligned_to_depth);
-		align_images(depth_intrin, depth_to_other, other_intrin, get_depth,
-			[out_other, in_other](int depth_pixel_index, int other_pixel_index) { out_other[depth_pixel_index] = in_other[other_pixel_index]; });
-	}
-
-	template<class GET_DEPTH>
-	inline void align_other_to_depth(byte* other_aligned_to_depth, GET_DEPTH get_depth, const rs2_intrinsics& depth_intrin, const rs2_extrinsics & depth_to_other, const rs2_intrinsics& other_intrin, const byte* other_pixels, rs2_format other_format)
-	{
-		switch (other_format)
-		{
-		case RS2_FORMAT_Y8:
-			align_other_to_depth_bytes<1>(other_aligned_to_depth, get_depth, depth_intrin, depth_to_other, other_intrin, other_pixels);
-			break;
-		case RS2_FORMAT_Y16:
-		case RS2_FORMAT_Z16:
-			align_other_to_depth_bytes<2>(other_aligned_to_depth, get_depth, depth_intrin, depth_to_other, other_intrin, other_pixels);
-			break;
-		case RS2_FORMAT_RGB8:
-		case RS2_FORMAT_BGR8:
-			align_other_to_depth_bytes<3>(other_aligned_to_depth, get_depth, depth_intrin, depth_to_other, other_intrin, other_pixels);
-			break;
-		case RS2_FORMAT_RGBA8:
-		case RS2_FORMAT_BGRA8:
-			align_other_to_depth_bytes<4>(other_aligned_to_depth, get_depth, depth_intrin, depth_to_other, other_intrin, other_pixels);
-			break;
-		default:
-			assert(false); // NOTE: rs2_align_other_to_depth_bytes<2>(...) is not appropriate for RS2_FORMAT_YUYV/RS2_FORMAT_RAW10 images, no logic prevents U/V channels from being written to one another
-		}
-	}
-
-	inline void align_other_to_z(byte* other_aligned_to_z, const uint16_t* z_pixels, float z_scale, const rs2_intrinsics& z_intrin, const rs2_extrinsics& z_to_other, const rs2_intrinsics& other_intrin, const byte* other_pixels, rs2_format other_format)
-	{
-		align_other_to_depth(other_aligned_to_z, [z_pixels, z_scale](int z_pixel_index) { return z_scale * z_pixels[z_pixel_index]; }, z_intrin, z_to_other, other_intrin, other_pixels, other_format);
-	}
-}
 
 /*********************************
  * self defined rsutils          *
  *********************************/
-namespace librealsense_ext {
+namespace librealsense {
 
 inline void read_parameters(const char *filename,
                             rs2_intrinsics &color_intr,
@@ -187,23 +74,6 @@ inline void read_parameters(const char *filename,
 	fin.close();
 }
 
-inline std::istream &operator>>(std::istream &in, rs2::software_sensor &sensor) {
-	std::string str;
-	int id = -1;
-	float val;
-	do {
-		in >> id;
-		if (id >= 0) {
-			in >> val;
-			std::getline(in, str);
-			rs2_option option = static_cast<rs2_option>(id);
-			sensor.add_read_only_option(static_cast<rs2_option>(id), val);
-		}
-	} while (id >= 0);
-	std::getline(in, str);
-	return in;
-}
-
 inline std::istream &operator >> (std::istream &in, rs2_intrinsics &intr) {
 	std::string str; int id;
 	in >> intr.width;	std::getline(in, str);
@@ -238,18 +108,6 @@ inline std::istream &operator>>(std::istream &in, rs2_extrinsics &extr) {
 	return in;
 }
 
-inline std::ostream &operator<<(std::ostream &out, rs2::sensor& sensor) {
-	for (int i = 0; i < static_cast<int>(RS2_OPTION_COUNT); i++) {
-		rs2_option option_type = static_cast<rs2_option>(i);
-		if (sensor.supports(option_type)) {
-			out << i << " " << sensor.get_option(option_type) << " ";
-			out << option_type << std::endl;
-		}
-	}
-	out << "-1\n";
-	return out;
-}
-
 inline std::ostream &operator<<(std::ostream &out, rs2_intrinsics &intr) {
 	out << intr.width       << " width  "       << "\n"
 		<< intr.height      << " height "       << "\n"
@@ -273,13 +131,6 @@ inline std::ostream &operator<<(std::ostream &out, rs2_extrinsics &extr) {
 
 
 class RealSenseSoftwareDevice {
-    rs2::software_device    mDevice;
-    rs2::software_sensor    mColorSensor;
-    rs2::software_sensor    mDepthSensor;
-    rs2::syncer             mSyncer;
-    int                     mCount;     // for syncer
-    rs2::stream_profile     mColorProfile;
-    rs2::stream_profile     mDepthProfile;
     // parameters
     rs2_intrinsics          mColorIntrinsics;
     rs2_intrinsics          mDepthIntrinsics;
@@ -313,12 +164,6 @@ public:
     glm::mat4 depth2colorTransform() const { return transformMat(mDepth2ColorExtrinsics); }
 
     /* get */
-	rs2::software_device &device()		                  { return mDevice;                 }
-	rs2::software_sensor &colorSensor()                   { return mColorSensor;            }
-	rs2::software_sensor &depthSensor()                   { return mDepthSensor;            }
-	rs2::stream_profile & colorProfile()                  { return mColorProfile;           }
-	rs2::stream_profile & depthProfile()                  { return mDepthProfile;           }
-	rs2::syncer &         syncer()                        { return mSyncer;                 }
 	const rs2_intrinsics &colorIntrinsics()         const { return mColorIntrinsics;        }
 	const rs2_intrinsics &depthIntrinsics()         const { return mDepthIntrinsics;        }
 	const rs2_extrinsics &depthToColorExtrinsics()  const { return mDepth2ColorExtrinsics;  }

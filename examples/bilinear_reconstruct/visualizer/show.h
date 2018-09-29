@@ -39,12 +39,15 @@ public:
         , mProjMat(1.0)
         , mModelMat(1.0) {}
     ~ShowWindow() { }
-
+    /*set data*/
     void setColor(const Image *imgPtr);
     void setDepth(const Image *depthPtr);
     void setPointCloud(const PointCloud *pointCloudPtr);
-    void setProjMat(const glm::mat4 &proj) { mProjMat = proj; }
-    
+    /*set mat*/
+    void setModelMat(const glm::mat4 &model) { mModelMat = model; }
+    void setViewMat(const glm::mat4 &view)   { mViewMat = view;   }
+    void setProjMat(const glm::mat4 &proj)   { mProjMat = proj;   }
+    /*overwrite virtual functions*/
     void processEvent(SDL_Event &event) {}
     void draw();
 };
