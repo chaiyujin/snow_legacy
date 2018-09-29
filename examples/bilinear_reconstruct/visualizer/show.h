@@ -1,32 +1,50 @@
 #pragma once
 #define SNOW_MODULE_OPENGL
-#include "../shaders/image.h"
 #include "../depth_source/data.h"
+#include "../shaders/image.h"
+#include "../shaders/point_cloud.h"
 #include <snow.h>
 
 class ShowWindow : public snow::AbstractWindow {
     const Image *       mColorPtr;
     const Image *       mDepthPtr;
-    Image *             mColorizedDepth;
+    Image               mColorizedDepth;
     const PointCloud *  mPointCloudPtr;
     ImageShader         mImageShader;
+    PointCloudShader    mPointShader;
+    bool                mShowColor;
+    bool                mShowDepth;
+    /* mat */
+    glm::mat4           mViewMat;
+    glm::mat4           mProjMat;
+    glm::mat4           mModelMat;
+
+    void updateImageWithColor();
+    void updateImageWithDepth();
+    void updatePointCloud();
 
 public:
-    ShowWindow() : AbstractWindow()
-                 , mColorPtr(nullptr)
-                 , mDepthPtr(nullptr)
-                 , mColorizedDepth(nullptr)
-                 , mPointCloudPtr(nullptr) {}
-    ~ShowWindow() { delete mColorPtr; delete mDepthPtr; delete mColorizedDepth; delete mPointCloudPtr; }
+    ShowWindow(int numLandmarks=75,
+               int numPoints=640*480,
+               const char *title="show")
+        : AbstractWindow(title)
+        , mColorPtr(nullptr)
+        , mDepthPtr(nullptr)
+        , mPointCloudPtr(nullptr)
+        , mImageShader(numLandmarks)
+        , mPointShader(numPoints, &mImageShader)
+        , mShowColor(true)
+        , mShowDepth(false)
+        , mViewMat(1.0)
+        , mProjMat(1.0)
+        , mModelMat(1.0) {}
+    ~ShowWindow() { }
 
     void setColor(const Image *imgPtr);
     void setDepth(const Image *depthPtr);
+    void setPointCloud(const PointCloud *pointCloudPtr);
+    void setProjMat(const glm::mat4 &proj) { mProjMat = proj; }
     
     void processEvent(SDL_Event &event) {}
-    void draw() {
-        if (mColorPtr) {
-            mImageShader.use();
-            mImageShader.draw();
-        }
-    }
+    void draw();
 };

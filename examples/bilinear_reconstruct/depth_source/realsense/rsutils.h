@@ -307,8 +307,10 @@ public:
     void updateFramePair(const uint8_t *color, const uint8_t *depth);
     void updatePointCloud();
     glm::mat4 projectMat(const rs2_intrinsics &intr) const;
+    glm::mat4 transformMat(const rs2_extrinsics &extr) const;
     glm::mat4 depthProjection() const { return projectMat(mDepthIntrinsics); }
     glm::mat4 colorProjection() const { return projectMat(mColorIntrinsics); }
+    glm::mat4 depth2colorTransform() const { return transformMat(mDepth2ColorExtrinsics); }
 
     /* get */
 	rs2::software_device &device()		                  { return mDevice;                 }

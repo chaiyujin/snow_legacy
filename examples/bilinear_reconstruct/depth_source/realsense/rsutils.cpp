@@ -101,9 +101,10 @@ void RealSenseSoftwareDevice::updatePointCloud() {
     // iter
     for (int iPixel = 0; iPixel < mDepthImg.pixels(); ++iPixel) {
         if (depthPtr[iPixel] == 0) {
-            mPointCloud.verticeList()[iPixel].x = std::numeric_limits<float>::infinity();
-            mPointCloud.verticeList()[iPixel].y = std::numeric_limits<float>::infinity();
-            mPointCloud.verticeList()[iPixel].z = std::numeric_limits<float>::infinity();
+            float val = 0.f; // std::numeric_limits<float>::infinity()
+            mPointCloud.verticeList()[iPixel].x = val;
+            mPointCloud.verticeList()[iPixel].y = val;
+            mPointCloud.verticeList()[iPixel].z = val;
         }
         else {
             int x = iPixel % mDepthIntrinsics.width;
@@ -114,8 +115,8 @@ void RealSenseSoftwareDevice::updatePointCloud() {
             rs2_deproject_pixel_to_point(&mPointCloud.verticeList()[iPixel], &mDepthIntrinsics, pixel, (float)depthPtr[iPixel] * mDepthScale);
             rs2_transform_point_to_point(&tmp, &mDepth2ColorExtrinsics, &mPointCloud.verticeList()[iPixel]);
             rs2_project_point_to_pixel(&pix, &mColorIntrinsics, &tmp);
-            mPointCloud.textureCoordsList()[iPixel].x = pix.x / (float)mColorIntrinsics.width;
-            mPointCloud.textureCoordsList()[iPixel].y = pix.y / (float)mColorIntrinsics.height;
+            mPointCloud.textureCoordList()[iPixel].x = pix.x / (float)mColorIntrinsics.width;
+            mPointCloud.textureCoordList()[iPixel].y = pix.y / (float)mColorIntrinsics.height;
             // _point_cloud._vert[k].x *= 1;
             // _point_cloud._vert[k].y *= 1;
             // _point_cloud._vert[k].z *= 1;
@@ -135,4 +136,16 @@ glm::mat4 RealSenseSoftwareDevice::projectMat(const rs2_intrinsics &intr) const 
     return proj;
 }
 
+glm::mat4 RealSenseSoftwareDevice::transformMat(const rs2_extrinsics &extr) const {
+    glm::mat4 R(1.0);
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            R[i][j] = extr.rotation[i * 3 + j];
+        }
+    }
+    glm::mat4 T(1.0);
+    for (int i = 0; i < 3; ++i)
+        T[3][i] = extr.translation[i];
+    return T * R;
+}
 }

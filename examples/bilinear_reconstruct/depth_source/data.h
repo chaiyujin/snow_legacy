@@ -88,8 +88,8 @@ public:
 	const snow::float3 &                operator[](int i)         const { return mVert[i];      }
 	std::vector<snow::float3> &         verticeList()                   { return mVert;         }
 	std::vector<snow::float3> &         normalList()                    { return mNorm;         }
-	std::vector<snow::float2> &         textureCoordsList()             { return mTex;          }
+	std::vector<snow::float2> &         textureCoordList ()             { return mTex;          }
 	const std::vector<snow::float3> &   verticeList()             const { return mVert;         }
 	const std::vector<snow::float3> &   normalList()              const { return mNorm;         }
-	const std::vector<snow::float2> &   textureCoordsList()       const { return mTex;          }
+	const std::vector<snow::float2> &   textureCoordList()        const { return mTex;          }
 };

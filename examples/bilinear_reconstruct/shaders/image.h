@@ -1,7 +1,5 @@
 #pragma once
-
 #include <snow.h>
-
 #define VERT_CODE ""\
 "layout (location = 0) in vec3 aPos;"\
 "layout (location = 1) in vec2 aTexCoord;"\
@@ -10,7 +8,6 @@
 "  gl_Position = vec4(aPos, 1.0);"\
 "  TexCoord = aTexCoord;"\
 "}"
-
 #define FRAG_CODE ""\
 "in vec2 TexCoord;"\
 "out vec4 FragColor;"\
@@ -23,8 +20,10 @@
 /**
  * Show image, and landmarks on image
  **/
+class PointCloudShader;
 class ImageShader : public snow::Shader {
 private:
+    friend class PointCloudShader;
     float * mPointsPtr;
     int     mNumLandmarks;
     float   mPointSize;
@@ -136,8 +135,10 @@ public:
     }
 
     void updateVertex(float *data, int start, int length) {
+        glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
         glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(float), length * sizeof(float), data);
+        glBindVertexArray(0);
     }
 
     void updateLandmarks(const std::vector<snow::float2> &data) {
@@ -149,8 +150,10 @@ public:
             mPointsPtr[k + 2] = 0;
         }
         float *d = mPointsPtr + 20;
+        glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
         glBufferSubData(GL_ARRAY_BUFFER, 20 * sizeof(float), mNumLandmarks * 5 * sizeof(float), d);
+        glBindVertexArray(0);
     }
 };
 
