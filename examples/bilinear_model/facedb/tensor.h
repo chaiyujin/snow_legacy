@@ -101,7 +101,7 @@ private:
             }
         }
         // D, 1, 1
-        shape[1] = Alignment;  // cannot change last dim
+        // shape[1] = Alignment;  // cannot change last dim
     }
 
     void free() {

@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-namespace librealsense { class RealSenseSoftwareDevice; }
+namespace librealsense { class RealSenseSource; }
 
 class Image {
     std::shared_ptr<uint8_t> mData;
@@ -95,4 +95,8 @@ public:
 	const std::vector<snow::float3> &   verticeList()             const { return mVert;         }
 	const std::vector<snow::float3> &   normalList()              const { return mNorm;         }
 	const std::vector<snow::float2> &   textureCoordList()        const { return mTex;          }
+};
+
+class MorphModel {
+    
 };

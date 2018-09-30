@@ -3,11 +3,11 @@
 
 namespace librealsense {
 
-RealSenseSoftwareDevice::RealSenseSoftwareDevice() {}
-RealSenseSoftwareDevice::RealSenseSoftwareDevice(std::string paramPath) : RealSenseSoftwareDevice() { this->initFrom(paramPath); }
-RealSenseSoftwareDevice::~RealSenseSoftwareDevice() {}
+RealSenseSource::RealSenseSource() {}
+RealSenseSource::RealSenseSource(std::string paramPath) : RealSenseSource() { this->initFrom(paramPath); }
+RealSenseSource::~RealSenseSource() {}
 
-void RealSenseSoftwareDevice::initFrom(std::string paramPath) {
+void RealSenseSource::initFrom(std::string paramPath) {
     std::ifstream fin(paramPath);
     if (!fin.is_open()) throw std::runtime_error("Failed to open parameter path.");
     // begin to read
@@ -59,12 +59,12 @@ void RealSenseSoftwareDevice::initFrom(std::string paramPath) {
 #endif
 }
 
-void RealSenseSoftwareDevice::updateFramePair(const uint8_t *color, const uint8_t *depth) {
+void RealSenseSource::updateFramePair(const uint8_t *color, const uint8_t *depth) {
     memcpy(mColorImg.data(), color, mColorImg.pixels() * mColorImg.bpp());
     memcpy(mDepthImg.data(), depth, mDepthImg.pixels() * mDepthImg.bpp());
 }
 
-void RealSenseSoftwareDevice::updatePointCloud() {
+void RealSenseSource::updatePointCloud() {
     const uint16_t *depthPtr = (const uint16_t *)mDepthImg.data();
     // set point cloud members
     mPointCloud.setWidth(mDepthIntrinsics.width);
@@ -98,7 +98,7 @@ void RealSenseSoftwareDevice::updatePointCloud() {
     }
 }
 
-glm::mat4 RealSenseSoftwareDevice::projectMat(const rs2_intrinsics &intr) const {
+glm::mat4 RealSenseSource::projectMat(const rs2_intrinsics &intr) const {
     float f = 100.f, n = 0.1f;
     float a = -(f + n) / (f - n);
     float b = -2.f * f * n / (f - n);
@@ -110,7 +110,7 @@ glm::mat4 RealSenseSoftwareDevice::projectMat(const rs2_intrinsics &intr) const 
     return proj;
 }
 
-glm::mat4 RealSenseSoftwareDevice::transformMat(const rs2_extrinsics &extr) const {
+glm::mat4 RealSenseSource::transformMat(const rs2_extrinsics &extr) const {
     glm::mat4 R(1.0);
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {

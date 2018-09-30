@@ -16,64 +16,6 @@
  *********************************/
 namespace librealsense {
 
-inline void read_parameters(const char *filename,
-                            rs2_intrinsics &color_intr,
-                            rs2_intrinsics &depth_intr,
-                            rs2_extrinsics &depth2color,
-                            float &depth_scale) {
-    std::ifstream fin(filename);
-	auto read_intr = [&](rs2_intrinsics &intr) -> void {
-		static int id = 0;
-		std::string name;
-		int model;
-		fin >> name >> intr.width >> name >> intr.height
-			>> name >> intr.ppx   >> name >> intr.ppy
-			>> name >> intr.fx    >> name >> intr.fy
-			>> name >> model;
-		while (name != "coeffs:") fin >> name;
-		intr.model = (rs2_distortion)model;
-		for (int i = 0; i < 5; ++i) {
-			fin >> intr.coeffs[i];
-		}
-#ifdef TEST_REALSENSE
-		printf("Intrinsics %d\n", id++);
-		printf("%d %d %f %f %f %f\n", intr.width, intr.height, intr.ppx, intr.ppy, intr.fx, intr.fy);
-		printf("%s", rs2_distortion_to_string(intr.model));
-		for (int i = 0; i < 5; ++i) {
-			printf(" %f", intr.coeffs[i]);
-		}
-		printf("\n");
-#endif
-	};
-
-	auto read_extr = [&](rs2_extrinsics &extr) -> void {
-		static int id = 0;
-		std::string name;
-		fin >> name;
-		for (int i = 0; i < 9; ++i) {
-			fin >> extr.rotation[i];
-		}
-		fin >> name;
-		for (int i = 0; i < 3; ++i) {
-			fin >> extr.translation[i];
-		}
-#ifdef TEST_REALSENSE
-		printf("Extrinsics %d\n", id++);
-		for (int i = 0; i < 9; ++i) printf("%f ", extr.rotation[i]); printf("\n");
-		for (int i = 0; i < 3; ++i) printf("%f ", extr.translation[i]); printf("\n");
-#endif
-	};
-
-	read_intr(color_intr);
-	read_intr(depth_intr);
-	read_extr(depth2color);
-
-	std::string name;
-	fin >> name >> depth_scale;
-
-	fin.close();
-}
-
 inline std::istream &operator >> (std::istream &in, rs2_intrinsics &intr) {
 	std::string str; int id;
 	in >> intr.width;	std::getline(in, str);
@@ -129,8 +71,7 @@ inline std::ostream &operator<<(std::ostream &out, rs2_extrinsics &extr) {
 	return out;
 }
 
-
-class RealSenseSoftwareDevice {
+class RealSenseSource {
     // parameters
     rs2_intrinsics          mColorIntrinsics;
     rs2_intrinsics          mDepthIntrinsics;
@@ -148,21 +89,21 @@ class RealSenseSoftwareDevice {
 public:
     static const int COLOR_BPP = 4;
     static const int DEPTH_BPP = 2;
-    static const int FPS       = 30;
 
-    RealSenseSoftwareDevice();
-    RealSenseSoftwareDevice(std::string paramPath);
-    ~RealSenseSoftwareDevice();
+    RealSenseSource();
+    RealSenseSource(std::string paramPath);
+    ~RealSenseSource();
 
     void initFrom(std::string paramPath);
     void updateFramePair(const uint8_t *color, const uint8_t *depth);
     void updatePointCloud();
-    glm::mat4 projectMat(const rs2_intrinsics &intr) const;
-    glm::mat4 transformMat(const rs2_extrinsics &extr) const;
-    glm::mat4 depthProjection() const { return projectMat(mDepthIntrinsics); }
-    glm::mat4 colorProjection() const { return projectMat(mColorIntrinsics); }
-    glm::mat4 depth2colorTransform() const { return transformMat(mDepth2ColorExtrinsics); }
-
+    /* mat */
+    glm::mat4 projectMat(const rs2_intrinsics &)    const;
+    glm::mat4 transformMat(const rs2_extrinsics &)  const;
+    glm::mat4 depthProjectionMat()                  const { return projectMat(mDepthIntrinsics); }
+    glm::mat4 colorProjectionMat()                  const { return projectMat(mColorIntrinsics); }
+    glm::mat4 depth2colorTransform()                const { return transformMat(mDepth2ColorExtrinsics); }
+    glm::mat4 viewMat()                             const { glm::mat4 view(1.0f); view[1][1] = view[2][2] = -1.0f; return view; }
     /* get */
 	const rs2_intrinsics &colorIntrinsics()         const { return mColorIntrinsics;        }
 	const rs2_intrinsics &depthIntrinsics()         const { return mDepthIntrinsics;        }
@@ -173,7 +114,6 @@ public:
     const Image &         colorizedDepthImg()       const { return mColorizedDepthImg;      }
 	PointCloud &          pointCloud()                    { return mPointCloud;             }
 	const PointCloud &    pointCloud()              const { return mPointCloud;             }
-
 };
 
 }

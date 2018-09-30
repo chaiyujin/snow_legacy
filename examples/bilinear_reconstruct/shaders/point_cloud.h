@@ -1,28 +1,26 @@
 #pragma once
-#define SNOW_MODULE_OPENGL
 #include <snow.h>
 #include "image.h"
 #include "../depth_source/data.h"
-
 #define VERT_CODE ""\
-"layout (location = 0) in vec3 aPos;"\
-"layout (location = 1) in vec2 aTexCoord;"\
-"out vec2 TexCoord;"\
-"uniform mat4 Model;"\
-"uniform mat4 View;"\
-"uniform mat4 Proj;"\
-"void main() {"\
-"  gl_Position = Proj * View * Model * vec4(aPos, 1.0);"\
-"  TexCoord = aTexCoord;"\
-"}"
+    "layout (location = 0) in vec3 aPos;"\
+    "layout (location = 1) in vec2 aTexCoord;"\
+    "out vec2 TexCoord;"\
+    "uniform mat4 Model;"\
+    "uniform mat4 View;"\
+    "uniform mat4 Proj;"\
+    "void main() {"\
+    "  gl_Position = Proj * View * Model * vec4(aPos, 1.0);"\
+    "  TexCoord = aTexCoord;"\
+    "}"
 #define FRAG_CODE ""\
-"in vec2 TexCoord;"\
-"out vec4 FragColor;"\
-"uniform sampler2D ImageTexture;"\
-"void main() {"\
-"    if (TexCoord[0] < 0) FragColor = vec4(0.0, 1.0, 0.0, 1.0);"\
-"    else                 FragColor = texture(ImageTexture, TexCoord);"\
-"}"
+    "in vec2 TexCoord;"\
+    "out vec4 FragColor;"\
+    "uniform sampler2D ImageTexture;"\
+    "void main() {"\
+    "    if (TexCoord[0] < 0) FragColor = vec4(0.0, 1.0, 0.0, 1.0);"\
+    "    else                 FragColor = texture(ImageTexture, TexCoord);"\
+    "}"
 
 class PointCloudShader : public snow::Shader {
 private:
@@ -95,3 +93,6 @@ public:
         glBindVertexArray(0);
     }
 };
+
+#undef VERT_CODE
+#undef FRAG_CODE

@@ -1,21 +1,21 @@
 #pragma once
 #include <snow.h>
 #define VERT_CODE ""\
-"layout (location = 0) in vec3 aPos;"\
-"layout (location = 1) in vec2 aTexCoord;"\
-"out vec2 TexCoord;"\
-"void main() {"\
-"  gl_Position = vec4(aPos, 1.0);"\
-"  TexCoord = aTexCoord;"\
-"}"
+    "layout (location = 0) in vec3 aPos;"\
+    "layout (location = 1) in vec2 aTexCoord;"\
+    "out vec2 TexCoord;"\
+    "void main() {"\
+    "  gl_Position = vec4(aPos, 1.0);"\
+    "  TexCoord = aTexCoord;"\
+    "}"
 #define FRAG_CODE ""\
-"in vec2 TexCoord;"\
-"out vec4 FragColor;"\
-"uniform sampler2D ImageTexture;"\
-"void main() {"\
-"    if (TexCoord[0] < 0) FragColor = vec4(0.0, 1.0, 0.0, 1.0);"\
-"    else                 FragColor = texture(ImageTexture, TexCoord);"\
-"}"
+    "in vec2 TexCoord;"\
+    "out vec4 FragColor;"\
+    "uniform sampler2D ImageTexture;"\
+    "void main() {"\
+    "    if (TexCoord[0] < 0) FragColor = vec4(0.0, 1.0, 0.0, 1.0);"\
+    "    else                 FragColor = texture(ImageTexture, TexCoord);"\
+    "}"
 
 /**
  * Show image, and landmarks on image
@@ -156,7 +156,6 @@ public:
         glBindVertexArray(0);
     }
 };
-
 
 #undef VERT_CODE
 #undef FRAG_CODE

@@ -15,7 +15,7 @@ void runObj(const char *objPath) {
 void runBilinear(const char *fwPath) {
     FaceDB::Initialize(fwPath);
 
-    std::vector<double> iden(50, 0);
+    std::vector<double> iden(75, 0);
     std::vector<double> expr(47, 0);
     iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
     expr[0] = 1.0;
