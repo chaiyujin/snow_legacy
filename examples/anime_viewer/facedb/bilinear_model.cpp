@@ -107,3 +107,12 @@ void BilinearModel::translate(size_t index, const double *translate) {
         data[0] += translate[0]; data[1] += translate[1]; data[2] += translate[2];
     }
 }
+
+void BilinearModel::transformMesh(size_t index, const glm::mat4 &extraTransform) {
+    double *data;
+    for (int i = 0; i < mMeshList[index].shape(0); i += 3) {
+        data = mMeshList[index].data(i);
+        auto q = extraTransform * glm::dvec4(data[0], data[1], data[2], 1);
+        data[0] = q.x; data[1] = q.y; data[2] = q.z;
+    }
+}

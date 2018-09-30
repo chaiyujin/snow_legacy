@@ -36,13 +36,11 @@ void ShowWindow::draw() {
     }
 
     /* draw model */ {
-        glm::mat4 V(1.0); V[1][1] = V[2][2] = -1.0f;
-        glm::mat4 normal = glm::transpose(glm::inverse(mModelMat * V));
         mModelShader.use();
-        mModelShader.setMat4("Normal", normal);
-        mModelShader.setMat4("Model", mModelMat * V);
-        mModelShader.setMat4("View",  mViewMat);
-        mModelShader.setMat4("Proj",  mProjMat);
+        mModelShader.setMat4("Normal",   glm::transpose(glm::inverse(mModelMat)));
+        mModelShader.setMat4("Model",    mModelMat);
+        mModelShader.setMat4("View",     mViewMat);
+        mModelShader.setMat4("Proj",     mProjMat);
         mModelShader.setVec3("LightPos", glm::vec3(0.0f, 0.0f, -30.0f));
         mModelShader.setVec3("Ambient",  glm::vec3(0.1f, 0.1f, 0.1f));
         mModelShader.setVec3("Diffuse",  glm::vec3(0.7f, 0.7f, 0.7f));

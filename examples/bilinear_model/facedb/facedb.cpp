@@ -89,8 +89,8 @@ void FaceDB::Initialize(std::string dir) {
         delete[] tmp;
         fclose(fp_tensor);
 
-        std::cout << " core  shape: " << gTensorShape << std::endl;
-        std::cout << "origin shape: " << gOriginShape << std::endl;
+        // std::cout << " core  shape: " << gTensorShape << std::endl;
+        // std::cout << "origin shape: " << gOriginShape << std::endl;
     }
 #else
     {
@@ -259,7 +259,7 @@ void FaceDB::Initialize(std::string dir) {
             // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);
-        printf("read face done\n");
+        // printf("read face done\n");
     }
     /* read contours */
     {
@@ -295,7 +295,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             return indices;
         });
-        printf("read contour done\n");
+        // printf("read contour done\n");
     }
     /* read singular values */
     {
@@ -319,7 +319,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        printf("read expr singular done\n");
+        // printf("read expr singular done\n");
     }
     /* read face only mesh */
     {
@@ -345,7 +345,7 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        printf("read face only mesh done\n");
+        // printf("read face only mesh done\n");
     }
 }
 

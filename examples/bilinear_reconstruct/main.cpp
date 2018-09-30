@@ -15,6 +15,16 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 
 int main() {
     FaceDB::Initialize("../../../assets/fw");
+    snow::App app;
+    ShowWindow *win = new ShowWindow();
+    
+    librealsense::RealSenseSource rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
+    Image color(1920, 1080, 4);
+    Image depth(640, 480, 2);
+    readFrameBin("../../../assets/frame.bin", color.data(), depth.data());
+    rsdevice.updateFramePair(color.data(), depth.data());
+    rsdevice.updatePointCloud();
+
     BilinearModel model;
     {
         std::vector<double> iden(75, 0);
@@ -26,18 +36,8 @@ int main() {
         model.updateScale(0);
         model.rotateYXZ(0);
         model.translate(0);
+        model.transformMesh(0, rsdevice.viewMat());
     }
-
-    snow::App app;
-    ShowWindow *win = new ShowWindow();
-    
-    librealsense::RealSenseSource rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
-    Image color(1920, 1080, 4);
-    Image depth(640, 480, 2);
-    readFrameBin("../../../assets/frame.bin", color.data(), depth.data());
-    rsdevice.updateFramePair(color.data(), depth.data());
-    rsdevice.updatePointCloud();
-
     win->mModelShader.updateTriangles(FaceDB::Triangles());
     FaceDB::UpdateNormals(model.mesh(0));
     win->mModelShader.updateVertices<double, float, float>(
@@ -45,6 +45,7 @@ int main() {
         &FaceDB::VertNormals()[0],
         nullptr,
         FaceDB::NumVertices());
+
 
     win->setViewMat(rsdevice.viewMat());
     win->setProjMat(rsdevice.colorProjectionMat());

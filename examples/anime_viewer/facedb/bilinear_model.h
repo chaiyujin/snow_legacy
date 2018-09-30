@@ -70,6 +70,8 @@ public:
     /* update all parameter for mesh i */
     void updateMesh         (size_t i=0){ updateIdenOnCore(i); updateExpr(i); updateScale(i); rotateYXZ(i); translate(i); }
 
+    void transformMesh(size_t i, const glm::mat4 &extraTransform);
+
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }
     PoseParameter  &        poseParameter(size_t i)       { return *mParamPosePtrList[i]; }

@@ -46,8 +46,7 @@ public:
     void reset() {
         memset(mTrainPtr, 0, sizeof(double) * Length);
         memset(mParamPtr, 0, sizeof(double) * Length);
-        getT(mTrainPtr, 2) = -0.5;
-        getT(mParamPtr, 2) = -0.5;
+        getT(mTrainPtr, 2) = getT(mParamPtr, 2) = -0.45f;
     }
 
     double *rotateYXZ()                   { return &getR(mParamPtr, 0); }
@@ -77,9 +76,8 @@ public:
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
         memset(mTrainPtr, 0, sizeof(double) * Length);
-        mParamPtr[0] = mTrainPtr[0] = 0.1;
+        mParamPtr[0] = mTrainPtr[0] = 0.01;
     }
-
 };
 
 class IdenParameter : public Parameter {
