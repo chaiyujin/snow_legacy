@@ -6,7 +6,7 @@ int main() {
     FaceDB::Initialize("../../../assets/fw");
 
     snow::App app;
-    app.addWindow(new ShowWindow());
+    app.addWindow(new VisualizerWindow());
     app.run();
 
     return 0;

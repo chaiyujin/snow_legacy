@@ -1,6 +1,6 @@
+#include "visualizer/window.h"
 #include "facedb/facedb.h"
 #include "facedb/bilinear_model.h"
-#include "visualizer/show.h"
 #include "depth_source/realsense/rsutils.h"
 #include <snow.h>
 
@@ -16,7 +16,7 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 int main() {
     FaceDB::Initialize("../../../assets/fw");
     snow::App app;
-    ShowWindow *win = new ShowWindow();
+    VisualizerWindow *win = new VisualizerWindow();
     
     librealsense::RealSenseSource rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
     Image color(1920, 1080, 4);

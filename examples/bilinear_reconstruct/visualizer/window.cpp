@@ -1,16 +1,16 @@
-#include "show.h"
+#include "window.h"
 
-void ShowWindow::setColor(const Image *imgPtr)                  { mColorPtr = imgPtr; }
-void ShowWindow::setDepth(const Image *depthPtr)                { mDepthPtr = depthPtr; Image::ColorizeDepth(*mDepthPtr, mColorizedDepth); }
-void ShowWindow::setPointCloud(const PointCloud *pointCloudPtr) { mPointCloudPtr = pointCloudPtr; updatePointCloud(); }
-void ShowWindow::updateImageWithColor()                         { mImageShader.uploadImage(mColorPtr->data(), mColorPtr->width(), mColorPtr->height(), (mColorPtr->bpp() == 4) ? GL_RGBA : GL_RGB); }
-void ShowWindow::updateImageWithDepth()                         { mImageShader.uploadImage(mColorizedDepth.data(), mColorizedDepth.width(), mColorizedDepth.height(), (mColorizedDepth.bpp() == 4) ? GL_RGBA : GL_RGB); }
-void ShowWindow::updatePointCloud()                             { mPointShader.updateWithPointCloud(*mPointCloudPtr); }
+void VisualizerWindow::setColor(const Image *imgPtr)                  { mColorPtr = imgPtr; }
+void VisualizerWindow::setDepth(const Image *depthPtr)                { mDepthPtr = depthPtr; Image::ColorizeDepth(*mDepthPtr, mColorizedDepth); }
+void VisualizerWindow::setPointCloud(const PointCloud *pointCloudPtr) { mPointCloudPtr = pointCloudPtr; updatePointCloud(); }
+void VisualizerWindow::updateImageWithColor()                         { mImageShader.uploadImage(mColorPtr->data(), mColorPtr->width(), mColorPtr->height(), (mColorPtr->bpp() == 4) ? GL_RGBA : GL_RGB); }
+void VisualizerWindow::updateImageWithDepth()                         { mImageShader.uploadImage(mColorizedDepth.data(), mColorizedDepth.width(), mColorizedDepth.height(), (mColorizedDepth.bpp() == 4) ? GL_RGBA : GL_RGB); }
+void VisualizerWindow::updatePointCloud()                             { mPointShader.updateWithPointCloud(*mPointCloudPtr); }
 
-void ShowWindow::processEvent(SDL_Event &event) {
+void VisualizerWindow::processEvent(SDL_Event &event) {
 }
 
-void ShowWindow::draw() {
+void VisualizerWindow::draw() {
     ImGui::Begin("tools");
     glClear(GL_DEPTH_BUFFER_BIT);
     /* draw image */ if (mColorPtr) {

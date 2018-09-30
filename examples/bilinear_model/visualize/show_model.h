@@ -16,7 +16,7 @@ public:
     void updateFromTensor(const Tensor3 &tensor);
 };
 
-class ShowWindow : public snow::CameraWindow {
+class VisualizerWindow : public snow::CameraWindow {
 private:
     ShowModel        mGLModel;
     snow::Shader    *mShaderPtr;
@@ -25,7 +25,7 @@ private:
     std::vector<float> mExpr;
 
 public:
-    ShowWindow();
+    VisualizerWindow();
     void draw();
 
     template <typename T>

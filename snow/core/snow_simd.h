@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef SNOW_AVX
 #include <x86intrin.h>
+#endif
 
 namespace snow {
 

@@ -8,5 +8,4 @@
 #include "snow_watch.h"
 #include "snow_iostream.h"
 #include "snow_path.h"
-
 #include "snow_simd.h"

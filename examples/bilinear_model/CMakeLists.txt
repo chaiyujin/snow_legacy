@@ -18,3 +18,6 @@ target_link_libraries(${PROJECT_NAME}
     snow                    # link snow
 )
 
+if (WIN32)
+    SNOW_COPY_DLL(AnimeViewer)
+endif (WIN32)

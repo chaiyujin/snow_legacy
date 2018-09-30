@@ -11,7 +11,7 @@ link_directories(   ${SNOW_LIBRARIES_DIRS})
 
 add_executable(${PROJECT_NAME}
     ./main.cpp
-    ./visualizer/show.cpp
+    ./visualizer/window.cpp
     ./facedb/facedb.cpp
     ./facedb/tensor.cpp
     ./facedb/bilinear_model.cpp
@@ -22,3 +22,6 @@ target_link_libraries(${PROJECT_NAME}
     snow                    # link snow
 )
 
+if (WIN32)
+    SNOW_COPY_DLL(${PROJECT_NAME})
+endif (WIN32)

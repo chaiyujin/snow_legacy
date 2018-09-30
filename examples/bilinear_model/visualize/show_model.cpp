@@ -32,7 +32,7 @@ void ShowModel::updateFromTensor(const Tensor3 &tensor) {
     glBufferSubData(GL_ARRAY_BUFFER, 0, meshes[0]->vertices.size() * sizeof(snow::Vertex), &meshes[0]->vertices[0]);
 }
 
-ShowWindow::ShowWindow()
+VisualizerWindow::VisualizerWindow()
     : snow::CameraWindow("")
     , mGLModel()
     , mBilinearModel(1)
@@ -49,7 +49,7 @@ ShowWindow::ShowWindow()
     );
 }
 
-void ShowWindow::draw() {
+void VisualizerWindow::draw() {
     {
         glEnable(GL_DEPTH_TEST);
         mShaderPtr->use();

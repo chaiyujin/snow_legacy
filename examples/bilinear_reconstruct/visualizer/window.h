@@ -1,12 +1,11 @@
 #pragma once
-#define SNOW_MODULE_OPENGL
 #include "../depth_source/data.h"
 #include "../shaders/image.h"
 #include "../shaders/point_cloud.h"
 #include "../shaders/morph_model.h"
 #include <snow.h>
 
-class ShowWindow : public snow::AbstractWindow {
+class VisualizerWindow : public snow::AbstractWindow {
 public:
     const Image *       mColorPtr;
     const Image *       mDepthPtr;
@@ -29,14 +28,14 @@ public:
     void updateImageWithDepth();
     void updatePointCloud();
 
-    ShowWindow(int numLandmarks=75, int numPoints=640*480, const char *title="show")
+    VisualizerWindow(int numLandmarks=75, int numPoints=640*480, const char *title="show")
         : AbstractWindow(title)
         , mColorPtr(nullptr) , mDepthPtr(nullptr) , mPointCloudPtr(nullptr), mModelPtr(nullptr)
         , mImageShader(numLandmarks), mPointShader(numPoints, &mImageShader)
         , mModelShader(11510, 22800)
         , mShowColor(true), mShowDepth(false), mShowPoint(true)
         , mViewMat(1.0), mProjMat(1.0), mModelMat(1.0) {}
-    ~ShowWindow() {}
+    ~VisualizerWindow() {}
     /*set data*/
     void setColor(const Image *imgPtr);
     void setDepth(const Image *depthPtr);

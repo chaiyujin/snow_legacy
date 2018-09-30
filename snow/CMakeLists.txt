@@ -4,12 +4,12 @@ project(snow VERSION 0.0.2 DESCRIPTION "A simple tool for OpenGL, Gui and FFmpeg
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
 
-OPTION(SNOW_AVX              "AVX functions" on)
+OPTION(SNOW_AVX              "AVX functions" off)
 OPTION(SNOW_RELEASE          "-O3 switch"    on)
 
 OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
-OPTION(SNOW_MODULE_FP        "Build with module functional programming" on)
+OPTION(SNOW_MODULE_FP        "Build with module functional programming" off)
 
 # ============== Begin ===============
 set(SNOW_SOURCES        "")

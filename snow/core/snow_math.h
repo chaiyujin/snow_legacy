@@ -11,8 +11,13 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 // eigen
+#ifdef _WIN32
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#else
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#endif
 // self defined
 #include "extypes.h"
 
