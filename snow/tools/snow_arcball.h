@@ -47,7 +47,7 @@ namespace snow {
 
     public:
         Arcball(CameraBase *camera,
-                bool manipulateCamera, 
+                bool manipulateCamera,
                 float radiusOfHalfHeight=0.5f,
                 glm::vec3 center=glm::vec3(0.f,0.f,0.f));
         glm::quat quaternion();
@@ -55,5 +55,6 @@ namespace snow {
         void setSpeed(float speed) { mSpeed = speed; }
 
         void draw(const glm::mat4 &project);
+        void reset();
     };
 }

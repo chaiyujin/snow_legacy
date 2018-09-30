@@ -51,6 +51,11 @@ namespace snow {
         mQuatCamera = glm::inverse(mCamera->quatAroundCenter());
     }
     
+    void Arcball::reset() { 
+        mQuatCamera = glm::inverse(mCamera->quatAroundCenter());
+        mQuatObject = glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f));
+    }
+
     glm::quat Arcball::quaternion() {
         if (mIsCamera) {
             glm::quat ret = (mIsMoving)? glm::cross(mQuatCamera, mDelta) : mQuatCamera;

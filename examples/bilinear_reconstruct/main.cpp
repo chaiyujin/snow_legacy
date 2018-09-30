@@ -1,6 +1,6 @@
-#include "visualizer/window.h"
 #include "facedb/facedb.h"
 #include "facedb/bilinear_model.h"
+#include "visualizer/window.h"
 #include "depth_source/realsense/rsutils.h"
 #include <snow.h>
 
@@ -15,10 +15,11 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 
 int main() {
     FaceDB::Initialize("../../../assets/fw");
-    snow::App app;
-    VisualizerWindow *win = new VisualizerWindow();
-    
     librealsense::RealSenseSource rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
+
+    snow::App app;
+    VisualizerWindow *win = new VisualizerWindow(75, rsdevice.depthImg().pixels(), FaceDB::NumVertices(), FaceDB::NumTriangles());
+    
     Image color(1920, 1080, 4);
     Image depth(640, 480, 2);
     readFrameBin("../../../assets/frame.bin", color.data(), depth.data());
@@ -37,21 +38,16 @@ int main() {
         model.rotateYXZ(0);
         model.translate(0);
         model.transformMesh(0, rsdevice.viewMat());
+        model.updateMorphModel(0);
     }
-    win->mModelShader.updateTriangles(FaceDB::Triangles());
-    FaceDB::UpdateNormals(model.mesh(0));
-    win->mModelShader.updateVertices<double, float, float>(
-        model.mesh().data(0),
-        &FaceDB::VertNormals()[0],
-        nullptr,
-        FaceDB::NumVertices());
-
-
-    win->setViewMat(rsdevice.viewMat());
-    win->setProjMat(rsdevice.colorProjectionMat());
+    
+    // set data
+    win->setColor(&rsdevice.colorImg());
+    win->setDepth(&rsdevice.depthImg());
     win->setPointCloud(&rsdevice.pointCloud());
-    win->setColor(&color);
-    win->setDepth(&depth);
+    win->setMorphModel(&model.morphModel(0));
+    // set mats
+    win->setProjMat(rsdevice.colorProjectionMat());
 
     app.addWindow(win);
     app.run();

@@ -4,6 +4,7 @@
 #include "parameter.h"
 #include "tensor.h"
 #include <vector>
+#include "../depth_source/data.h"
 
 class BilinearModel {
 private:
@@ -12,6 +13,7 @@ private:
     std::vector<Tensor3>            mTv1eList;
     std::vector<Tensor3>            mTv11List;
     std::vector<Tensor3>            mMeshList;
+    std::vector<MorphModel>         mMorphModelList;
 
     ScaleParameter *                mParamScalePtr;
     IdenParameter *                 mParamIdenPtr;
@@ -42,6 +44,8 @@ public:
     Tensor3 &tvi1(size_t i)                 { return mTvi1List[i]; }
     const Tensor3 &mesh(size_t i=0)   const { return mMeshList[i]; }
 
+    const MorphModel &morphModel(size_t i=0) const { return mMorphModelList[i]; }
+
     /**
      * There are two possible paths of applying parameters
      * 1. iden -> expr -> scale -> rotate -> translate
@@ -71,6 +75,7 @@ public:
     void updateMesh         (size_t i=0){ updateIdenOnCore(i); updateExpr(i); updateScale(i); rotateYXZ(i); translate(i); }
 
     void transformMesh(size_t i, const glm::mat4 &extraTransform);
+    void updateMorphModel   (size_t i);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

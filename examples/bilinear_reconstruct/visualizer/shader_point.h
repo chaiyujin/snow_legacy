@@ -1,7 +1,7 @@
 #pragma once
 #include <snow.h>
-#include "image.h"
 #include "../depth_source/data.h"
+#include "shader_image.h"
 #define VERT_CODE ""\
     "layout (location = 0) in vec3 aPos;"\
     "layout (location = 1) in vec2 aTexCoord;"\

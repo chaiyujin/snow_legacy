@@ -16,19 +16,10 @@ namespace snow {
     }
 
     CameraBase::CameraBase(glm::vec3 eye, glm::vec3 center, glm::vec3 up) {
-        mZoom     = 45.f;
-        mCenter   = center;
-        mDistance = glm::distance(center, eye);
-        // correct up
-        mEye   = eye;
-        mUp    = up;
-        mFront = glm::normalize(mCenter - mEye);
-        mRight = glm::normalize(glm::cross(mFront, mUp));
-        mUp    = glm::normalize(glm::cross(mRight, mFront));
-        // get quat
-        mQuatAroundCenter = snow::quatBetween(gStandardFront, mFront);
-        mQuatAroundFront  = snow::quatBetween(glm::rotate(mQuatAroundCenter, gStandardFront + gStandardUp) - mFront, mUp);
-        this->_updateCameraVectors();
+        mInitEye = eye;
+        mInitCenter = center;
+        mInitUp = up;
+        this->_initialize();
     }
 
     void CameraBase::rotateAroundCenter(const glm::quat &q) {
@@ -51,6 +42,22 @@ namespace snow {
         this->_updateCameraVectors();
     }
 
+    void CameraBase::_initialize() {
+        mZoom     = 45.f;
+        mCenter   = mInitCenter;
+        mDistance = glm::distance(mInitCenter, mInitEye);
+        // correct up
+        mEye   = mInitEye;
+        mUp    = mInitUp;
+        mFront = glm::normalize(mCenter - mEye);
+        mRight = glm::normalize(glm::cross(mFront, mUp));
+        mUp    = glm::normalize(glm::cross(mRight, mFront));
+        // get quat
+        mQuatAroundCenter = snow::quatBetween(gStandardFront, mFront);
+        mQuatAroundFront  = snow::quatBetween(glm::rotate(mQuatAroundCenter, gStandardFront + gStandardUp) - mFront, mUp);
+        this->_updateCameraVectors();
+    }
+    
     void CameraBase::_updateCameraVectors() {
         auto front = glm::rotate(mQuatAroundCenter, gStandardFront);
         auto up    = glm::rotate(mQuatAroundCenter, gStandardFront + gStandardUp) - front;
@@ -61,14 +68,18 @@ namespace snow {
         mEye       = mCenter - mDistance * mFront;
     }
 
-    ArcballCamera::ArcballCamera(glm::vec3 eye, glm::vec3 up)
-        : CameraBase(eye, CameraBase::gOrigin, up)
+    ArcballCamera::ArcballCamera(glm::vec3 eye, glm::vec3 up, glm::vec3 center)
+        : CameraBase(eye, center, up)
         , mArcballPtr(nullptr)
         , mLastX(-1), mLastY(-1)
         , mSpeedZoom(1.f), mSpeedMove(5.f), mSpeedRotate(1.f)
     {
         mArcballPtr = new Arcball(this, true);
         mArcballPtr->setSpeed(mSpeedRotate);
+    }
+
+    void ArcballCamera::reset() {
+        _initialize(); mArcballPtr->reset();
     }
 
     void ArcballCamera::setSpeedRotate(float speed)  { mSpeedRotate = speed; mArcballPtr->setSpeed(mSpeedRotate); }

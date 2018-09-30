@@ -3,15 +3,22 @@
 void VisualizerWindow::setColor(const Image *imgPtr)                  { mColorPtr = imgPtr; }
 void VisualizerWindow::setDepth(const Image *depthPtr)                { mDepthPtr = depthPtr; Image::ColorizeDepth(*mDepthPtr, mColorizedDepth); }
 void VisualizerWindow::setPointCloud(const PointCloud *pointCloudPtr) { mPointCloudPtr = pointCloudPtr; updatePointCloud(); }
+void VisualizerWindow::setMorphModel(const MorphModel *morphModel)    { mModelPtr = morphModel;         updateMorphModel(); }
 void VisualizerWindow::updateImageWithColor()                         { mImageShader.uploadImage(mColorPtr->data(), mColorPtr->width(), mColorPtr->height(), (mColorPtr->bpp() == 4) ? GL_RGBA : GL_RGB); }
 void VisualizerWindow::updateImageWithDepth()                         { mImageShader.uploadImage(mColorizedDepth.data(), mColorizedDepth.width(), mColorizedDepth.height(), (mColorizedDepth.bpp() == 4) ? GL_RGBA : GL_RGB); }
 void VisualizerWindow::updatePointCloud()                             { mPointShader.updateWithPointCloud(*mPointCloudPtr); }
+void VisualizerWindow::updateMorphModel()                             { mModelShader.updateWithMorphModel(*mModelPtr); }
 
 void VisualizerWindow::processEvent(SDL_Event &event) {
+    mCamera.processMouseEvent(event);
 }
 
 void VisualizerWindow::draw() {
     ImGui::Begin("tools");
+
+    if (ImGui::Button("reset camera")) mCamera.reset();
+    mViewMat = mCamera.viewMatrix();
+
     glClear(GL_DEPTH_BUFFER_BIT);
     /* draw image */ if (mColorPtr) {
         bool show = false;
@@ -35,16 +42,18 @@ void VisualizerWindow::draw() {
         }
     }
 
-    /* draw model */ {
+    ImGui::Checkbox("model", &mShowModel);
+    /* draw model */ if (mShowModel) {
         mModelShader.use();
         mModelShader.setMat4("Normal",   glm::transpose(glm::inverse(mModelMat)));
         mModelShader.setMat4("Model",    mModelMat);
         mModelShader.setMat4("View",     mViewMat);
         mModelShader.setMat4("Proj",     mProjMat);
-        mModelShader.setVec3("LightPos", glm::vec3(0.0f, 0.0f, -30.0f));
+        mModelShader.setVec3("LightPos", glm::vec3(0.0f, 0.0f, -10.0f));
         mModelShader.setVec3("Ambient",  glm::vec3(0.1f, 0.1f, 0.1f));
         mModelShader.setVec3("Diffuse",  glm::vec3(0.7f, 0.7f, 0.7f));
         mModelShader.draw();
     }
+
     ImGui::End();
 }

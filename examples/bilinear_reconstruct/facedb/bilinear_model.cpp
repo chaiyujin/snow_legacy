@@ -6,6 +6,7 @@ BilinearModel::BilinearModel(size_t count)
     : Core(FaceDB::CoreTensor())
     , mTvi1List(0), mTv1eList(0)
     , mTv11List(0), mMeshList(0)
+    , mMorphModelList(0)
     , mParamScalePtr(new ScaleParameter)
     , mParamIdenPtr(new IdenParameter)
     , mParamPosePtrList(0)
@@ -40,7 +41,6 @@ BilinearModel::~BilinearModel() {
         }
     }
 }
-
 void BilinearModel::appendModel(size_t count) {
     if (mIsChild) throw std::runtime_error("[BilinearModel]: appendModel() should not be child.\n");
     ++mCount;
@@ -49,6 +49,8 @@ void BilinearModel::appendModel(size_t count) {
     mTv1eList.emplace_back();
     mTv11List.emplace_back();
     mMeshList.emplace_back();
+    mMorphModelList.emplace_back();
+    mMorphModelList.back().setIndices(FaceDB::Triangles());
 
     mParamPosePtrList.push_back(new PoseParameter);
     mParamExprPtrList.push_back(new ExprParameter);
@@ -62,6 +64,7 @@ void BilinearModel::prepareAllModel() {
         mTv1eList[i].resize({ FaceDB::NumDimVert(), 1,                   FaceDB::NumDimExpr() });
         mTv11List[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
         mMeshList[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
+        mMorphModelList[i].resize(FaceDB::NumVertices());
     }
 
 }
@@ -107,12 +110,27 @@ void BilinearModel::translate(size_t index, const double *translate) {
         data[0] += translate[0]; data[1] += translate[1]; data[2] += translate[2];
     }
 }
-
 void BilinearModel::transformMesh(size_t index, const glm::mat4 &extraTransform) {
     double *data;
     for (int i = 0; i < mMeshList[index].shape(0); i += 3) {
         data = mMeshList[index].data(i);
         auto q = extraTransform * glm::dvec4(data[0], data[1], data[2], 1);
         data[0] = q.x; data[1] = q.y; data[2] = q.z;
+    }
+}
+void BilinearModel::updateMorphModel(size_t index) {
+    FaceDB::UpdateNormals(mMeshList[index]);
+    auto &model = mMorphModelList[index];
+    double *data;
+    for (int i = 0; i < FaceDB::NumVertices(); ++i) {
+        data = mMeshList[index].data(i * 3);
+        model.vertex(i).x = data[0];
+        model.vertex(i).y = data[1];
+        model.vertex(i).z = data[2];
+        model.normal(i).x = FaceDB::VertNormals()[i].x;
+        model.normal(i).y = FaceDB::VertNormals()[i].y;
+        model.normal(i).z = FaceDB::VertNormals()[i].z;
+        model.textureCoord(i).x = 0.f;
+        model.textureCoord(i).y = 0.f;
     }
 }

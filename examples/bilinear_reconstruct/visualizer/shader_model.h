@@ -1,5 +1,4 @@
 #pragma once
-#define SNOW_MODULE_OPENGL
 #include <snow.h>
 #include "../depth_source/data.h"
 #include "../facedb/tensor.h"
@@ -114,24 +113,24 @@ public:
         glBindVertexArray(0);
     }
 
-    template <typename T, typename U, typename W>
-    void updateVertices(const T *vertice, const U *normal, const W *texcoord, size_t numVertice) {
-        if (numVertice > mNumVertice) throw std::runtime_error("too many vertices");
-        mNumVertice = numVertice;
+    void updateWithMorphModel(const MorphModel &model) {
+        if (model.numVertices() > mNumVertice) throw std::runtime_error("too many vertices");
+        mNumVertice = model.numVertices();
         for (size_t i = 0; i < mNumVertice; ++i) {
-            mPointsPtr[i * 8 + 0] = vertice[i * 3 + 0];
-            mPointsPtr[i * 8 + 1] = vertice[i * 3 + 1];
-            mPointsPtr[i * 8 + 2] = vertice[i * 3 + 2];
-            mPointsPtr[i * 8 + 3] = (normal)? normal[i * 3 + 0] : 0.f;
-            mPointsPtr[i * 8 + 4] = (normal)? normal[i * 3 + 1] : 0.f;
-            mPointsPtr[i * 8 + 5] = (normal)? normal[i * 3 + 2] : 0.f;
-            mPointsPtr[i * 8 + 6] = (texcoord)? texcoord[i * 2 + 0] : 0.f;
-            mPointsPtr[i * 8 + 7] = (texcoord)? texcoord[i * 2 + 1] : 0.f;
+            mPointsPtr[i * 8 + 0] = model.vertex(i).x;
+            mPointsPtr[i * 8 + 1] = model.vertex(i).y;
+            mPointsPtr[i * 8 + 2] = model.vertex(i).z;
+            mPointsPtr[i * 8 + 3] = model.normal(i).x;
+            mPointsPtr[i * 8 + 4] = model.normal(i).y;
+            mPointsPtr[i * 8 + 5] = model.normal(i).z;
+            mPointsPtr[i * 8 + 6] = model.textureCoord(i).x;
+            mPointsPtr[i * 8 + 7] = model.textureCoord(i).y;
         }
         glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * mNumVertice * 8, mPointsPtr);
         glBindVertexArray(0);
+        this->updateTriangles(model.indices());
     }
 };
 

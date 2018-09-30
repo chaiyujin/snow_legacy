@@ -23,6 +23,8 @@ namespace snow {
         glm::vec3 mCenter;
         float     mDistance;
         float     mZoom;
+        void _updateCameraVectors();
+        void _initialize();
     private:
         // up, front, right is update by quat
         glm::vec3 mUp;
@@ -31,7 +33,9 @@ namespace snow {
         // eye is calculated by center, distance and front
         glm::vec3 mEye;
 
-        void _updateCameraVectors();
+        // initial
+        glm::vec3 mInitEye, mInitCenter, mInitUp;
+
     public:
         static glm::vec3 gOrigin;
         static glm::vec3 gStandardUp;
@@ -55,6 +59,8 @@ namespace snow {
         const glm::quat &quatAroundCenter() const { return mQuatAroundCenter; }
 
         static glm::quat QuatFromStandard(const glm::vec3 &up, const glm::vec3 &front);
+
+        void reset() { this->_initialize(); }
     };
 
     /**
@@ -63,7 +69,8 @@ namespace snow {
     class ArcballCamera : public CameraBase {
     public:
         // constructor
-        ArcballCamera(glm::vec3 eye=glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f));
+        ArcballCamera(glm::vec3 eye=glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up=glm::vec3(0.0f, 1.0f, 0.0f),
+                      glm::vec3 center=CameraBase::gOrigin);
 
         void  zoomIn(float deltaAngle=1.f)  { mZoom = std::max( 5.f, mZoom - std::max(0.f, deltaAngle * mSpeedZoom)); }
         void  zoomOut(float deltaAngle=1.f) { mZoom = std::min(85.f, mZoom + std::max(0.f, deltaAngle * mSpeedZoom)); }
@@ -74,6 +81,7 @@ namespace snow {
         void setSpeedRotate(float speed);
 
         Arcball *arcballPtr() { return mArcballPtr; }
+        void reset();
     private:
         Arcball    *mArcballPtr;
         // for event
