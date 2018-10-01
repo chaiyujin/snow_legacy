@@ -13,7 +13,7 @@ private:
     std::vector<Tensor3>            mTv1eList;
     std::vector<Tensor3>            mTv11List;
     std::vector<Tensor3>            mMeshList;
-    std::vector<MorphModel>         mMorphModelList;
+    MorphModel                      mMorphModel;
 
     ScaleParameter *                mParamScalePtr;
     IdenParameter *                 mParamIdenPtr;
@@ -37,14 +37,12 @@ public:
     ~BilinearModel();
 
     size_t size()                     const { return mCount;       }
-
     Tensor3 &mesh(size_t i=0)               { return mMeshList[i]; }
     Tensor3 &tv11(size_t i)                 { return mTv11List[i]; }
     Tensor3 &tv1e(size_t i)                 { return mTv1eList[i]; }
     Tensor3 &tvi1(size_t i)                 { return mTvi1List[i]; }
     const Tensor3 &mesh(size_t i=0)   const { return mMeshList[i]; }
-
-    const MorphModel &morphModel(size_t i=0) const { return mMorphModelList[i]; }
+    const MorphModel &morphModel()    const { return mMorphModel; }
 
     /**
      * There are two possible paths of applying parameters
@@ -75,7 +73,7 @@ public:
     void updateMesh         (size_t i=0){ updateIdenOnCore(i); updateExpr(i); updateScale(i); rotateYXZ(i); translate(i); }
 
     void transformMesh(size_t i, const glm::mat4 &extraTransform);
-    void updateMorphModel   (size_t i);
+    void updateMorphModel   (size_t mesh_index);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

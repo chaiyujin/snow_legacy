@@ -1,59 +1,94 @@
 #include "window.h"
 
-void VisualizerWindow::setColor(const Image *imgPtr)                  { mColorPtr = imgPtr; }
-void VisualizerWindow::setDepth(const Image *depthPtr)                { mDepthPtr = depthPtr; Image::ColorizeDepth(*mDepthPtr, mColorizedDepth); }
-void VisualizerWindow::setPointCloud(const PointCloud *pointCloudPtr) { mPointCloudPtr = pointCloudPtr; updatePointCloud(); }
-void VisualizerWindow::setMorphModel(const MorphModel *morphModel)    { mModelPtr = morphModel;         updateMorphModel(); }
-void VisualizerWindow::updateImageWithColor()                         { mImageShader.uploadImage(mColorPtr->data(), mColorPtr->width(), mColorPtr->height(), (mColorPtr->bpp() == 4) ? GL_RGBA : GL_RGB); }
-void VisualizerWindow::updateImageWithDepth()                         { mImageShader.uploadImage(mColorizedDepth.data(), mColorizedDepth.width(), mColorizedDepth.height(), (mColorizedDepth.bpp() == 4) ? GL_RGBA : GL_RGB); }
-void VisualizerWindow::updatePointCloud()                             { mPointShader.updateWithPointCloud(*mPointCloudPtr); }
-void VisualizerWindow::updateMorphModel()                             { mModelShader.updateWithMorphModel(*mModelPtr); }
+void VisualizerWindow::setImage(const Image &image) {
+    if (mImageShaderPtr == nullptr) mImageShaderPtr = new ImageShader();
+    mImageShaderPtr->uploadImage(
+        image.data(), image.width(), image.height(),
+        (image.bpp() == 4) ? GL_RGBA : GL_RGB
+    );
+}
+
+void VisualizerWindow::set2DLandmarks(const std::vector<snow::float2> &landmarks) {
+    if (mLandsShaderPtr == nullptr
+        || landmarks.size() != mLandsShaderPtr->numPoints()) {
+        delete mLandsShaderPtr;
+        mLandsShaderPtr = new LandmarksShader(landmarks.size());
+    }
+    mLandsShaderPtr->update2DLandmarks(landmarks);
+}
+
+void VisualizerWindow::set3DLandmarks(const std::vector<snow::float3> &landmarks) {
+    if (mLandsShaderPtr == nullptr
+        || landmarks.size() != mLandsShaderPtr->numPoints()) {
+        delete mLandsShaderPtr;
+        mLandsShaderPtr = new LandmarksShader(landmarks.size());
+    }
+    mLandsShaderPtr->update3DLandmarks(landmarks);
+}
+
+void VisualizerWindow::setPointCloud(const PointCloud &pointCloud) {
+    if (mPointShaderPtr == nullptr
+        || mPointShaderPtr->numPoints() != pointCloud.numPoints()) {
+        delete mPointShaderPtr;
+        mPointShaderPtr = new PointCloudShader(pointCloud.numPoints(), mImageShaderPtr);
+    }
+    mPointShaderPtr->setTextureShader(mImageShaderPtr);
+    mPointShaderPtr->updateWithPointCloud(pointCloud);
+}
+
+void VisualizerWindow::setMorphModel(const MorphModel &morphModel) {
+    if (mModelShaderPtr == nullptr
+        || mModelShaderPtr->numVertices() != morphModel.numVertices()
+        || mModelShaderPtr->numTriangles() != morphModel.numTriangles()) {
+        delete mModelShaderPtr;
+        mModelShaderPtr = new MorphModelShader(morphModel.numVertices(), morphModel.numTriangles());
+    }
+    mModelShaderPtr->updateWithMorphModel(morphModel);
+}
 
 void VisualizerWindow::processEvent(SDL_Event &event) {
     mCamera.processMouseEvent(event);
 }
 
 void VisualizerWindow::draw() {
-    ImGui::Begin("tools");
-
-    if (ImGui::Button("reset camera")) mCamera.reset();
-    mViewMat = mCamera.viewMatrix();
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-    /* draw image */ if (mColorPtr) {
-        bool show = false;
-        ImGui::Checkbox("color", &mShowColor); 
-        if (mDepthPtr) { ImGui::SameLine(); ImGui::Checkbox("depth", &mShowDepth); }
-        if (mShowColor && mColorPtr != nullptr) { updateImageWithColor(); show = true; }
-        if (mShowDepth && mDepthPtr != nullptr) { updateImageWithDepth(); show = true; }
-        if (show) { mImageShader.use(); mImageShader.draw(); }
+    /* ui */ {
+        ImGui::Begin("tools");
+        if (ImGui::Button("reset camera")) mCamera.reset();
+        if (mImageShaderPtr) { ImGui::Checkbox("image",       &mShowImage); }
+        if (mImageShaderPtr && mLandsShaderPtr) ImGui::SameLine();
+        if (mLandsShaderPtr) { ImGui::Checkbox("landmarks",   &mShowLands); }
+        if (mPointShaderPtr) { ImGui::Checkbox("point cloud", &mShowPoint); }
+        if (mModelShaderPtr) { ImGui::Checkbox("model",       &mShowModel); }
+        ImGui::End();
     }
 
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    /* draw point cloud */ if (mPointCloudPtr) {
-        ImGui::Checkbox("point cloud", &mShowPoint);
-        if (mShowPoint) {
-            mPointShader.use();
-            mPointShader.setMat4("Model", mModelMat);
-            mPointShader.setMat4("View",  mViewMat);
-            mPointShader.setMat4("Proj",  mProjMat);
-            mPointShader.draw();
+    /* drawing */ {
+        mViewMat = mCamera.viewMatrix();
+        // image
+        if (mImageShaderPtr && mShowImage) { glClear(GL_DEPTH_BUFFER_BIT); mImageShaderPtr->use(); mImageShaderPtr->draw(); }
+        // point
+        glEnable(GL_DEPTH_TEST);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        if (mPointShaderPtr && mShowPoint) {
+            mPointShaderPtr->use();
+            mPointShaderPtr->setMat4("Model", mModelMat);
+            mPointShaderPtr->setMat4("View",  mViewMat);
+            mPointShaderPtr->setMat4("Proj",  mProjMat);
+            mPointShaderPtr->draw();
         }
+        // model
+        if (mModelShaderPtr && mShowModel) {
+            mModelShaderPtr->use();
+            mModelShaderPtr->setMat4("Normal",   glm::transpose(glm::inverse(mModelMat)));
+            mModelShaderPtr->setMat4("Model",    mModelMat);
+            mModelShaderPtr->setMat4("View",     mViewMat);
+            mModelShaderPtr->setMat4("Proj",     mProjMat);
+            mModelShaderPtr->setVec3("LightPos", glm::vec3(0.0f, 0.0f, -10.0f));
+            mModelShaderPtr->setVec3("Ambient",  glm::vec3(0.1f, 0.1f, 0.1f));
+            mModelShaderPtr->setVec3("Diffuse",  glm::vec3(0.7f, 0.7f, 0.7f));
+            mModelShaderPtr->draw();
+        }
+        // landmarks
+        if (mLandsShaderPtr && mShowLands) { glClear(GL_DEPTH_BUFFER_BIT); mLandsShaderPtr->use(); mLandsShaderPtr->draw(); }
     }
-
-    ImGui::Checkbox("model", &mShowModel);
-    /* draw model */ if (mShowModel) {
-        mModelShader.use();
-        mModelShader.setMat4("Normal",   glm::transpose(glm::inverse(mModelMat)));
-        mModelShader.setMat4("Model",    mModelMat);
-        mModelShader.setMat4("View",     mViewMat);
-        mModelShader.setMat4("Proj",     mProjMat);
-        mModelShader.setVec3("LightPos", glm::vec3(0.0f, 0.0f, -10.0f));
-        mModelShader.setVec3("Ambient",  glm::vec3(0.1f, 0.1f, 0.1f));
-        mModelShader.setVec3("Diffuse",  glm::vec3(0.7f, 0.7f, 0.7f));
-        mModelShader.draw();
-    }
-
-    ImGui::End();
 }

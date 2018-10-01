@@ -46,7 +46,7 @@ class MorphModelShader : public snow::Shader {
 private:
     float *             mPointsPtr;
     uint32_t *          mIndicePtr;
-    int                 mNumVertice;
+    int                 mNumVertices;
     int                 mNumTriangles;
     GLuint              mVAO, mVBO, mEBO;
 public:
@@ -54,14 +54,14 @@ public:
         : snow::Shader()
         , mPointsPtr(nullptr)
         , mIndicePtr(nullptr)
-        , mNumVertice(numVertice)
+        , mNumVertices(numVertice)
         , mNumTriangles(numTriangles)
         , mVAO(0), mVBO(0), mEBO(0) {
         this->buildFromCode(VERT_CODE, FRAG_CODE);
         // alloc
-        mPointsPtr = new float[mNumVertice * 8];
+        mPointsPtr = new float[mNumVertices * 8];
         mIndicePtr = new uint32_t[mNumTriangles * 3];
-        memset(mPointsPtr, 0, sizeof(float) * mNumVertice * 8);
+        memset(mPointsPtr, 0, sizeof(float) * mNumVertices * 8);
         memset(mIndicePtr, 0, sizeof(float) * mNumTriangles * 3);
         // gen buffer 
         glGenVertexArrays(1, &mVAO);
@@ -70,7 +70,7 @@ public:
 
         glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * mNumVertice, mPointsPtr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * mNumVertices, mPointsPtr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * 3 * mNumTriangles, mIndicePtr, GL_DYNAMIC_DRAW);
 
@@ -114,9 +114,9 @@ public:
     }
 
     void updateWithMorphModel(const MorphModel &model) {
-        if (model.numVertices() > mNumVertice) throw std::runtime_error("too many vertices");
-        mNumVertice = model.numVertices();
-        for (size_t i = 0; i < mNumVertice; ++i) {
+        if (model.numVertices() > mNumVertices) throw std::runtime_error("too many vertices");
+        mNumVertices = model.numVertices();
+        for (size_t i = 0; i < mNumVertices; ++i) {
             mPointsPtr[i * 8 + 0] = model.vertex(i).x;
             mPointsPtr[i * 8 + 1] = model.vertex(i).y;
             mPointsPtr[i * 8 + 2] = model.vertex(i).z;
@@ -128,10 +128,13 @@ public:
         }
         glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * mNumVertice * 8, mPointsPtr);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * mNumVertices * 8, mPointsPtr);
         glBindVertexArray(0);
         this->updateTriangles(model.indices());
     }
+
+    int numVertices()  const { return mNumVertices; }
+    int numTriangles() const { return mNumTriangles; } 
 };
 
 #undef VERT_CODE

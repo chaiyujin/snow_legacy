@@ -77,6 +77,8 @@ void RealSenseSource::updatePointCloud() {
             mPointCloud.verticeList()[iPixel].x = val;
             mPointCloud.verticeList()[iPixel].y = val;
             mPointCloud.verticeList()[iPixel].z = val;
+            mPointCloud.textureCoordList()[iPixel].x = -1.f;
+            mPointCloud.textureCoordList()[iPixel].y = -1.f;
         }
         else {
             int x = iPixel % mDepthIntrinsics.width;
@@ -88,8 +90,11 @@ void RealSenseSource::updatePointCloud() {
             rs2_transform_point_to_point(&colorSpace, &mDepth2ColorExtrinsics, &mPointCloud.verticeList()[iPixel]);
             rs2_project_point_to_pixel(&pix, &mColorIntrinsics, &colorSpace);
             // set texture
-            mPointCloud.textureCoordList()[iPixel].x = pix.x / (float)mColorIntrinsics.width;
-            mPointCloud.textureCoordList()[iPixel].y = pix.y / (float)mColorIntrinsics.height;
+            pix.x /= (float)mColorIntrinsics.width;
+            pix.y /= (float)mColorIntrinsics.height;
+            if (pix.x < 0.f || pix.x > 1.f || pix.y < 0.f || pix.y > 1.f) { pix.x = pix.y = -1.f; }
+            mPointCloud.textureCoordList()[iPixel].x = pix.x;
+            mPointCloud.textureCoordList()[iPixel].y = pix.y;
             // set vertice in colorSpace
             mPointCloud.verticeList()[iPixel].x = colorSpace.x;
             mPointCloud.verticeList()[iPixel].y = colorSpace.y;

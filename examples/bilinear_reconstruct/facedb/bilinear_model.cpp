@@ -6,7 +6,6 @@ BilinearModel::BilinearModel(size_t count)
     : Core(FaceDB::CoreTensor())
     , mTvi1List(0), mTv1eList(0)
     , mTv11List(0), mMeshList(0)
-    , mMorphModelList(0)
     , mParamScalePtr(new ScaleParameter)
     , mParamIdenPtr(new IdenParameter)
     , mParamPosePtrList(0)
@@ -49,8 +48,6 @@ void BilinearModel::appendModel(size_t count) {
     mTv1eList.emplace_back();
     mTv11List.emplace_back();
     mMeshList.emplace_back();
-    mMorphModelList.emplace_back();
-    mMorphModelList.back().setIndices(FaceDB::Triangles());
 
     mParamPosePtrList.push_back(new PoseParameter);
     mParamExprPtrList.push_back(new ExprParameter);
@@ -64,9 +61,10 @@ void BilinearModel::prepareAllModel() {
         mTv1eList[i].resize({ FaceDB::NumDimVert(), 1,                   FaceDB::NumDimExpr() });
         mTv11List[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
         mMeshList[i].resize({ FaceDB::NumDimVert(), 1,                   1,                  });
-        mMorphModelList[i].resize(FaceDB::NumVertices());
     }
 
+    mMorphModel.setIndices(FaceDB::Triangles());
+    mMorphModel.resize(FaceDB::NumVertices());
 }
 
 #ifdef PARAMETER_FACS
@@ -118,9 +116,10 @@ void BilinearModel::transformMesh(size_t index, const glm::mat4 &extraTransform)
         data[0] = q.x; data[1] = q.y; data[2] = q.z;
     }
 }
-void BilinearModel::updateMorphModel(size_t index) {
+void BilinearModel::updateMorphModel(size_t mesh_index) {
+    size_t index = mesh_index;
     FaceDB::UpdateNormals(mMeshList[index]);
-    auto &model = mMorphModelList[index];
+    auto &model = mMorphModel;
     double *data;
     for (int i = 0; i < FaceDB::NumVertices(); ++i) {
         data = mMeshList[index].data(i * 3);

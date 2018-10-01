@@ -83,6 +83,7 @@ public:
     void                                setHeight(int h)                { mHeight = h;          }
     /* get */
 	int                                 size()                    const { return mSize;         }
+    int                                 numPoints()               const { return mSize;         }
 	int                                 width()                   const { return mWidth;        }
 	int                                 height()                  const { return mHeight;       }
 	snow::float3 &                      vertex(int i)                   { return mVert[i];      }
@@ -112,18 +113,19 @@ public:
     void                                resize(int points)              { if (points != mNumVertice) { mNumVertice = points; mVert.resize(points); mNorm.resize(points); mTex.resize(points); } }
     void                                setIndices(const std::vector<snow::int3> &indices) { mIndices = indices; }
     /* get */
-    int                                 numVertices()             const { return mNumVertice;   }
-	snow::float3 &                      vertex(int i)                   { return mVert[i];      }
-	snow::float3 &                      normal(int i)                   { return mNorm[i];      }
-	snow::float2 &                      textureCoord(int i)             { return mTex[i];       }
-	const snow::float3 &                vertex(int i)             const { return mVert[i];      }
-	const snow::float3 &                normal(int i)             const { return mNorm[i];      }
-	const snow::float2 &                textureCoord(int i)       const { return mTex[i];       }
-	std::vector<snow::float3> &         verticeList()                   { return mVert;         }
-	std::vector<snow::float3> &         normalList()                    { return mNorm;         }
-	std::vector<snow::float2> &         textureCoordList ()             { return mTex;          }
-	const std::vector<snow::float3> &   verticeList()             const { return mVert;         }
-	const std::vector<snow::float3> &   normalList()              const { return mNorm;         }
-	const std::vector<snow::float2> &   textureCoordList()        const { return mTex;          }
-    const std::vector<snow::int3> &     indices()                 const { return mIndices;      }
+    int                                 numVertices()             const { return mNumVertice;           }
+    int                                 numTriangles()            const { return (int)mIndices.size();  }
+	snow::float3 &                      vertex(int i)                   { return mVert[i];              }
+	snow::float3 &                      normal(int i)                   { return mNorm[i];              }
+	snow::float2 &                      textureCoord(int i)             { return mTex[i];               }
+	const snow::float3 &                vertex(int i)             const { return mVert[i];              }
+	const snow::float3 &                normal(int i)             const { return mNorm[i];              }
+	const snow::float2 &                textureCoord(int i)       const { return mTex[i];               }
+	std::vector<snow::float3> &         verticeList()                   { return mVert;                 }
+	std::vector<snow::float3> &         normalList()                    { return mNorm;                 }
+	std::vector<snow::float2> &         textureCoordList ()             { return mTex;                  }
+	const std::vector<snow::float3> &   verticeList()             const { return mVert;                 }
+	const std::vector<snow::float3> &   normalList()              const { return mNorm;                 }
+	const std::vector<snow::float2> &   textureCoordList()        const { return mTex;                  }
+    const std::vector<snow::int3> &     indices()                 const { return mIndices;              }
 };

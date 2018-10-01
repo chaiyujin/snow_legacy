@@ -41,11 +41,18 @@ int main() {
         model.updateMorphModel(0);
     }
     
+    std::vector<snow::float2> landmarks;
+    {
+        for (int i = 0; i < 73; ++i) {
+            landmarks.push_back({ i / 73.f, i / 73.f });
+        }
+    }
+
     // set data
-    win->setColor(&rsdevice.colorImg());
-    win->setDepth(&rsdevice.depthImg());
-    win->setPointCloud(&rsdevice.pointCloud());
-    win->setMorphModel(&model.morphModel(0));
+    win->setImage(rsdevice.colorImg());
+    win->set2DLandmarks(landmarks);
+    win->setPointCloud(rsdevice.pointCloud());
+    win->setMorphModel(model.morphModel());
     // set mats
     win->setProjMat(rsdevice.colorProjectionMat());
 

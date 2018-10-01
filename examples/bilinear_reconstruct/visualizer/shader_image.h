@@ -25,28 +25,26 @@ class ImageShader : public snow::Shader {
 private:
     friend class PointCloudShader;
     float * mPointsPtr;
-    int     mNumLandmarks;
     float   mPointSize;
     GLuint  mVAO, mVBO, mEBO;
     GLuint  mTextureID;
     GLenum  mTextureUnit;
-    bool    mIsShowLandmarks;
+    int     mWidth, mHeight;
 
 public:
-    ImageShader(int numLandmarks=75, GLenum textureUnit=GL_TEXTURE0)
+    ImageShader(GLenum textureUnit=GL_TEXTURE0)
         : Shader()
         , mPointsPtr(nullptr)
-        , mNumLandmarks(numLandmarks)
         , mPointSize(3.0)
         , mVAO(0), mVBO(0), mEBO(0)
         , mTextureID(0)
         , mTextureUnit(textureUnit)
-        , mIsShowLandmarks(true)
+        , mWidth(0), mHeight(0)
     {
         // compile from code
         this->buildFromCode(VERT_CODE, FRAG_CODE);
         // fill points with -1
-        int points = 4 + mNumLandmarks;
+        const int points = 4;
         mPointsPtr = new float[points * 5];
         for (int i = 0; i < points * 5; ++i) mPointsPtr[i] = -1.f;
         // first 4 points for image
@@ -91,27 +89,24 @@ public:
         if (mTextureID) glDeleteTextures(1, &mTextureID);
     }
 
-    void showLandmarks(bool flag) { mIsShowLandmarks = flag; }
-
     void draw() {
-        glActiveTexture(mTextureUnit);
-        if (mTextureID)
-            glBindTexture(  GL_TEXTURE_2D, mTextureID);
-        glBindVertexArray(mVAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        if (mTextureID)
-            glBindTexture(  GL_TEXTURE_2D, 0);
-        
-        glClear(GL_DEPTH_BUFFER_BIT);
-        if (mIsShowLandmarks) {
-            glPointSize(mPointSize);
-            glDrawArrays(GL_POINTS, 4, mNumLandmarks);
+        if (mTextureID) {
+            glActiveTexture(mTextureUnit);
+            glBindTexture(GL_TEXTURE_2D, mTextureID);
+            glBindVertexArray(mVAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glBindVertexArray(0);
         }
-
-        glBindVertexArray(0);
     }
         
     void uploadImage(const uint8_t *data, int w, int h, GLenum format, GLenum type = GL_UNSIGNED_BYTE) {
+        // size mismatch, realloc texture
+        if (w != mWidth || h != mHeight) {
+            if (mTextureID) { glDeleteTextures(1, &mTextureID); mTextureID = 0; }
+            mWidth = w; mHeight = h;
+        }
+
         glActiveTexture(mTextureUnit);
         if (mTextureID == 0) {
             glGenTextures(1, &mTextureID);
@@ -132,28 +127,6 @@ public:
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, (void*)data);
             glBindTexture(  GL_TEXTURE_2D, 0 );
         }
-    }
-
-    void updateVertex(float *data, int start, int length) {
-        glBindVertexArray(mVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-        glBufferSubData(GL_ARRAY_BUFFER, start * sizeof(float), length * sizeof(float), data);
-        glBindVertexArray(0);
-    }
-
-    void updateLandmarks(const std::vector<snow::float2> &data) {
-        mNumLandmarks = (int)data.size();
-        for (size_t i = 0; i < data.size(); ++i) {
-            int k = 20 + (int)i * 5;
-            mPointsPtr[k]     = data[i].x;
-            mPointsPtr[k + 1] = data[i].y;
-            mPointsPtr[k + 2] = 0;
-        }
-        float *d = mPointsPtr + 20;
-        glBindVertexArray(mVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 20 * sizeof(float), mNumLandmarks * 5 * sizeof(float), d);
-        glBindVertexArray(0);
     }
 };
 

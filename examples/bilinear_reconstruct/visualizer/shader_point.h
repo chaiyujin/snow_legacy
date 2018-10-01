@@ -18,7 +18,7 @@
     "out vec4 FragColor;"\
     "uniform sampler2D ImageTexture;"\
     "void main() {"\
-    "    if (TexCoord[0] < 0) FragColor = vec4(0.0, 1.0, 0.0, 1.0);"\
+    "    if (TexCoord[0] < 0) FragColor = vec4(0.0, 0.0, 0.0, 1.0);"\
     "    else                 FragColor = texture(ImageTexture, TexCoord);"\
     "}"
 
@@ -66,13 +66,15 @@ public:
     }
 
     void draw() {
-        glActiveTexture(mImageShader->mTextureUnit);
-        if (mImageShader->mTextureID) glBindTexture(GL_TEXTURE_2D, mImageShader->mTextureID);
+        if (mImageShader) {
+            glActiveTexture(mImageShader->mTextureUnit);
+            if (mImageShader->mTextureID) glBindTexture(GL_TEXTURE_2D, mImageShader->mTextureID);
+        }
         glBindVertexArray(mVAO); 
         glPointSize(mPointSize);
         glDrawArrays(GL_POINTS, 0, mNumPoints);
         glBindVertexArray(0);
-        if (mImageShader->mTextureID) glBindTexture(GL_TEXTURE_2D, 0);
+        if (mImageShader && mImageShader->mTextureID) glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     void updateWithPointCloud(const PointCloud &points) {
@@ -92,6 +94,10 @@ public:
 		glBufferSubData(GL_ARRAY_BUFFER, 0 * sizeof(float), sizeof(float) * mNumPoints * 5, mPointsPtr);
         glBindVertexArray(0);
     }
+
+    int  numPoints()                        const { return mNumPoints; }
+    void setPointSize(float size)                 { mPointSize = size; }
+    void setTextureShader(const ImageShader *ptr) { mImageShader = ptr; }
 };
 
 #undef VERT_CODE
