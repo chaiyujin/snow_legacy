@@ -32,6 +32,8 @@ private:
     void prepareAllModel();
 
 public:
+    static int NumVertices() { return FaceDB::NumVertices(); }
+
     BilinearModel(size_t count=1);
     BilinearModel(const BilinearModel &father, int startVertexId);
     ~BilinearModel();
@@ -72,8 +74,10 @@ public:
     /* update all parameter for mesh i */
     void updateMesh         (size_t i=0){ updateIdenOnCore(i); updateExpr(i); updateScale(i); rotateYXZ(i); translate(i); }
 
-    void transformMesh(size_t i, const glm::mat4 &extraTransform);
+    void transformMesh      (size_t i, const glm::mat4 &extraTransform);
     void updateMorphModel   (size_t mesh_index);
+
+    std::vector<snow::double3> getMeshContourCands(size_t i);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

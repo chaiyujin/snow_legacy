@@ -54,7 +54,7 @@ void PlayerWindow::seek() {
             {
                 const VideoFrame *colorFrame = (const VideoFrame *)mVideoStreamPtr->framePtr();
                 const VideoFrame *depthFrame = (const VideoFrame *)mDepthStreamPtr->framePtr();
-                writeFrameBin("../../../assets/frame.bin",
+                writeFrameBin("../../../assets/test_depth/frame.bin",
                               colorFrame->data(), depthFrame->data(),
                               colorFrame->mWidth * colorFrame->mHeight * 4,
                               depthFrame->mWidth * depthFrame->mHeight * 2);

@@ -63,7 +63,7 @@ void VisualizerWindow::draw() {
     }
 
     /* drawing */ {
-        mViewMat = mCamera.viewMatrix();
+        glm::mat4 viewMat = mCamera.viewMatrix() * mViewMat;
         // image
         if (mImageShaderPtr && mShowImage) { glClear(GL_DEPTH_BUFFER_BIT); mImageShaderPtr->use(); mImageShaderPtr->draw(); }
         // point
@@ -72,7 +72,7 @@ void VisualizerWindow::draw() {
         if (mPointShaderPtr && mShowPoint) {
             mPointShaderPtr->use();
             mPointShaderPtr->setMat4("Model", mModelMat);
-            mPointShaderPtr->setMat4("View",  mViewMat);
+            mPointShaderPtr->setMat4("View",  viewMat);
             mPointShaderPtr->setMat4("Proj",  mProjMat);
             mPointShaderPtr->draw();
         }
@@ -81,7 +81,7 @@ void VisualizerWindow::draw() {
             mModelShaderPtr->use();
             mModelShaderPtr->setMat4("Normal",   glm::transpose(glm::inverse(mModelMat)));
             mModelShaderPtr->setMat4("Model",    mModelMat);
-            mModelShaderPtr->setMat4("View",     mViewMat);
+            mModelShaderPtr->setMat4("View",     viewMat);
             mModelShaderPtr->setMat4("Proj",     mProjMat);
             mModelShaderPtr->setVec3("LightPos", glm::vec3(0.0f, 0.0f, -10.0f));
             mModelShaderPtr->setVec3("Ambient",  glm::vec3(0.1f, 0.1f, 0.1f));

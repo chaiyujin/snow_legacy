@@ -133,3 +133,13 @@ void BilinearModel::updateMorphModel(size_t mesh_index) {
         model.textureCoord(i).y = 0.f;
     }
 }
+std::vector<snow::double3> BilinearModel::getMeshContourCands(size_t index) {
+    std::vector<snow::double3> ret;
+    for (size_t i = 0; i < FaceDB::Contours().size(); ++i) {
+        for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j) {
+            int vi = FaceDB::Contours()[i][j] * 3;
+            ret.push_back({ *mMeshList[index].data(vi), *mMeshList[index].data(vi + 1), *mMeshList[index].data(vi + 2) });
+        }
+    }
+    return ret;
+}
