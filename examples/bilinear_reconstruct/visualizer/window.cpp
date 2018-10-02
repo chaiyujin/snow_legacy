@@ -1,4 +1,6 @@
 #include "window.h"
+#include "../tools/projection.h"
+#include "../tools/contour.h"
 
 void VisualizerWindow::setImage(const Image &image) {
     if (mImageShaderPtr == nullptr) mImageShaderPtr = new ImageShader();
@@ -64,6 +66,30 @@ void VisualizerWindow::draw() {
 
     /* drawing */ {
         glm::mat4 viewMat = mCamera.viewMatrix() * mViewMat;
+
+        {
+            std::vector<snow::float3> cands;
+            std::vector<size_t> candsIndex;
+            for (size_t i = 0; i < FaceDB::Contours().size(); ++i) {
+                for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j) {
+                    int idx = FaceDB::Contours()[i][j];
+                    cands.push_back({
+                        mModelShaderPtr->pointsPtr()[idx * 8],
+                        mModelShaderPtr->pointsPtr()[idx * 8+1],
+                        mModelShaderPtr->pointsPtr()[idx * 8+2]
+                    });
+                    if (i < FaceDB::Contours().size() - 1) {
+                        candsIndex.push_back(idx);
+                    }
+                }
+            }
+            
+            std::vector<snow::float2> landmarks;
+            projectToImageSpace(cands, mProjMat, viewMat, mModelMat, landmarks);
+            auto contour_pair = getContourGrahamScan(landmarks);
+            set2DLandmarks(landmarks);
+        }
+
         // image
         if (mImageShaderPtr && mShowImage) { glClear(GL_DEPTH_BUFFER_BIT); mImageShaderPtr->use(); mImageShaderPtr->draw(); }
         // point

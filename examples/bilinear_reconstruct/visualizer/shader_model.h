@@ -134,7 +134,8 @@ public:
     }
 
     int numVertices()  const { return mNumVertices; }
-    int numTriangles() const { return mNumTriangles; } 
+    int numTriangles() const { return mNumTriangles; }
+    const float *pointsPtr() const { return mPointsPtr;    }
 };
 
 #undef VERT_CODE

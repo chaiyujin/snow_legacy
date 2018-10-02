@@ -143,3 +143,14 @@ std::vector<snow::double3> BilinearModel::getMeshContourCands(size_t index) {
     }
     return ret;
 }
+std::vector<size_t> BilinearModel::getContourMeshIndex(const std::vector<size_t> &candidateIndex) {
+    std::vector<size_t> cands, ret;
+    for (size_t i = 0; i < FaceDB::Contours().size(); ++i)
+        for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j)
+            cands.push_back(FaceDB::Contours()[i][j]);
+    for (size_t i: candidateIndex) {
+        if (i < cands.size())
+            ret.push_back(cands[i]);
+    }
+    return ret;
+}

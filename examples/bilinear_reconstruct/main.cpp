@@ -48,7 +48,7 @@ int main() {
         int num;
         std::ifstream fin("../../../assets/test_depth/0-0-1.mkv_lmrecord");
         fin >> num >> num >> num;
-        for (int i = 0; i < 73; ++i) {
+        for (int i = 0; i < 15; ++i) {
             float x, y;
             fin >> x >> y;
             x = x * 2.f - 1.f;
@@ -58,17 +58,22 @@ int main() {
         fin.close();
     }
     
-    // projectToImageSpace(model.mesh().data(0),
-    //                     model.NumVertices(),
+    // projectToImageSpace(model.getMeshContourCands(0),
     //                     rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), landmarks);
-    projectToImageSpace(model.getMeshContourCands(0),
-                        rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), landmarks);
-    auto contour = getContourGrahamScan(landmarks);
-    std::cout << contour.size() << std::endl;
+    // auto contour_pair = getContourGrahamScan(landmarks);
+    // auto contourIndex = model.getContourMeshIndex(contour_pair.second);
+    // std::vector<snow::double3> contour3d;
+    // for (size_t idx : contourIndex) {
+    //     contour3d.push_back(model.meshVertex(0, idx));
+    // }
+    // projectToImageSpace(contour3d,
+    //                     rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), landmarks);
+    // auto contour = landmarks;
+    // std::cout << contour.size() << std::endl;
 
     // set data
     win->setImage(rsdevice.colorImg());
-    win->set2DLandmarks(contour);
+    win->set2DLandmarks(landmarks);
     win->setPointCloud(rsdevice.pointCloud());
     win->setMorphModel(model.morphModel());
     // set mats

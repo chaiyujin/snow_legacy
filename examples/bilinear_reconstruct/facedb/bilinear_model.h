@@ -44,7 +44,8 @@ public:
     Tensor3 &tv1e(size_t i)                 { return mTv1eList[i]; }
     Tensor3 &tvi1(size_t i)                 { return mTvi1List[i]; }
     const Tensor3 &mesh(size_t i=0)   const { return mMeshList[i]; }
-    const MorphModel &morphModel()    const { return mMorphModel; }
+    const MorphModel &morphModel()    const { return mMorphModel;  }
+    snow::double3 meshVertex(size_t iMesh, size_t iVert) { return { *mMeshList[iMesh].data(iVert * 3), *mMeshList[iMesh].data(iVert * 3+1), *mMeshList[iMesh].data(iVert * 3+2) }; }
 
     /**
      * There are two possible paths of applying parameters
@@ -78,6 +79,7 @@ public:
     void updateMorphModel   (size_t mesh_index);
 
     std::vector<snow::double3> getMeshContourCands(size_t i);
+    std::vector<size_t>        getContourMeshIndex(const std::vector<size_t> &candidateIndex);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

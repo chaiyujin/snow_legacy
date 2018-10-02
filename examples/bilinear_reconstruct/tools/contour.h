@@ -4,11 +4,12 @@
 #include <vector>
 
 template <class T>
-std::vector<snow::_float2<T>> getContourGrahamScan(const std::vector<snow::_float2<T>> &points) {
+std::pair<std::vector<snow::_float2<T>>, std::vector<size_t>> getContourGrahamScan(const std::vector<snow::_float2<T>> &points) {
 	if (points.size() < 3) {
         throw std::runtime_error("cannot calculate contour for points less than 3.");
 	}
     std::vector<snow::_float2<T>> convexHull;
+    std::vector<size_t>           index;
 	size_t si = 0;
 	snow::_float2<T> ptBase = points[0];
 	for (size_t i = 1; i < points.size(); ++i) {
@@ -17,29 +18,34 @@ std::vector<snow::_float2<T>> getContourGrahamScan(const std::vector<snow::_floa
 			si = i;
 		}
 	}
-	std::vector<snow::_float2<T>> angles;
+	std::vector<snow::_float3<T>> angles;
 	for (size_t i = 0; i < points.size(); ++i) {
 		if (si == i) continue;
-		angles.push_back(points[i] - ptBase);
+        auto vec = points[i] - ptBase;
+		angles.push_back({vec.x, vec.y, (float)i});
 	}
-    auto compFunc = [](const snow::_float2<T> &p0, const snow::_float2<T> &p1) -> bool {
-        float m0 = sqrt((float)(p0.x * p0.x + p0.y * p0.y));
-        float m1 = sqrt((float)(p1.x * p1.x + p1.y * p1.y));
-        float v0 = p0.x / m0;
-        float v1 = p1.x / m1;
+    auto compFunc = [](const snow::_float3<T> &a0, const snow::_float3<T> &a1) -> bool {
+        float m0 = sqrt((float)(a0.x * a0.x + a0.y * a0.y));
+        float m1 = sqrt((float)(a1.x * a1.x + a1.y * a1.y));
+        float v0 = a0.x / m0;
+        float v1 = a1.x / m1;
         return (v0 > v1 || (v0 == v1 && m0 < m1));
+    };
+    auto equalFunc = [](const snow::_float3<T> &a0, const snow::_float3<T> &a1) -> bool {
+        return a0.x == a1.x && a0.y == a1.y;
     };
 	// sort in angles
 	std::sort(angles.begin(), angles.end(), compFunc);
 	// delete same vectors
-	auto it = std::unique(angles.begin(), angles.end());
+	auto it = std::unique(angles.begin(), angles.end(), equalFunc);
 	angles.erase(it, angles.end());
 	for (int i = (int)angles.size() - 1; i > 0; --i) {
 		int j = i - 1;
 		angles[i].x -= angles[j].x;
 		angles[i].y -= angles[j].y;
 	}
-	convexHull.push_back(angles[0]);
+	convexHull.push_back({angles[0].x, angles[0].y});
+    index.push_back((size_t)angles[0].z);
 	for (int i = 1; i < angles.size(); ++i) {
 		while (convexHull.size()) {
 			float v0 = angles[i].x * convexHull.back().y;
@@ -52,9 +58,11 @@ std::vector<snow::_float2<T>> getContourGrahamScan(const std::vector<snow::_floa
 				angles[i].x += convexHull.back().x;
 				angles[i].y += convexHull.back().y;
 				convexHull.pop_back();
+                index.pop_back();
 			}
 		}
-		convexHull.push_back(angles[i]);
+        convexHull.push_back({angles[i].x, angles[i].y});
+        index.push_back((size_t)angles[i].z);
 	}
 	convexHull.front().x += ptBase.x;
 	convexHull.front().y += ptBase.y;
@@ -63,5 +71,6 @@ std::vector<snow::_float2<T>> getContourGrahamScan(const std::vector<snow::_floa
 		convexHull[i].y += convexHull[i - 1].y;
 	}
 	convexHull.push_back(ptBase);
-    return convexHull;
+    index.push_back(si);
+    return {convexHull, index};
 }
