@@ -327,7 +327,14 @@ void VisWindow::draw() {
                 if (idx < mPrivate.mAnime.size()) mModelPtr->modify(&mPrivate.mAnime.at(idx));
                 break;
             case ModelType::Bilinear:
-                if (idx < mPrivate.mExprList.size()) mModelPtr->modify(&mPrivate.mExprList.at(idx));
+                if (idx < mPrivate.mExprList.size()) {
+                    mModelPtr->modify(&mPrivate.mExprList.at(idx));
+                    std::cout << idx << " ";
+                    for (size_t i = 0; i < mPrivate.mExprList.at(idx).size(); ++i) {
+                        std::cout << mPrivate.mExprList.at(idx)[i] << " ";
+                    }
+                    std::cout << std::endl;
+                }
                 break;
             default:
                 throw std::runtime_error("Unknown model type.");

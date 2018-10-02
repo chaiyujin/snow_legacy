@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-std::vector<double> vector_from_numpy(py::array_t<double> &data) {
+std::vector<double> vector_from_numpy(py::array_t<double, py::array::c_style> &data) {
     assert(data.ndim() == 1);
     std::vector<double> ret(data.shape(0));
     memcpy(ret.data(), data.data(), sizeof(double) * data.shape(0));
@@ -124,12 +124,12 @@ void set_anime(std::string window, py::array_t<float> &anime) {
 }
 
 /* for ModelType::Bilinear */
-void set_iden(std::string window, py::array_t<double> &iden) {
+void set_iden(std::string window, py::array_t<double, py::array::c_style> &iden) {
     std::vector<double> _iden = vector_from_numpy(iden);
     Application::setIden(window, _iden);
 }
 
-void set_expr_list(std::string window, py::array_t<double> &exprList) {
+void set_expr_list(std::string window, py::array_t<double, py::array::c_style> &exprList) {
     assert(exprList.ndim() == 2);
     std::vector<std::vector<double>> _exprList;
     for (size_t i = 0; i < exprList.shape(0); ++i) {

@@ -355,14 +355,14 @@ void FaceDB::QueryCore(const double *iden, const double *expr, Tensor3 &result) 
 
 void FaceDB::UpdateNormals(const Tensor3 &vertices)
 {
-    if (gVertNorms.size() != NumVertice())  gVertNorms.resize(NumVertice());
+    if (gVertNorms.size() != NumVertices())  gVertNorms.resize(NumVertices());
     if (gFaceNorms.size() != NumTriangles()) gFaceNorms.resize(NumTriangles());
 
     for (int i = 0; i < NumTriangles(); ++i) {
         gFaceNorms[i] = (GetFaceNormal(vertices, i));
     }
 
-    for (int vi = 0; vi < NumVertice(); ++vi) {
+    for (int vi = 0; vi < NumVertices(); ++vi) {
         snow::float3 norm{ 0, 0, 0 };
         for (int i = 0; i < gTrianglesOfPoint[vi].size(); ++i) {
             int f0 = gTrianglesOfPoint[vi][i];
