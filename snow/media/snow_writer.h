@@ -2,13 +2,11 @@
 #include "ffmpeg_head.h"
 #include <string>
 #include <vector>
+#include "../core/snow_image.h"
 
 namespace snow {
 
-class MediaWriter;
-class OutputStream {
-    friend class MediaWriter;
-
+struct OutputStream {
     AVStream *          mStreamPtr;
     AVCodecContext *    mEncCtxPtr;
     int64_t             mNextPts;
@@ -22,18 +20,25 @@ class OutputStream {
     int                 mWidth, mHeight;
     int                 mSampleRate;
 
-public:
     OutputStream() : mStreamPtr(nullptr), mEncCtxPtr(nullptr)
                    , mNextPts(0), mSamplesCount(0)
                    , mFramePtr(nullptr), mTmpFramePtr(nullptr)
                    , mSwsCtxPtr(nullptr), mSwrCtxPtr(nullptr)
                    , mWidth(0), mHeight(0), mSampleRate(0) {}
-    ~OutputStream() {
+
+    ~OutputStream() {}
+
+    void free() {
         if (mEncCtxPtr)     avcodec_free_context(&mEncCtxPtr);
         if (mFramePtr)      av_frame_free(&mFramePtr);
         if (mTmpFramePtr)   av_frame_free(&mTmpFramePtr);
-        if (mSwsCtxPtr)     { sws_freeContext(mSwsCtxPtr); mSwsCtxPtr == nullptr; }
+        if (mSwsCtxPtr)     sws_freeContext(mSwsCtxPtr);
         if (mSwrCtxPtr)     swr_free(&mSwrCtxPtr);
+        mEncCtxPtr      = nullptr;
+        mFramePtr       = nullptr;
+        mTmpFramePtr    = nullptr;
+        mSwsCtxPtr      = nullptr;
+        mSwrCtxPtr      = nullptr;
     }
 };
 
@@ -45,38 +50,33 @@ private:
     AVCodec *                   mVideoCodecPtr;
     OutputStream *              mVideoStreamPtr;
     OutputStream *              mAudioStreamPtr;
-
+    // audio data
     std::vector<float>          mAudio;
     int                         mSampleIndex;
-    int                         mSampleRate;
+    // video data
+    // encode bool
+    bool                        mEncodeVideo;
+    bool                        mEncodeAudio;
 
-    OutputStream * addStream(AVFormatContext *oc, AVCodec **codec, enum AVCodecID codecId, int width, int height, int fps, int sampleRate);
     void openAudio();
-    bool write_audio_frame();
+    void openVideo(int bpp);
+    bool writeAudioFrame();
+    bool writeVideoFrame(const snow::Image *image);
+
 public:
     MediaWriter(std::string filename);
 
-    void setAudioTrack(const std::vector<float> &audio, int sampleRate);
-    void setAudioTrack(const std::vector<int16_t> &audio, int sampleRate);
+    void addAudioStream(int sampleRate);
+    void addVideoStream(int w, int h, int bpp, int fps);
 
+    void setAudioData(const std::vector<float> &audio);
+    void setAudioData(const std::vector<int16_t> &audio);
+
+    void appendImage(const snow::Image &image);
+
+    void start(bool dumpFormat=false);
     void write();
-    void close() {
-
-        av_write_trailer(mFmtCtxPtr);
-
-        // /* Close each codec. */
-        // if (have_video)
-        //     close_stream(oc, &video_st);
-        // if (have_audio)
-        //     close_stream(oc, &audio_st);
-
-        if (!(mFmtCtxPtr->oformat->flags & AVFMT_NOFILE))
-            /* Close the output file. */
-            avio_closep(&mFmtCtxPtr->pb);
-
-        /* free the stream */
-        avformat_free_context(mFmtCtxPtr);
-    }
+    void finish();
 };
 
 }

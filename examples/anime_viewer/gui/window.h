@@ -189,10 +189,12 @@ public:
             VisWindow *win = it->second;
             frames = std::max(frames, win->frames());
         }
-        snow::MediaWriter writer("../../../assets/test_write.mp3");
-        writer.setAudioTrack(VisWindow::gShared.gAudioGroup.mSignals[0], VisWindow::gShared.gAudioGroup.mSampleRate);
+        snow::MediaWriter writer("../../../assets/test_write.mp4");
+        writer.addAudioStream(VisWindow::gShared.gAudioGroup.mSampleRate);
+        writer.setAudioData(VisWindow::gShared.gAudioGroup.mSignals[0]);
+        writer.start();
         writer.write();
-        // writer.close();
+        writer.finish();
         VisWindow::SeekBegin();
         for (int iFrame = 0; iFrame < frames; ++iFrame) {
             // printf("%d\n", iFrame);
