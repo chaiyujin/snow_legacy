@@ -27,7 +27,8 @@ void runBilinear(const char *fwPath) {
     Application::newAPP(ModelType::Bilinear);
     Application::setIden("bilinear", iden);
     Application::setExprList("bilinear", exprList);
-    Application::run(25.0);
+    Application::offscreen(25.0);
+    // Application::run(25.0);
     Application::terminate();
 }
 

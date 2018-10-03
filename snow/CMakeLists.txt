@@ -22,7 +22,8 @@ set(SNOW_DEFINITIONS    "")
 # ====================================
 # =========== Module Core ============
 # ====================================
-set(SNOW_CORE_SOURCES   "")
+set(SNOW_CORE_SOURCES
+    "${PROJECT_SOURCE_DIR}/core/snow_image.cpp")
 set(SNOW_CORE_INCLUDE_DIRS
     # third-party
     "${PROJECT_SOURCE_DIR}/third-party/stb/")

@@ -9,3 +9,4 @@
 #include "snow_iostream.h"
 #include "snow_path.h"
 #include "snow_simd.h"
+#include "snow_image.h"

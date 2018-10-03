@@ -15,14 +15,14 @@ std::vector<double> vector_from_numpy(py::array_t<double, py::array::c_style> &d
     return ret;
 }
 
-S16Signal audio_from_numpy(py::array_t<int16_t> &data) {
+S16Signal audio_from_numpy(py::array_t<int16_t, py::array::c_style> &data) {
     assert(data.ndim() == 1);
     std::vector<int16_t> ret(data.shape(0));
     memcpy(ret.data(), data.data(), sizeof(int16_t) * data.shape(0));
     return ret;
 }
 
-S16Signal audio_from_numpy(py::array_t<float> &data) {
+S16Signal audio_from_numpy(py::array_t<float, py::array::c_style> &data) {
     assert(data.ndim() == 1);
     std::vector<int16_t> ret(data.shape(0));
     for (size_t i = 0; i < data.shape(0); ++i) {
@@ -44,8 +44,8 @@ ScrollImage scroll_image_from_numpy(py::array_t<uint8_t, py::array::c_style> &da
     return ret;
 }
 
-std::vector<Vertices> anime_from_numpy(py::array_t<float> &data) {
-    auto _to_frame = [](py::array_t<float> &anime, Vertices &frame, int r) -> void {
+std::vector<Vertices> anime_from_numpy(py::array_t<float, py::array::c_style> &data) {
+    auto _to_frame = [](py::array_t<float, py::array::c_style> &anime, Vertices &frame, int r) -> void {
         // anime
         int C = anime.shape(1);
         for (int i = 0; i * 3 < C; ++i) {
@@ -92,12 +92,12 @@ void set_text(std::string window, std::string text) {
     Application::setText(window, text);
 }
 
-void add_audio_s16(std::string tag, py::array_t<int16_t> &audio, int samplerate) {
+void add_audio_s16(std::string tag, py::array_t<int16_t, py::array::c_style> &audio, int samplerate) {
     auto data = audio_from_numpy(audio);
     Application::addAudio(tag, data, samplerate);
 }
 
-void add_audio_f32(std::string tag, py::array_t<float> &audio, int samplerate) {
+void add_audio_f32(std::string tag, py::array_t<float, py::array::c_style> &audio, int samplerate) {
     auto data = audio_from_numpy(audio);
     Application::addAudio(tag, data, samplerate);
 }
@@ -118,7 +118,7 @@ void set_obj(std::string window, std::string filename) {
     Application::setObj(window, filename);
 }
 
-void set_anime(std::string window, py::array_t<float> &anime) {
+void set_anime(std::string window, py::array_t<float, py::array::c_style> &anime) {
     std::vector<Vertices> frames = anime_from_numpy(anime);
     Application::setAnime(window, frames);
 }

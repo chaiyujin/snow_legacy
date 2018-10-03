@@ -38,6 +38,8 @@ namespace snow {
         /* get */
         SDL_Window *        windowPtr() { return mWindowPtr; }
         SDL_GLContext       glContext() { return mGLContext; }
+        int                 width() const { return mWidth; }
+        int                 height() const { return mHeight; }
         /* functions */
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
         glm::mat4           perspective(const CameraBase *camera);

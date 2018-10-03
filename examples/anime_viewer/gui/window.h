@@ -100,7 +100,6 @@ private:
 
     void releaseObj();
     void processEvent(SDL_Event &event);
-    void draw();
     void setTexture(std::string title, uint8_t *data, int rows, int cols);
 
 public:
@@ -127,6 +126,12 @@ public:
     void setText(std::string sentence) { mPrivate.mText = sentence; }
     void setIden(const std::vector<double> &iden);
     void setExprList(const std::vector<std::vector<double>> &exprList);
+
+    void draw();
+    
+    int frames() const { return mPrivate.mFrames; }
+    static void SeekBegin() { gShared.gCurrentFrame = 0; }
+    static void NextFrame() { gShared.gCurrentFrame ++;  }
 };
 
 class Application {
@@ -174,6 +179,30 @@ public:
         }
         gAppPtr->run();
         terminate();
+    }
+    // off-screen
+    static void offscreen(double fps) {
+        int frames = 0;
+        for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
+            VisWindow *win = it->second;
+            frames = std::max(frames, win->frames());
+        }
+        VisWindow::SeekBegin();
+        for (int iFrame = 0; iFrame < frames; ++iFrame) {
+            printf("%d\n", iFrame);
+            for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
+                VisWindow *win = it->second;
+                win->_draw();
+                {
+                    snow::Image image;
+                    image.resize(win->width(), win->height(), 4);
+                    glReadPixels(0, 0, win->width(), win->height(), GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+                    snow::Image::Flip(image, 1);
+                    snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
+                }
+            }
+            VisWindow::NextFrame();
+        }
     }
 
     static void addAudio(std::string tag, const S16Signal &signal, int sampleRate) {

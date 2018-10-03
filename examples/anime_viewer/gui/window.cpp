@@ -213,23 +213,6 @@ void VisWindow::draw() {
         ImGui::Begin(""); ImGui::Text("No mesh!"); ImGui::End();
         return;
     }
-    /* draw model */ {
-        mShaderPtr->use();
-        mShaderPtr->setVec3("lightPos", mCameraPtr->eye());
-        mShaderPtr->setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
-        // view. projection
-        glm::mat4 projection = this->perspective(mCameraPtr);
-        glm::mat4 view = mCameraPtr->viewMatrix();
-        mShaderPtr->setMat4("projection", projection);
-        mShaderPtr->setMat4("view", view);
-        // model, normal
-        glm::mat4 model = mModelPtr->autoModelTransform(projection * view, 0.3);
-        glm::mat4 normal = glm::transpose(glm::inverse(model));
-        mShaderPtr->setMat4("model", model);
-        mShaderPtr->setMat4("normal", normal);
-        // draw model
-        mModelPtr->draw(*mShaderPtr);
-    }
 
     /* draw text at bottom */ if (mPrivate.mText.length() > 0) {
         int height = ImGui::GetItemsLineHeightWithSpacing() * 2 + ImGui::GetStyle().WindowPadding.y * 2;
@@ -327,14 +310,7 @@ void VisWindow::draw() {
                 if (idx < mPrivate.mAnime.size()) mModelPtr->modify(&mPrivate.mAnime.at(idx));
                 break;
             case ModelType::Bilinear:
-                if (idx < mPrivate.mExprList.size()) {
-                    mModelPtr->modify(&mPrivate.mExprList.at(idx));
-                    std::cout << idx << " ";
-                    for (size_t i = 0; i < mPrivate.mExprList.at(idx).size(); ++i) {
-                        std::cout << mPrivate.mExprList.at(idx)[i] << " ";
-                    }
-                    std::cout << std::endl;
-                }
+                if (idx < mPrivate.mExprList.size()) mModelPtr->modify(&mPrivate.mExprList.at(idx));
                 break;
             default:
                 throw std::runtime_error("Unknown model type.");
@@ -362,5 +338,23 @@ void VisWindow::draw() {
         ImGui::Begin(it->first.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::Image((void*)(intptr_t)(it->second), ImVec2(itImage->second.mCols, itImage->second.mWinLength * 5));
         ImGui::End();
+    }
+
+    /* draw model */ {
+        mShaderPtr->use();
+        mShaderPtr->setVec3("lightPos", mCameraPtr->eye());
+        mShaderPtr->setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
+        // view. projection
+        glm::mat4 projection = this->perspective(mCameraPtr);
+        glm::mat4 view = mCameraPtr->viewMatrix();
+        mShaderPtr->setMat4("projection", projection);
+        mShaderPtr->setMat4("view", view);
+        // model, normal
+        glm::mat4 model = mModelPtr->autoModelTransform(projection * view, 0.3);
+        glm::mat4 normal = glm::transpose(glm::inverse(model));
+        mShaderPtr->setMat4("model", model);
+        mShaderPtr->setMat4("normal", normal);
+        // draw model
+        mModelPtr->draw(*mShaderPtr);
     }
 }
