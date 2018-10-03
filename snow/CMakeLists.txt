@@ -140,7 +140,8 @@ if (SNOW_MODULE_FFMPEG)
     list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_FFMPEG")
     
     include(cmake_modules/FFmpeg.cmake)
-    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_reader.cpp")
+    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_reader.cpp"
+                            "${PROJECT_SOURCE_DIR}/media/snow_writer.cpp")
 
     list(APPEND SNOW_SOURCES            "${SNOW_FFMPEG_SOURCES}")
     list(APPEND SNOW_INCLUDE_DIRS       "${FFMPEG_INCLUDE_DIRS}")

@@ -83,8 +83,10 @@ enum ModelType {
     Bilinear = 1
 };
 
+class Application;
 class VisWindow : public snow::AbstractWindow {
 private:
+    friend class Application;
     // ui and play related
     static PublicData    gShared;
     static bool          gAudiable;
@@ -187,9 +189,13 @@ public:
             VisWindow *win = it->second;
             frames = std::max(frames, win->frames());
         }
+        snow::MediaWriter writer("../../../assets/test_write.mp3");
+        writer.setAudioTrack(VisWindow::gShared.gAudioGroup.mSignals[0], VisWindow::gShared.gAudioGroup.mSampleRate);
+        writer.write();
+        // writer.close();
         VisWindow::SeekBegin();
         for (int iFrame = 0; iFrame < frames; ++iFrame) {
-            printf("%d\n", iFrame);
+            // printf("%d\n", iFrame);
             for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
                 VisWindow *win = it->second;
                 win->_draw();
@@ -198,7 +204,7 @@ public:
                     image.resize(win->width(), win->height(), 4);
                     glReadPixels(0, 0, win->width(), win->height(), GL_RGBA, GL_UNSIGNED_BYTE, image.data());
                     snow::Image::Flip(image, 1);
-                    snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
+                    // snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
                 }
             }
             VisWindow::NextFrame();

@@ -15,6 +15,13 @@ void runObj(const char *objPath) {
 void runBilinear(const char *fwPath) {
     FaceDB::Initialize(fwPath);
 
+    snow::WavPCM wavreader;
+    wavreader.read("../../../assets/test.wav");
+    std::vector<int16_t> wav(wavreader.channel(0).size());
+    for (size_t i = 0; i < wavreader.channel(0).size(); ++i) {
+        wav[i] = wavreader.channel(0)[i] * 32767.f;
+    }
+
     std::vector<double> iden(75, 0);
     std::vector<double> expr(47, 0);
     iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
@@ -25,6 +32,7 @@ void runBilinear(const char *fwPath) {
     }
 
     Application::newAPP(ModelType::Bilinear);
+    Application::addAudio("0", wav, wavreader.sampleRate());
     Application::setIden("bilinear", iden);
     Application::setExprList("bilinear", exprList);
     Application::offscreen(25.0);
