@@ -75,7 +75,6 @@ public:
     void appendImage(const snow::Image &image);
 
     void start(bool dumpFormat=false);
-    void write();
     void finish();
 };
 

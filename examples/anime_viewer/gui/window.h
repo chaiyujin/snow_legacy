@@ -184,33 +184,34 @@ public:
     }
     // off-screen
     static void offscreen(double fps) {
+        if (std::abs(std::round(fps) - fps) > 1e-5)
+            throw std::runtime_error("offscreen only support integer fps");
         int frames = 0;
+        int w, h;
+        VisWindow::SeekBegin();
         for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
             VisWindow *win = it->second;
             frames = std::max(frames, win->frames());
+            w = win->width();
+            h = win->height();
         }
         snow::MediaWriter writer("../../../assets/test_write.mp4");
         writer.addAudioStream(VisWindow::gShared.gAudioGroup.mSampleRate);
+        writer.addVideoStream(w, h, 4, (int)fps);
         writer.setAudioData(VisWindow::gShared.gAudioGroup.mSignals[0]);
         writer.start();
-        writer.write();
-        writer.finish();
-        VisWindow::SeekBegin();
         for (int iFrame = 0; iFrame < frames; ++iFrame) {
             // printf("%d\n", iFrame);
             for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
                 VisWindow *win = it->second;
-                win->_draw();
-                {
-                    snow::Image image;
-                    image.resize(win->width(), win->height(), 4);
-                    glReadPixels(0, 0, win->width(), win->height(), GL_RGBA, GL_UNSIGNED_BYTE, image.data());
-                    snow::Image::Flip(image, 1);
-                    // snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
-                }
+                snow::Image image;
+                win->_draw(&image);
+                // snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
+                writer.appendImage(image);
             }
             VisWindow::NextFrame();
         }
+        writer.finish();
     }
 
     static void addAudio(std::string tag, const S16Signal &signal, int sampleRate) {

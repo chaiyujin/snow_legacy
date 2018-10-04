@@ -44,7 +44,7 @@ namespace snow {
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
         glm::mat4           perspective(const CameraBase *camera);
         virtual void        _processEvent(SDL_Event &event);
-        virtual void        _draw();
+        virtual void        _draw(snow::Image *image=nullptr);
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual void        draw() = 0;
@@ -89,7 +89,7 @@ namespace snow {
         {}
 
         virtual void _processEvent(SDL_Event &event);
-        virtual void _draw();
+        virtual void _draw(snow::Image *image=nullptr);
         virtual void processEvent(SDL_Event &event) {}
         virtual void draw() {}
     };

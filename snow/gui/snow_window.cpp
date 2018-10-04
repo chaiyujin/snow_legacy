@@ -86,11 +86,16 @@ namespace snow {
         this->processEvent(event);
     }
 
-    void AbstractWindow::_draw() {
+    void AbstractWindow::_draw(snow::Image *image) {
         this->glMakeCurrent();
         this->mImGui.newFrame();
         this->draw();  // custom draw
         this->mImGui.endFrame();
+        if (image != nullptr) {
+            image->resize(this->mWidth, this->mHeight, 4);
+            glReadPixels(0, 0, this->mWidth, this->mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image->data());
+            snow::Image::Flip(*image, 1);
+        }
         SDL_GL_SwapWindow(mWindowPtr);
     }
 
@@ -103,7 +108,7 @@ namespace snow {
         mCamera.processMouseEvent(event);
     }
 
-    void CameraWindow::_draw() {
+    void CameraWindow::_draw(snow::Image *image) {
         this->glMakeCurrent();
         this->mImGui.newFrame();
         this->draw();  // custom draw
@@ -122,6 +127,11 @@ namespace snow {
             ImGui::End();
         }
         this->mImGui.endFrame();
+        if (image != nullptr) {
+            image->resize(this->mWidth, this->mHeight, 4);
+            glReadPixels(0, 0, this->mWidth, this->mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image->data());
+            snow::Image::Flip(*image, 1);
+        }
         SDL_GL_SwapWindow(mWindowPtr);
     }
 }

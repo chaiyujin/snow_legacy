@@ -91,7 +91,7 @@ static OutputStream * addStream(AVFormatContext *oc, AVCodec **codec, enum AVCod
     case AVMEDIA_TYPE_VIDEO:
         c->codec_id = codecId;
 
-        c->bit_rate = 400000;
+        c->bit_rate = 800000;
         /* Resolution must be a multiple of two. */
         c->width    = width;
         c->height   = height;
@@ -188,9 +188,26 @@ void MediaWriter::openAudio() {
 
     int nbSamples = (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) ? 10000 : c->frame_size;
     ost->mFramePtr = allocAudioFrame(c->sample_fmt, c->channel_layout, c->sample_rate, nbSamples);
+    ost->mTmpFramePtr = allocAudioFrame(AV_SAMPLE_FMT_FLTP, c->channel_layout, c->sample_rate, nbSamples);
 
     ret = avcodec_parameters_from_context(ost->mStreamPtr->codecpar, c);
     if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Could not copy the stream parameters\n"); exit(1); }
+
+    /* create resampler context */
+    ost->mSwrCtxPtr = swr_alloc();
+    if (!ost->mSwrCtxPtr) { av_log(nullptr, AV_LOG_ERROR, "Could not allocate resampler context\n"); exit(1); }
+
+    /* set options */
+    av_opt_set_int       (ost->mSwrCtxPtr, "in_channel_count",   c->channels,        0);
+    av_opt_set_int       (ost->mSwrCtxPtr, "in_sample_rate",     c->sample_rate,     0);
+    av_opt_set_sample_fmt(ost->mSwrCtxPtr, "in_sample_fmt",      AV_SAMPLE_FMT_FLTP, 0);
+    av_opt_set_int       (ost->mSwrCtxPtr, "out_channel_count",  c->channels,        0);
+    av_opt_set_int       (ost->mSwrCtxPtr, "out_sample_rate",    c->sample_rate,     0);
+    av_opt_set_sample_fmt(ost->mSwrCtxPtr, "out_sample_fmt",     c->sample_fmt,      0);
+
+    /* initialize the resampling context */
+    if ((ret = swr_init(ost->mSwrCtxPtr)) < 0) { av_log(nullptr, AV_LOG_ERROR, "Failed to initialize the resampling context\n"); exit(1); }
+
 }
 
 void MediaWriter::openVideo(int bpp) {
@@ -226,7 +243,7 @@ void MediaWriter::openVideo(int bpp) {
 bool MediaWriter::writeAudioFrame() {
     AVCodecContext *c;
     AVPacket pkt = { 0 }; // data and size must be 0;
-    AVFrame *frame = mAudioStreamPtr->mFramePtr;
+    AVFrame *frame = mAudioStreamPtr->mTmpFramePtr;
     int ret;
     int gotPacket;
     int numSamples;
@@ -244,6 +261,34 @@ bool MediaWriter::writeAudioFrame() {
         frame->nb_samples = numSamples;
         frame->pts = mAudioStreamPtr->mNextPts;
         mAudioStreamPtr->mNextPts += frame->nb_samples;
+
+        // convert
+        auto * ost = mAudioStreamPtr;
+        /* convert samples from native format to destination codec format, using the resampler */
+            /* compute destination number of samples */
+        int dstNbSamples = av_rescale_rnd(swr_get_delay(ost->mSwrCtxPtr, c->sample_rate) + frame->nb_samples,
+                                          c->sample_rate, c->sample_rate, AV_ROUND_UP);
+        if (dstNbSamples != frame->nb_samples) {
+            av_log(nullptr, AV_LOG_ERROR, "swr samples not same!"); exit(1);
+        }
+
+        /* when we pass a frame to the encoder, it may keep a reference to it
+         * internally;
+         * make sure we do not overwrite it here
+         */
+        ret = av_frame_make_writable(ost->mFramePtr);
+        if (ret < 0) exit(1);
+
+        /* convert to destination format */
+        ret = swr_convert(ost->mSwrCtxPtr,
+                          ost->mFramePtr->data, dstNbSamples,
+                          (const uint8_t **)frame->data, frame->nb_samples);
+        if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Error while converting\n"); exit(1); }
+        dstNbSamples = ret;
+
+        frame = ost->mFramePtr;
+        frame->pts = av_rescale_q(ost->mSamplesCount, (AVRational){1, c->sample_rate}, c->time_base);
+        ost->mSamplesCount += dstNbSamples;
     }
     else frame = nullptr;
 
@@ -267,7 +312,7 @@ bool MediaWriter::writeVideoFrame(const snow::Image *image) {
     int gotPacket = 0;
 
     av_init_packet(&pkt);
-    c = mAudioStreamPtr->mEncCtxPtr;
+    c = mVideoStreamPtr->mEncCtxPtr;
 
     if (!image) frame = nullptr;
     else {
@@ -275,43 +320,44 @@ bool MediaWriter::writeVideoFrame(const snow::Image *image) {
         // convert image
         if (av_frame_make_writable(ost->mFramePtr) < 0) exit(1);
 
+        AVPixelFormat pixFmt;
+        if (image->bpp() == 3) pixFmt = AV_PIX_FMT_RGB24;
+        else if (image->bpp() == 4) pixFmt = AV_PIX_FMT_RGBA;
+
         if (!ost->mSwsCtxPtr) {
             ost->mSwsCtxPtr = sws_getContext(c->width, c->height,
-                                          AV_PIX_FMT_YUV420P,
-                                          c->width, c->height,
-                                          c->pix_fmt,
-                                          SWS_BICUBIC, NULL, NULL, NULL);
+                                             pixFmt,
+                                             c->width, c->height,
+                                             c->pix_fmt,
+                                             SWS_BICUBIC, NULL, NULL, NULL);
             if (!ost->mSwsCtxPtr) { av_log(nullptr, AV_LOG_ERROR, "Could not initialize the conversion context\n"); exit(1); }
         }
 
         // copy data !!!!!
-        -----------------
+        const uint8_t *imageData = image->data();
+        for (int y = 0; y < image->height(); y++) {
+            const uint8_t *ptr = imageData + y * image->width() * image->bpp();
+            for (int x = 0; x < image->width() * image->bpp(); x++)
+                ost->mTmpFramePtr->data[0][y * ost->mTmpFramePtr->linesize[0] + x] = *ptr++;
+        }
 
         sws_scale(ost->mSwsCtxPtr,
                   (const uint8_t * const *)ost->mTmpFramePtr->data, ost->mTmpFramePtr->linesize,
                   0, c->height, ost->mFramePtr->data, ost->mFramePtr->linesize);
+        ost->mFramePtr->pts = ost->mNextPts++;
+
+        frame = ost->mFramePtr;
     }
 
     /* encode the image */
     ret = avcodec_encode_video2(c, &pkt, frame, &gotPacket);
     if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Error encoding video frame: %s\n", av_err2str(ret)); exit(1); }
-    if (gotPacket) { ret = writeFrame(mFmtCtxPtr, &c->time_base, mVideoStreamPtr->mStreamPtr, &pkt); } else { ret = 0; }
+    if (gotPacket) { 
+        ret = writeFrame(mFmtCtxPtr, &c->time_base, mVideoStreamPtr->mStreamPtr, &pkt);
+    } else { ret = 0; }
     if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Error while writing video frame: %s\n", av_err2str(ret)); exit(1); }
 
     return (frame || gotPacket) ? true : false;
-}
-
-void MediaWriter::appendImage(const snow::Image &image) {
-    if (mVideoStreamPtr == nullptr) { throw std::runtime_error("[MediaWriter]: no video stream added!"); }
-    if (mAudioStreamPtr) {
-        while (mEncodeAudio) {
-            bool videoTurn = av_compare_ts(mVideoStreamPtr->mNextPts, mVideoStreamPtr->mEncCtxPtr->time_base,
-                                           mAudioStreamPtr->mNextPts, mAudioStreamPtr->mEncCtxPtr->time_base) <= 0;
-            if (videoTurn) break;
-            mEncodeAudio = writeAudioFrame();
-        }
-    }
-    mEncodeVideo = writeVideoFrame(&image);
 }
 
 void MediaWriter::start(bool dumpFormat) {
@@ -330,8 +376,17 @@ void MediaWriter::start(bool dumpFormat) {
     mSampleIndex = 0;
 }
 
-void MediaWriter::write() {
-
+void MediaWriter::appendImage(const snow::Image &image) {
+    if (mVideoStreamPtr == nullptr) { throw std::runtime_error("[MediaWriter]: no video stream added!"); }
+    if (mAudioStreamPtr) {
+        while (mEncodeAudio) {
+            bool videoTurn = av_compare_ts(mVideoStreamPtr->mNextPts, mVideoStreamPtr->mEncCtxPtr->time_base,
+                                           mAudioStreamPtr->mNextPts, mAudioStreamPtr->mEncCtxPtr->time_base) <= 0;
+            if (videoTurn) break;
+            mEncodeAudio = writeAudioFrame();
+        }
+    }
+    mEncodeVideo = writeVideoFrame(&image);
 }
 
 void MediaWriter::finish() {
