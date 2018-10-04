@@ -82,6 +82,10 @@ void run(double fps) {
     Application::run(fps);
 }
 
+void offscreen(std::string videoPath, double fps, int videoWidth, int videoHeight) {
+    Application::offscreen(videoPath, fps, videoWidth, videoHeight);
+}
+
 /**
  * =========================================
  *              window private
@@ -161,5 +165,6 @@ PYBIND11_MODULE(anime_viewer11, m) {
     m.def("set_expr_list",      &set_expr_list,     "set expr list for certain window");
     // run or terminate
     m.def("run",                &run,               "run app with given fps");
+    m.def("offscreen",          &offscreen,         "offscreen rendering");
     m.def("terminate",          &terminate,         "terminate app");
 }

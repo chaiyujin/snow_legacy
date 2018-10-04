@@ -35,7 +35,9 @@ void runBilinear(const char *fwPath) {
     Application::addAudio("0", wav, wavreader.sampleRate());
     Application::setIden("bilinear", iden);
     Application::setExprList("bilinear", exprList);
-    Application::offscreen(25.0);
+    Application::setIden("bilinear2", iden);
+    Application::setExprList("bilinear2", exprList);
+    Application::offscreen("../../../assets/test_offscreen.mp4", 25.0, 1280, 480);
     // Application::run(25.0);
     Application::terminate();
 }

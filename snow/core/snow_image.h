@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <string.h>
 namespace snow {
 
 class Image {
@@ -18,6 +19,7 @@ public:
         mWidth          = w;
         mHeight         = h;
         mBytesPerPixel  = bpp;
+        zero();
     }
 
     uint8_t *       data()            { return mData.get();     }
@@ -25,10 +27,13 @@ public:
     const int       width()     const { return mWidth;          }
     const int       height()    const { return mHeight;         }
     const int       bpp()       const { return mBytesPerPixel;  }
+    int             size()      const { return mWidth * mHeight * mBytesPerPixel;                  }
+    void            zero()            { memset(mData.get(), 0, mWidth * mHeight * mBytesPerPixel); }
 
     static Image Read(std::string filename);
     static void  Write(std::string filename, const Image &image);
     static void  Flip(Image &image, int axis);
+    static Image Merge(const Image &image0, const Image &image1, int axis);
 };
 
 

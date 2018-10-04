@@ -225,10 +225,20 @@ void VisWindow::draw() {
 
     /* draw player controller on top */ if (mPrivate.mFrames > 0) {
         // position and size, on top of window
-        int height = ImGui::GetItemsLineHeightWithSpacing() * 3 + ImGui::GetStyle().WindowPadding.y * 2;
-        ImGui::SetNextWindowPos(ImVec2(0, 0),0);
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height),0);
-        ImGui::Begin("", nullptr, ImGuiWindowFlags_NoResize);
+        if (mController) {
+            int height = ImGui::GetItemsLineHeightWithSpacing() * 3 + ImGui::GetStyle().WindowPadding.y * 2;
+            ImGui::SetNextWindowPos(ImVec2(0, 0),0);
+            ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height),0);
+            ImGui::Begin("", nullptr, ImGuiWindowFlags_NoResize);
+        }
+        else if (mTitle.length() > 0) {    
+            int height = ImGui::GetItemsLineHeightWithSpacing() * 2 + ImGui::GetStyle().WindowPadding.y * 2;
+            ImGui::SetNextWindowPos(ImVec2(0, 0), 0);
+            ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height),0);
+            ImGui::Begin("", nullptr, ImGuiWindowFlags_NoResize);
+            ImGui::Text("%s", mTitle.c_str());
+            ImGui::End();
+        }
 
         double currentTime = ImGui::GetTime();
 
@@ -248,58 +258,59 @@ void VisWindow::draw() {
         };
         auto _clip = [](int x, int l, int r) -> int { if (x < l) return l; else if (x > r) return r; else return x; };
 
-
-        // slider controller
-        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
-        if (ImGui::SliderInt("Frame", &gShared.gCurrentFrame, 0, gShared.gMaxFrames - 1)) {
-            _restart();
-        }
-        ImGui::SameLine();
-        ImGui::PushItemWidth(100);
-        // go to controller
-        if (ImGui::InputInt(" ", &gShared.gCurrentFrame, 1)) {
-            _restart();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Reset")) { gShared.gCurrentFrame = 0; }
-        ImGui::SameLine();
-
-        // playing, next frame;        
-        if (gPlaying) {
-            double delta = currentTime - gLastTime;
-            gSeconds += delta;
-            if (gSeconds > 1.0 / gShared.gFPS) {
-                // next frame
-                _nextFrame();
-                gSeconds -= 1.0 / gShared.gFPS;
+        if (mController) {
+            // slider controller
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
+            if (ImGui::SliderInt("Frame", &gShared.gCurrentFrame, 0, gShared.gMaxFrames - 1)) {
+                _restart();
             }
-        }
+            ImGui::SameLine();
+            ImGui::PushItemWidth(100);
+            // go to controller
+            if (ImGui::InputInt(" ", &gShared.gCurrentFrame, 1)) {
+                _restart();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Reset")) { gShared.gCurrentFrame = 0; }
+            ImGui::SameLine();
 
-        // pause or play
-        if ((gPlaying && ImGui::Button("Pause")) || gShared.gCurrentFrame >= mPrivate.mFrames) {
-            if (gAudiable) SDL_PauseAudio(1);
-            gPlaying = false;
-        }
-        else if (!gPlaying && ImGui::Button("Play ")) {
-            if (gAudiable) SDL_PauseAudio(0);
-            gPlaying = true;
-            _restart();
-        }
+            // playing, next frame;        
+            if (gPlaying) {
+                double delta = currentTime - gLastTime;
+                gSeconds += delta;
+                if (gSeconds > 1.0 / gShared.gFPS) {
+                    // next frame
+                    _nextFrame();
+                    gSeconds -= 1.0 / gShared.gFPS;
+                }
+            }
 
-        // clip current frame
-        gShared.gCurrentFrame = _clip(gShared.gCurrentFrame, 0, gShared.gMaxFrames - 1);
+            // pause or play
+            if ((gPlaying && ImGui::Button("Pause")) || gShared.gCurrentFrame >= mPrivate.mFrames) {
+                if (gAudiable) SDL_PauseAudio(1);
+                gPlaying = false;
+            }
+            else if (!gPlaying && ImGui::Button("Play ")) {
+                if (gAudiable) SDL_PauseAudio(0);
+                gPlaying = true;
+                _restart();
+            }
 
-        // update clock
-        ImGui::SameLine();
-        gTimeClock = (double)(gShared.gCurrentFrame) / gShared.gFPS + gSeconds;
-        ImGui::Text("%.3f s", gTimeClock);
+            // clip current frame
+            gShared.gCurrentFrame = _clip(gShared.gCurrentFrame, 0, gShared.gMaxFrames - 1);
 
-        /* audio select */ if (gAudiable) {
-            for (size_t i = 0; i < gShared.gAudioGroup.mSignals.size(); ++i) {
-                if (i > 0) ImGui::SameLine();
-                ImGui::RadioButton((std::string("audio ") + gShared.gAudioGroup.mTags[i]).c_str(),
-                                   &(gShared.gAudioGroup.mSelectId),
-                                   i);
+            // update clock
+            ImGui::SameLine();
+            gTimeClock = (double)(gShared.gCurrentFrame) / gShared.gFPS + gSeconds;
+            ImGui::Text("%.3f s", gTimeClock);
+
+            /* audio select */ if (gAudiable) {
+                for (size_t i = 0; i < gShared.gAudioGroup.mSignals.size(); ++i) {
+                    if (i > 0) ImGui::SameLine();
+                    ImGui::RadioButton((std::string("audio ") + gShared.gAudioGroup.mTags[i]).c_str(),
+                                    &(gShared.gAudioGroup.mSelectId),
+                                    i);
+                }
             }
         }
 
@@ -329,7 +340,8 @@ void VisWindow::draw() {
         }
         
         gLastTime = currentTime;
-        ImGui::End();
+
+        if (mController) ImGui::End();
     }
 
     /* show scroll images */ 

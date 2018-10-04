@@ -1,6 +1,4 @@
 #pragma once
-#define SNOW_MODULE_OPENGL
-#define SNOW_MODULE_FFMPEG
 #include <snow.h>
 #include <memory>
 #include "../shader/image.h"

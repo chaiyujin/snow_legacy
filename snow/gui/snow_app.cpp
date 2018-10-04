@@ -48,6 +48,11 @@ namespace snow {
     }
 
     void App::run() {
+        // show all window
+        for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
+            it->second->show();
+        }
+
         // vsync for multi-windows
         SDL_GL_SetSwapInterval(-1);
         // raise the first added window

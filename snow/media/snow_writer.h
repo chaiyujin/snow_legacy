@@ -62,15 +62,26 @@ private:
     void openVideo(int bpp);
     bool writeAudioFrame();
     bool writeVideoFrame(const snow::Image *image);
+    void resample(int sampleRate);
 
 public:
+    // output sample rate is 22050
+    static int  AudioSampleRate;
+    static int  AudioBitRate;
+    static int  VideoBitRate;
+
+    static void setAudioSampleRate(int sr) { AudioSampleRate = sr;  }
+    static void setAudioBitRate(int br)    { AudioBitRate = br;     }
+    static void setVideoBitRate(int br)    { VideoBitRate = br;     }
+
     MediaWriter(std::string filename);
 
-    void addAudioStream(int sampleRate);
+    void addAudioStream();
     void addVideoStream(int w, int h, int bpp, int fps);
 
-    void setAudioData(const std::vector<float> &audio);
-    void setAudioData(const std::vector<int16_t> &audio);
+    /* audio data will be resampled to 22050 */
+    void setAudioData(const std::vector<float> &audio, int sampleRate);
+    void setAudioData(const std::vector<int16_t> &audio, int sampleRate);
 
     void appendImage(const snow::Image &image);
 

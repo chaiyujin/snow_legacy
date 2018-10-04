@@ -98,6 +98,8 @@ private:
     snow::Shader        *mShaderPtr;
     snow::ArcballCamera *mCameraPtr;
 
+    bool                 mController;
+
     std::map<std::string, uint32_t> mTextureMap;
 
     void releaseObj();
@@ -112,7 +114,8 @@ public:
         , mPrivate()
         , mModelPtr(nullptr)
         , mShaderPtr(nullptr)
-        , mCameraPtr(nullptr)    
+        , mCameraPtr(nullptr)
+        , mController(true)
     {}
 
     static void audioCallback(void *userdata, uint8_t *stream, int len);
@@ -128,7 +131,7 @@ public:
     void setText(std::string sentence) { mPrivate.mText = sentence; }
     void setIden(const std::vector<double> &iden);
     void setExprList(const std::vector<std::vector<double>> &exprList);
-
+    void setController(bool flag) { mController = flag; }
     void draw();
     
     int frames() const { return mPrivate.mFrames; }
@@ -183,35 +186,48 @@ public:
         terminate();
     }
     // off-screen
-    static void offscreen(double fps) {
-        if (std::abs(std::round(fps) - fps) > 1e-5)
-            throw std::runtime_error("offscreen only support integer fps");
-        int frames = 0;
-        int w, h;
-        VisWindow::SeekBegin();
+    static void offscreen(std::string videoPath, double fps, int videoWidth=0, int videoHeight=0) {
+        if (std::abs(std::round(fps) - fps) > 1e-5) throw std::runtime_error("offscreen only support integer fps");
+        int frames = 0, w = 0, h = 0, numWins = (int)gWindowMap.size();
         for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
             VisWindow *win = it->second;
             frames = std::max(frames, win->frames());
-            w = win->width();
+            int winW = win->width(), winH = win->height();
+            if (videoWidth  > 0)  winW = videoWidth  / numWins;
+            if (videoHeight > 0)  winH = videoHeight;
+            win->resize(winW, winH);
+            win->setController(false);
+            win->hide();
+            // win->_draw();
+            w += win->width();
             h = win->height();
         }
-        snow::MediaWriter writer("../../../assets/test_write.mp4");
-        writer.addAudioStream(VisWindow::gShared.gAudioGroup.mSampleRate);
+        snow::MediaWriter writer(videoPath);
         writer.addVideoStream(w, h, 4, (int)fps);
-        writer.setAudioData(VisWindow::gShared.gAudioGroup.mSignals[0]);
+        if (VisWindow::gShared.gAudioGroup.mSignals.size() > 0) {
+            if (VisWindow::gShared.gAudioGroup.mSignals.size() > 1)
+                printf("[AnimeViewer]: offscreen(), ignore audio signals rather than track 0.");
+            writer.addAudioStream();
+            writer.setAudioData(VisWindow::gShared.gAudioGroup.mSignals[0], VisWindow::gShared.gAudioGroup.mSampleRate);
+        }
         writer.start();
+        VisWindow::SeekBegin();
         for (int iFrame = 0; iFrame < frames; ++iFrame) {
-            // printf("%d\n", iFrame);
+            printf("[AnimeViewer]: frame %d\r", iFrame);
+            snow::Image image;
             for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
                 VisWindow *win = it->second;
-                snow::Image image;
-                win->_draw(&image);
-                // snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
-                writer.appendImage(image);
+                snow::Image img;
+                win->_draw(&img);
+                image = snow::Image::Merge(image, img, 1);
             }
+            writer.appendImage(image);
             VisWindow::NextFrame();
+            // snow::Image::Write(std::string("../../../assets/images/frame") + std::to_string(iFrame) + ".png", image);
         }
+        printf("\n");
         writer.finish();
+        terminate();
     }
 
     static void addAudio(std::string tag, const S16Signal &signal, int sampleRate) {

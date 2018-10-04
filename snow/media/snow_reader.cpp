@@ -1,4 +1,5 @@
 #include "snow_reader.h"
+#include "ffmpeg_functions.h"
 #include <memory>
 #define SYNC_EPS 5
 
@@ -7,79 +8,6 @@ namespace snow {
 bool            MediaReader::gInitialized = false;
 snow::color_map MediaReader::gJetCmap = snow::color_map::jet();
 
-static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
-                                  uint64_t channel_layout,
-                                  int sample_rate,
-                                  int64_t nb_samples) {
-    AVFrame *frame = av_frame_alloc();
-    int ret;
-
-    if (!frame) {
-        fprintf(stderr, "Error allocating an audio frame\n");
-        exit(1);
-    }
-
-    frame->format           = sample_fmt;
-    frame->channel_layout   = channel_layout;
-    frame->sample_rate      = sample_rate;
-    frame->nb_samples       = nb_samples;
-
-    if (nb_samples) {
-        ret = av_frame_get_buffer(frame, 32);
-        if (ret < 0) {
-            fprintf(stderr, "Error allocating an audio buffer\n");
-            exit(1);
-        }
-    }
-
-    return frame;
-}
-
-static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height) {
-    AVFrame *picture;
-    int ret;
-
-    picture = av_frame_alloc();
-    if (!picture)
-        return NULL;
-
-    picture->format = pix_fmt;
-    picture->width = width;
-    picture->height = height;
-
-    /* allocate the buffers for the frame data */
-    ret = av_frame_get_buffer(picture, 32);
-    if (ret < 0) {
-        fprintf(stderr, "Could not allocate frame data.\n");
-        exit(1);
-    }
-
-    return picture;
-}
-
-static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt) {
-    int ret;
-    int consumed = 0;
-
-    *got_frame = 0;
-
-    // This relies on the fact that the decoder will not buffer additional
-    // packets internally, but returns AVERROR(EAGAIN) if there are still
-    // decoded frames to be returned.
-    ret = avcodec_send_packet(avctx, pkt);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return ret;
-    if (ret >= 0)
-        consumed = pkt->size;
-
-    ret = avcodec_receive_frame(avctx, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return ret;
-    if (ret >= 0)
-        *got_frame = 1;
-
-    return consumed;
-}
 
 MediaReader::MediaReader(const std::string &filename)
     : mFilename(filename)
@@ -189,7 +117,7 @@ bool MediaReader::open() {
             int     srcNumSamples = 1024;
             int64_t dstNumSample = av_rescale_rnd(srcNumSamples, mDstAudioFmt.mSampleRate, codec_ctx->sample_rate, AV_ROUND_UP);
 
-            st->mTmpFramePtr = alloc_audio_frame(
+            st->mTmpFramePtr = ffmpeg::allocAudioFrame(
                 mDstAudioFmt.mSampleFmt,
                 mDstAudioFmt.mChLayout,
                 mDstAudioFmt.mSampleRate,
@@ -224,7 +152,7 @@ bool MediaReader::open() {
             mVideoQueues.push_back(new SafeQueue<VideoFrame>());
             // if (st->is_depth()) { _depth_indices.push_back(st->mVideoStreamIdx); }
 
-            st->mTmpFramePtr = alloc_picture(AV_PIX_FMT_RGBA, codec_ctx->width, codec_ctx->height);
+            st->mTmpFramePtr = ffmpeg::allocPicture(AV_PIX_FMT_RGBA, codec_ctx->width, codec_ctx->height);
             if (codec_ctx->pix_fmt != AV_PIX_FMT_RGBA && !st->is_depth()) {
                 st->mSwsCtxPtr = sws_getContext(
                     codec_ctx->width, codec_ctx->height,
@@ -295,7 +223,7 @@ int MediaReader::processInput(MediaType request_type) {
     int got_frame = 0;
     if ((st->mType == AVMEDIA_TYPE_AUDIO) && (request_type & MediaType::Audio))
     {
-        decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
+        ffmpeg::decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
             int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS
@@ -314,7 +242,7 @@ int MediaReader::processInput(MediaType request_type) {
                 // realloc the temporary frame
                 if (st->mTmpFramePtr->nb_samples < dstNumSample) {
                     av_frame_free(&st->mTmpFramePtr);
-                    st->mTmpFramePtr = alloc_audio_frame(
+                    st->mTmpFramePtr = ffmpeg::allocAudioFrame(
                         mDstAudioFmt.mSampleFmt, mDstAudioFmt.mChLayout,
                         mDstAudioFmt.mSampleRate, dstNumSample);
                 }
@@ -331,7 +259,7 @@ int MediaReader::processInput(MediaType request_type) {
         }
     }
     else if ((st->mType == AVMEDIA_TYPE_VIDEO) && (request_type & MediaType::Video)) {
-        decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
+        ffmpeg::decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
             int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
 #ifdef DEBUG_TS

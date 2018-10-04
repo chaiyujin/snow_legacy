@@ -45,6 +45,9 @@ namespace snow {
         glm::mat4           perspective(const CameraBase *camera);
         virtual void        _processEvent(SDL_Event &event);
         virtual void        _draw(snow::Image *image=nullptr);
+        void                resize(int w, int h);
+        void                hide() { SDL_HideWindow(this->mWindowPtr); }
+        void                show() { SDL_ShowWindow(this->mWindowPtr); }
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual void        draw() = 0;
