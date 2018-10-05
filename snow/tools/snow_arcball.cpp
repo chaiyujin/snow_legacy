@@ -41,8 +41,8 @@ namespace snow {
         , mIsCamera(manipulateCamera)
         , mRadiusOfHalfHeight(radius)
         , mCenter(center)
-        , mQuatObject(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
         , mQuatCamera(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
+        , mQuatObject(glm::angleAxis(0.f, glm::vec3(0.f, 1.f, 0.f)))
         , mIsMoving(false)
         , mSpeed(1.0)
     {

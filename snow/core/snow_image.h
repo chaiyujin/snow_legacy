@@ -10,7 +10,8 @@ private:
     int                      mWidth, mHeight;
     int                      mBytesPerPixel;
 public:
-    Image(int w=0, int h=0, int bpp=0) : mData(nullptr) { resize(w, h, bpp); }
+    Image(int w=0, int h=0, int bpp=0)
+        : mData(nullptr), mWidth(0), mHeight(0), mBytesPerPixel(0) { resize(w, h, bpp); }
 
     void resize(int w, int h, int bpp) {
         if (w * h * bpp > 0 && mWidth * mHeight * mBytesPerPixel != w * h * bpp) {
@@ -24,9 +25,9 @@ public:
 
     uint8_t *       data()            { return mData.get();     }
     const uint8_t * data()      const { return mData.get();     }
-    const int       width()     const { return mWidth;          }
-    const int       height()    const { return mHeight;         }
-    const int       bpp()       const { return mBytesPerPixel;  }
+     int       width()     const { return mWidth;          }
+     int       height()    const { return mHeight;         }
+     int       bpp()       const { return mBytesPerPixel;  }
     int             size()      const { return mWidth * mHeight * mBytesPerPixel;                  }
     void            zero()            { memset(mData.get(), 0, mWidth * mHeight * mBytesPerPixel); }
 

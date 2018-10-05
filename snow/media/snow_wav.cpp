@@ -32,7 +32,8 @@ bool WavPCM::read(const std::string &path) {
     for (;;) {
         fin.read((char *)&(chunk), sizeof(Chunk));
         // printf("%c%c%c%c\t%d\n", chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3], chunk.size);
-        if (*(uint32_t *)&chunk.mId == 0x61746164)  // == "data"
+        // if (*(uint32_t *)(chunk.mId) == 0x61746164)  // == "data"
+        if (chunk.mId[0] == 'd' && chunk.mId[1] == 'a' && chunk.mId[2] == 't' && chunk.mId[3] == 'a')
             break;
         fin.seekg(chunk.mSize, std::ios_base::cur);  // skip not important subchunk
     }

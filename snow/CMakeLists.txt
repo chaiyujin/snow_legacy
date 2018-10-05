@@ -59,6 +59,7 @@ endif (SNOW_AVX)
 if (MSVC)
     list(APPEND SNOW_DEFINITIONS    "-D_CRT_SECURE_NO_WARNINGS")
 endif (MSVC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -pedantic")
 
 
 # ====================================

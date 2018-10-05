@@ -22,7 +22,7 @@ protected:
 
 class StopWatch : public Timer {
 public:
-    StopWatch(std::string tag=""): mTag(tag), mStop(false), mDuration(0) {}
+    StopWatch(std::string tag=""): mTag(tag), mDuration(0), mStop(false) {}
     ~StopWatch() { stop(); }
 
     double stop() {

@@ -18,8 +18,20 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 
 int main() {
     /* test distance */ {
-        std::cout << "sqr distance " << PointToLine2D::sqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+        std::cout << "PointToLine:\n";
+        std::cout << "sqr distance      " << PointToLine2D::sqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
         std::cout << "diff sqr distance " << PointToLine2D::diffSqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+        std::cout << "sqr distance      " << PointToLine2D::distance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << PointToLine2D::diffDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+        std::cout << "\n";
+
+        std::cout << "PointToPoint:\n";
+        std::cout << "sqr distance      " << Point2Point2D::sqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << Point2Point2D::diffSqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "sqr distance      " << Point2Point2D::distance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << Point2Point2D::diffDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "\n";
+        
     }
 
     FaceDB::Initialize("../../../assets/fw");
@@ -54,7 +66,7 @@ int main() {
         int num;
         std::ifstream fin("../../../assets/test_depth/0-0-1.mkv_lmrecord");
         fin >> num >> num >> num;
-        for (int i = 0; i < 15; ++i) {
+        for (int i = 0; i < 73; ++i) {
             float x, y;
             fin >> x >> y;
             x = x * 2.f - 1.f;
@@ -63,7 +75,7 @@ int main() {
         }
         fin.close();
     }
-    
+
     // projectToImageSpace(model.getMeshContourCands(0),
     //                     rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), landmarks);
     // auto contour_pair = getContourGrahamScan(landmarks);
