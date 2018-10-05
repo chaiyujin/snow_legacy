@@ -4,6 +4,7 @@
 #include "depth_source/realsense/rsutils.h"
 #include "tools/projection.h"
 #include "tools/contour.h"
+#include "tools/distances.h"
 #include <snow.h>
 
 static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
@@ -16,6 +17,11 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 }
 
 int main() {
+    /* test distance */ {
+        std::cout << "sqr distance " << PointToLine2D::sqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << PointToLine2D::diffSqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
+    }
+
     FaceDB::Initialize("../../../assets/fw");
     librealsense::RealSenseSource rsdevice("../../../assets/test_depth/0-0-1.mkv_params_stream-1");
 

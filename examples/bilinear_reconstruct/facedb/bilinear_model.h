@@ -51,6 +51,7 @@ public:
      * There are two possible paths of applying parameters
      * 1. iden -> expr -> scale -> rotate -> translate
      * 2. expr -> iden -> scale -> rotate -> translate
+     * Any extra transform can be done with transformMesh()
      * */
 
     /* path 1 start with */
