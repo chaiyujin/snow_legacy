@@ -123,9 +123,9 @@ void BilinearModel::updateMorphModel(size_t mesh_index) {
     double *data;
     for (int i = 0; i < FaceDB::NumVertices(); ++i) {
         data = mMeshList[index].data(i * 3);
-        model.vertex(i).x = data[0];
-        model.vertex(i).y = data[1];
-        model.vertex(i).z = data[2];
+        model.vertex(i).x = (float)data[0];
+        model.vertex(i).y = (float)data[1];
+        model.vertex(i).z = (float)data[2];
         model.normal(i).x = FaceDB::VertNormals()[i].x;
         model.normal(i).y = FaceDB::VertNormals()[i].y;
         model.normal(i).z = FaceDB::VertNormals()[i].z;

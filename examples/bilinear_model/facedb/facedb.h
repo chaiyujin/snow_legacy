@@ -60,8 +60,8 @@ public:
     static int                                  NumDimVert()    { return gTensorShape[0];     }
     static int                                  NumDimIden()    { return gTensorShape[1];     }
     static int                                  NumDimExpr()    { return gTensorShape[2];     }
-    static int                                  NumVertice()   { return gTensorShape[0] / 3; }
-    static int                                  NumTriangles()  { return gTriangles.size();   }
+    static int                                  NumVertices()   { return gTensorShape[0] / 3; }
+    static int                                  NumTriangles()  { return (int)gTriangles.size();   }
     static const Tensor3 &                      CoreTensor()    { return gCoreTensor;         }
 
     static const MatrixRM &                     IdenUT()        { return gIdenUT; }

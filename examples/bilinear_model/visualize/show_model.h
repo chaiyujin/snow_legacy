@@ -31,11 +31,11 @@ public:
     template <typename T>
     void updateShowParameters(T *iden, T *expr) {
         for (size_t i = 0; i < mIden.size(); ++i) {
-            mIden[i] = iden[i];
+            mIden[i] = (float)iden[i];
             mBilinearModel.idenParameter().param()[i] = iden[i];
         }
         for (size_t i = 0; i < mExpr.size(); ++i) {
-            mExpr[i] = expr[i];
+            mExpr[i] = (float)expr[i];
             mBilinearModel.exprParameter(0).param()[i] = expr[i];
         }
         mBilinearModel.updateMesh();

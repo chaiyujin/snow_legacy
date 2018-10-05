@@ -26,5 +26,5 @@ inline void projectToImageSpace(const std::vector<snow::_float3<T>> &vertices,
                                 const glm::mat4 view,
                                 const glm::mat4 model,
                                 std::vector<snow::float2> &points) {
-    projectToImageSpace(&vertices[0], vertices.size(), projection, view, model, points);
+    projectToImageSpace(&vertices[0], (int)vertices.size(), projection, view, model, points);
 }

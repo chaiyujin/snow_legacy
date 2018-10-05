@@ -63,7 +63,7 @@ void FaceDB::Initialize(std::string dir) {
         /* tensor size */
         gTensorShape.resize(3);
         gOriginShape.resize(3);
-        int read_size;
+        size_t read_size;
         read_size = fread(gTensorShape.data(), sizeof(int), 3, fp_tensor);
         read_size = fread(gOriginShape.data(), sizeof(int), 3, fp_tensor);
         int size = gTensorShape[0] * gTensorShape[1] * gTensorShape[2];
@@ -249,13 +249,13 @@ void FaceDB::Initialize(std::string dir) {
             
             --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2]; --tmp_vi[3];  // -1
             gTriangles.push_back({ tmp_vi[0], tmp_vi[1], tmp_vi[2] });
-            gTrianglesOfPoint[tmp_vi[0]].push_back(gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[1]].push_back(gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[2]].push_back(gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[1]].push_back((int)gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
             gTriangles.push_back({ tmp_vi[0], tmp_vi[2], tmp_vi[3] });
-            gTrianglesOfPoint[tmp_vi[0]].push_back(gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[2]].push_back(gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[3]].push_back(gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
+            gTrianglesOfPoint[tmp_vi[3]].push_back((int)gTriangles.size() - 1);
             // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);

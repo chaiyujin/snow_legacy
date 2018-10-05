@@ -56,13 +56,13 @@ bool WavPCM::read(const std::string &path) {
             case 8: {
                 uint8_t val;
                 fin.read((char *)&val, 1);
-                mData[ch][i] = (((double)val - 128.0) / 128.0);
+                mData[ch][i] = (((float)val - 128.0f) / 128.0f);
                 break;
             }
             case 16: {
                 int16_t val;
                 fin.read((char *)&val, 2);
-                mData[ch][i] = ((double)val / 32767.0);
+                mData[ch][i] = ((float)val / 32767.0f);
                 break;
             }
             default:
@@ -96,12 +96,12 @@ bool WavPCM::write(const std::string &path) {
     mHeader.mBlockAlign = 16 * 1 / 8;
     mHeader.mBitsPerSample = 16;  // int16_t
     // calc mChunkSize
-    mHeader.mChunkSize = sizeof(mHeader) + channel(0).size() * 2;
+    mHeader.mChunkSize = (uint32_t)(sizeof(mHeader) + channel(0).size() * 2);
 
     // chunk
     Chunk chunk;
     chunk.mId[0] = 'd'; chunk.mId[1] = 'a'; chunk.mId[2] = 't'; chunk.mId[3] = 'a';
-    chunk.mSize = channel(0).size() * 2;
+    chunk.mSize = (int32_t)channel(0).size() * 2;
 
     std::ofstream fout(path, std::ios::binary);
     if (fout.is_open()) {
@@ -110,7 +110,7 @@ bool WavPCM::write(const std::string &path) {
         for (float x : channel(0)) {
             if (x > 1.0)  x = 1.0;
             if (x < -1.0) x = -1.0;
-            int16_t sample = x * 32767.0f;
+            int16_t sample = (int16_t)(x * 32767.0f);
             fout.write((char *)(&sample), sizeof(int16_t));
         }
         fout.close();

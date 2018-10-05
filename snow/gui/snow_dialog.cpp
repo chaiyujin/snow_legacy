@@ -12,7 +12,8 @@ namespace snow {
         }
 
 #if defined(_WIN32)
-        std::runtime_error("not implemented.");
+        throw std::runtime_error("not implemented.");
+        return std::vector<std::string>();
     }
 #else
         char buffer[FILE_DIALOG_MAX_BUFFER];

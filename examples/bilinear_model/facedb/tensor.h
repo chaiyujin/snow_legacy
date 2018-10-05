@@ -33,10 +33,10 @@ public:
         std::vector<int> indices(mShape.size());
         std::vector<int> div(mShape.size());  // idx -> i, j, k...
         std::vector<int> mul(mShape.size());  // idx <- i, j, k...
-        int D = indices.size();
+        int D = (int)indices.size();
         {
             div[mShape.size() - 1] = 1;
-            for (int i = mShape.size() - 2; i >= 0; --i) { div[i] = div[i + 1] * mShape[i + 1]; }
+            for (int i = (int)mShape.size() - 2; i >= 0; --i) { div[i] = div[i + 1] * mShape[i + 1]; }
         }
         if (is_data_colmajor) {
             for (int i = 0, d=unfold_mode, v=1; i < D; ++i) {

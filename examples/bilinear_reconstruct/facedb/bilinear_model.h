@@ -45,7 +45,7 @@ public:
     Tensor3 &tvi1(size_t i)                 { return mTvi1List[i]; }
     const Tensor3 &mesh(size_t i=0)   const { return mMeshList[i]; }
     const MorphModel &morphModel()    const { return mMorphModel;  }
-    snow::double3 meshVertex(size_t iMesh, size_t iVert) { return { *mMeshList[iMesh].data(iVert * 3), *mMeshList[iMesh].data(iVert * 3+1), *mMeshList[iMesh].data(iVert * 3+2) }; }
+    snow::double3 meshVertex(size_t iMesh, size_t iVert) { return { *mMeshList[iMesh].data((int)iVert * 3), *mMeshList[iMesh].data((int)iVert * 3+1), *mMeshList[iMesh].data((int)iVert * 3+2) }; }
 
     /**
      * There are two possible paths of applying parameters

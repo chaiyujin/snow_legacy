@@ -20,7 +20,7 @@ void ShowModel::load() {
 
 void ShowModel::updateFromTensor(const Tensor3 &tensor) {
     FaceDB::UpdateNormals(tensor);
-    for (size_t i = 0; i < tensor.shape(0); i += 3) {
+    for (int i = 0; i < tensor.shape(0); i += 3) {
         meshes[0]->vertices[i / 3].position = { *tensor.data(i), *tensor.data(i+1), *tensor.data(i+2) };
     }
     for (int i = 0; i < FaceDB::NumVertices(); ++i) {
@@ -61,7 +61,7 @@ void VisualizerWindow::draw() {
         mShaderPtr->setMat4("projection", projection);
         mShaderPtr->setMat4("view", view);
         // model, normal
-        glm::mat4 model = mGLModel.autoModelTransform(projection * view, 0.3);
+        glm::mat4 model = mGLModel.autoModelTransform(projection * view, 0.3f);
         glm::mat4 normal = glm::transpose(glm::inverse(model));
         mShaderPtr->setMat4("model", model);
         mShaderPtr->setMat4("normal", normal);

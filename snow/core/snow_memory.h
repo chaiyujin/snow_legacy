@@ -11,7 +11,7 @@ namespace snow {
 
 /* aligned memory allocate and free */
 
-inline void *_aligned_malloc(uint32_t size, int alignment) {
+inline void *_aligned_malloc(size_t size, int alignment) {
     if (alignment & (alignment - 1)) {
         throw std::invalid_argument("[_aligned_malloc]: alignment should be 2 ^ n.");
     }
@@ -33,7 +33,7 @@ inline void _aligned_free(void *ptr) {
     free(raw);
 }
 
-template <typename T> inline T *  alignedMalloc(uint32_t number, int alignment=MEMORY_ALIGNMENT) {return (T*)snow::_aligned_malloc(sizeof(T) * number, alignment); }
+template <typename T> inline T *  alignedMalloc(size_t number, int alignment=MEMORY_ALIGNMENT) {return (T*)snow::_aligned_malloc(sizeof(T) * number, alignment); }
 template <typename T> inline void alignedFree(T *ptr) { snow::_aligned_free((void *)ptr); }
 
 
@@ -48,10 +48,10 @@ template <typename T> inline void alignedFree(T *ptr) { snow::_aligned_free((voi
  * */
 struct Block {
     uint8_t     *mData;
-    uint32_t     mSize;
-    uint8_t      mCount;
+    size_t       mSize;
+    size_t       mCount;
     size_t       mCurPos;
-    Block(uint32_t blockSize=32768)
+    Block(size_t blockSize=32768)
         : mData(new uint8_t[blockSize]), mSize(blockSize)
         , mCount(0), mCurPos(0) {}
     ~Block() { delete[] mData; }
@@ -116,12 +116,12 @@ struct Block {
 class MemoryArena {
 private:
     Block                  *mCurBlockPtr;
-    uint32_t                mBlockSize;
+    size_t                  mBlockSize;
     std::list<Block *>      mUsedBlocks;
     std::list<Block *>      mAvailableBlocks;
 
 public:
-    MemoryArena(uint32_t blockSize=32768)
+    MemoryArena(size_t blockSize=32768)
         : mCurBlockPtr(nullptr)
         , mBlockSize(blockSize)
         , mUsedBlocks(0)
@@ -135,7 +135,7 @@ public:
         mAvailableBlocks.clear();
     }
 
-    void *alloc(uint32_t size) {
+    void *alloc(size_t size) {
         void * ret = nullptr;
         if (!mCurBlockPtr || !(ret = mCurBlockPtr->alloc(size))) {
             // store in used
@@ -161,9 +161,9 @@ public:
     }
 
     template <typename T>
-    T *alloc(uint32_t count=1) {
+    T *alloc(size_t count=1) {
         T *ret = (T*)this->alloc(count * sizeof(T));
-        // for (uint32_t i = 0; i < count; ++i) new (&ret[i]) T();  // too slow
+        // for (size_t i = 0; i < count; ++i) new (&ret[i]) T();  // too slow
         ret = new (ret) T[count];  // faster
         return ret;
     }
@@ -178,8 +178,8 @@ public:
     void free(T *ptr) {
         if (ptr == nullptr) return;
         if (mCurBlockPtr == nullptr) return;
-        const int count = Block::querySize(ptr) / sizeof(T);
-        for (uint32_t i = 0; i < count; ++i) ptr[i].~T();
+        const size_t count = Block::querySize(ptr) / sizeof(T);
+        for (size_t i = 0; i < count; ++i) ptr[i].~T();
         Block * block = Block::free(ptr);
 #ifdef TEST_MEMORY
         if (block) printf("-> reuse block 0x%X\n", block);

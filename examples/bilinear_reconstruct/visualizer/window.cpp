@@ -14,7 +14,7 @@ void VisualizerWindow::set2DLandmarks(const std::vector<snow::float2> &landmarks
     if (mLandsShaderPtr == nullptr
         || landmarks.size() != mLandsShaderPtr->numPoints()) {
         delete mLandsShaderPtr;
-        mLandsShaderPtr = new LandmarksShader(landmarks.size());
+        mLandsShaderPtr = new LandmarksShader((int)landmarks.size());
     }
     mLandsShaderPtr->update2DLandmarks(landmarks);
 }
@@ -23,7 +23,7 @@ void VisualizerWindow::set3DLandmarks(const std::vector<snow::float3> &landmarks
     if (mLandsShaderPtr == nullptr
         || landmarks.size() != mLandsShaderPtr->numPoints()) {
         delete mLandsShaderPtr;
-        mLandsShaderPtr = new LandmarksShader(landmarks.size());
+        mLandsShaderPtr = new LandmarksShader((int)landmarks.size());
     }
     mLandsShaderPtr->update3DLandmarks(landmarks);
 }

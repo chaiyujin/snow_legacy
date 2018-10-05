@@ -19,5 +19,5 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if (WIN32)
-    SNOW_COPY_DLL(AnimeViewer)
+    SNOW_COPY_DLL(${PROJECT_NAME})
 endif (WIN32)
