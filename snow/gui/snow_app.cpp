@@ -60,7 +60,6 @@ namespace snow {
 
         mRunning = true;
         mStop = false;
-        SDL_Event mEvent;
         while (mRunning && !mStop) {
             while(SDL_PollEvent(&mEvent)) {
                 uint32_t windowID = App::GetEventID(mEvent);

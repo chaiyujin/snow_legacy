@@ -117,7 +117,7 @@ public:
 
     virtual bool readFrame() {
         checkInput();
-        mFramePtr = std::move(mInputPtr->readFrame(this));
+        mFramePtr = mInputPtr->readFrame(this);
         return mFramePtr != nullptr;
     }
     virtual void seek(int64_t ms) {
