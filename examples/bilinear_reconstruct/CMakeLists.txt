@@ -9,6 +9,8 @@ add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(   ${SNOW_LIBRARIES_DIRS})
 
+find_package(Ceres)
+
 add_executable(${PROJECT_NAME}
     ./main.cpp
     ./visualizer/window.cpp
@@ -20,6 +22,7 @@ add_executable(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
     snow                    # link snow
+    ceres
 )
 
 if (WIN32)

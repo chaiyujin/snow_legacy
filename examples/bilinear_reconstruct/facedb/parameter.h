@@ -1,6 +1,7 @@
 #pragma once
 
 #include <snow.h>
+#include <iostream>
 #include "tensor.h"
 #include "facedb.h"
 
@@ -67,6 +68,11 @@ public:
 #undef getT
 #undef getR
 };
+inline std::ostream &operator<<(std::ostream &out, const PoseParameter &param) {
+    out << "rotateYXZ: [" << param.rotateYXZ()[0] << ", " << param.rotateYXZ()[1] << ", " << param.rotateYXZ()[2] << "]\n"
+        << "translate: [" << param.translate()[0] << ", " << param.translate()[1] << ", " << param.translate()[2] << "]\n";
+    return out;
+}
 
 class ScaleParameter: public Parameter {
 public:

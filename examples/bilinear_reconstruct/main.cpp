@@ -4,7 +4,8 @@
 #include "depth_source/realsense/rsutils.h"
 #include "tools/projection.h"
 #include "tools/contour.h"
-#include "tools/distances.h"
+#include "tools/math_tools.h"
+#include "solver/functions_2d.h"
 #include <snow.h>
 
 static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
@@ -17,6 +18,7 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 }
 
 int main() {
+
     /* test distance */ {
         std::cout << "PointToLine:\n";
         std::cout << "sqr distance      " << PointToLine2D::sqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
@@ -75,11 +77,60 @@ int main() {
         }
         fin.close();
     }
+    std::vector<size_t> contourIndex;
+    for (int epoch = 0; epoch < 10; ++epoch) {
+        {   
+            model.updateScale(0);
+            std::vector<glm::dvec2> landmark_contour;
+            for (int i = 0; i < 15; ++i) { landmark_contour.push_back({ landmarks[i].x, landmarks[i].y }); }
+            glm::dmat4 pvm = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
+            ceres::Problem problem;
+            for (size_t idx: contourIndex) {
+                auto source3d = model.meshVertex(0, idx);
+                auto *cost = new PoseCost2DLine(landmark_contour,
+                                                snow::toGLM(source3d),
+                                                pvm);
+                problem.AddResidualBlock(cost, nullptr,
+                    model.poseParameter(0).trainRotateYXZ(),
+                    model.poseParameter(0).trainTranslate());
+            }
+            for (int iLM = 15; iLM < 73; ++iLM) {
+                auto source3d = model.meshVertex(0, FaceDB::Landmarks73()[iLM]);
+                Constraint2D constraint = { glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y}, 1.0 };
+                auto *cost = new PoseCost2DPoint(constraint,
+                                                 snow::toGLM(source3d),
+                                                 pvm);
+                problem.AddResidualBlock(cost, nullptr,
+                    model.poseParameter(0).trainRotateYXZ(),
+                    model.poseParameter(0).trainTranslate());
+            }
+            ceres::Solver::Options options;
+            options.minimizer_progress_to_stdout = true;
+            options.num_threads = 1;
+            // options.minimizer_type = ceres::LINE_SEARCH;
+            // options.line_search_direction_type = ceres::LBFGS;
+            ceres::Solver::Summary summary;
+            ceres::Solve(options, &problem, &summary);
+            std::cout << model.poseParameter(0) << std::endl;
+            model.poseParameter(0).useTrained();
+            std::cout << model.poseParameter(0) << std::endl;
 
-    // projectToImageSpace(model.getMeshContourCands(0),
-    //                     rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), landmarks);
-    // auto contour_pair = getContourGrahamScan(landmarks);
-    // auto contourIndex = model.getContourMeshIndex(contour_pair.second);
+        }
+        {
+            model.updateScale(0);
+            model.rotateYXZ(0);
+            model.translate(0);
+            model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
+            model.updateMorphModel(0);
+        }
+        {
+            std::vector<snow::float2> contour2d;
+            projectToImageSpace(model.getMeshContourCands(0),
+                                rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), contour2d);
+            auto contour_pair = getContourGrahamScan(contour2d);
+            contourIndex = model.getContourMeshIndex(contour_pair.second);
+        }
+    }
     // std::vector<snow::double3> contour3d;
     // for (size_t idx : contourIndex) {
     //     contour3d.push_back(model.meshVertex(0, idx));

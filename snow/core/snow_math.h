@@ -3,13 +3,6 @@
 #include <ctype.h>
 #include <iostream>
 #include <iomanip>
-// glm
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 // eigen
 #ifdef _WIN32
 #include <Eigen/Core>
@@ -20,6 +13,7 @@
 #endif
 // self defined
 #include "extypes.h"
+#include "snow_glm.h"
 
 namespace snow {
 
