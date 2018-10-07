@@ -67,7 +67,6 @@ std::vector<float> resample(const std::vector<float> &audio, int srcSampleRate, 
     int srcLineSize, dstLineSize;
     int srcNumSamples = 1024, dstNumSamples, maxDstNumSamples;
     int dstBufferSize;
-    const char *fmt;
     int index = 0;
     int ret;
     struct SwrContext *swrCtxPtr;

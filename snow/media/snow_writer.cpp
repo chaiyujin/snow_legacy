@@ -168,7 +168,7 @@ void MediaWriter::resample(int sampleRate) {
 }
 
 void MediaWriter::openAudio() {
-    AVFormatContext *oc = mFmtCtxPtr;
+    // AVFormatContext *oc = mFmtCtxPtr;
     AVCodec *codec      = mAudioCodecPtr;
     OutputStream *ost   = mAudioStreamPtr;
     AVCodecContext *c   = ost->mEncCtxPtr;
@@ -201,7 +201,7 @@ void MediaWriter::openAudio() {
 }
 
 void MediaWriter::openVideo(int bpp) {
-    AVFormatContext *oc = mFmtCtxPtr;
+    // AVFormatContext *oc = mFmtCtxPtr;
     AVCodec *codec      = mVideoCodecPtr;
     OutputStream *ost   = mVideoStreamPtr;
     AVCodecContext *c   = ost->mEncCtxPtr;

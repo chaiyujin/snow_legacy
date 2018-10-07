@@ -1,8 +1,10 @@
 #include "bilinear_model.h"
+#include "../tools/contour.h"
+#include "../tools/projection.h"
 
 snow::MemoryArena Parameter::gArena;
 
-BilinearModel::BilinearModel(size_t count)
+BilinearModel::BilinearModel()
     : Core(FaceDB::CoreTensor())
     , mTvi1List(0), mTv1eList(0)
     , mTv11List(0), mMeshList(0)
@@ -11,10 +13,7 @@ BilinearModel::BilinearModel(size_t count)
     , mParamPosePtrList(0)
     , mParamExprPtrList(0)
     , mCount(0)
-    , mIsChild(false) {
-    appendModel(count);
-    prepareAllModel();
-}
+    , mIsChild(false) {}
 BilinearModel::BilinearModel(const BilinearModel &father, int startVertexIndex)
     : Core(FaceDB::CoreTensor())
     , mParamScalePtr(father.mParamScalePtr)
@@ -153,4 +152,11 @@ std::vector<size_t> BilinearModel::getContourMeshIndex(const std::vector<size_t>
             ret.push_back(cands[i]);
     }
     return ret;
+}
+
+std::vector<size_t> BilinearModel::getContourIndex(size_t index, const glm::dmat4 &PVM) {
+    std::vector<snow::float2> contour2d;
+    projectToImageSpace(getMeshContourCands(0), PVM, contour2d);
+    auto contour_pair = getContourGrahamScan(contour2d);
+    return getContourMeshIndex(contour_pair.second);
 }

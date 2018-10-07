@@ -343,7 +343,7 @@ void MediaReader::seek(int64_t ms) {
         clearQueues();
         std::lock_guard<std::mutex> lock(mFmtCtxMutex);       
         int64_t ts = av_rescale_q(ms, AVRational{ 1, 1000 }, AV_TIME_BASE_Q);
-        int ret = av_seek_frame(mFmtCtxPtr, -1, ts, AVSEEK_FLAG_BACKWARD);
+        av_seek_frame(mFmtCtxPtr, -1, ts, AVSEEK_FLAG_BACKWARD);
     }
 }
 

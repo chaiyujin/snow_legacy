@@ -14,7 +14,7 @@ private:
     std::condition_variable mCondVar;
 
 public:
-    SafeQueue(void) : mQueue(), mMutex(), mCondVar(), mSize(0) {}
+    SafeQueue(void) : mSize(0), mQueue(), mMutex(), mCondVar() {}
     ~SafeQueue(void) {}
 
     // Add an element to the queue.

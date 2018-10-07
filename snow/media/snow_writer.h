@@ -48,8 +48,8 @@ private:
     AVFormatContext *           mFmtCtxPtr;
     AVCodec *                   mAudioCodecPtr;
     AVCodec *                   mVideoCodecPtr;
-    OutputStream *              mVideoStreamPtr;
     OutputStream *              mAudioStreamPtr;
+    OutputStream *              mVideoStreamPtr;
     // audio data
     std::vector<float>          mAudio;
     int                         mSampleIndex;

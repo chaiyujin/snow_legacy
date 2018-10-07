@@ -1,8 +1,9 @@
+
 #pragma once
 #include <ceres/ceres.h>
 #include <snow.h>
-#include "../tools/math_tools.h"
 #include "modules.h"
+#include "../tools/math_tools.h"
 
 template <typename T>
 struct _Constraint {

@@ -23,6 +23,13 @@ private:
     size_t                          mCount;
     bool                            mIsChild;
 
+public:
+    static int NumVertices() { return FaceDB::NumVertices(); }
+
+    BilinearModel();
+    BilinearModel(const BilinearModel &father, int startVertexId);
+    ~BilinearModel();
+
     /**
      * It takes lots of time to do copy construction for Tensor3
      * So, firstly append empty tensors.
@@ -30,13 +37,6 @@ private:
      * */
     void appendModel(size_t count=1);
     void prepareAllModel();
-
-public:
-    static int NumVertices() { return FaceDB::NumVertices(); }
-
-    BilinearModel(size_t count=1);
-    BilinearModel(const BilinearModel &father, int startVertexId);
-    ~BilinearModel();
 
     size_t size()                     const { return mCount;       }
     Tensor3 &mesh(size_t i=0)               { return mMeshList[i]; }
@@ -81,6 +81,7 @@ public:
 
     std::vector<snow::double3> getMeshContourCands(size_t i);
     std::vector<size_t>        getContourMeshIndex(const std::vector<size_t> &candidateIndex);
+    std::vector<size_t>        getContourIndex(size_t i, const glm::dmat4 &PVM);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

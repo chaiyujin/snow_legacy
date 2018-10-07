@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}
     ./facedb/bilinear_model.cpp
     ./depth_source/realsense/rsutils.cpp
     ./depth_source/realsense/librealsense.cpp # no need to link realsense any more
+    ./solver/frames_solver.cpp
 )
 target_link_libraries(${PROJECT_NAME}
     snow                    # link snow
