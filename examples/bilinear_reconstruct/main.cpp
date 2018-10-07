@@ -50,21 +50,6 @@ int main() {
 
     BilinearModel model;
 
-        {
-            std::vector<double> iden(75, 0);
-            std::vector<double> expr(47, 0);
-            iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
-            expr[0] = 1.0;
-            double scale = 1.0;
-            model.updateIdenOnCore(0, iden.data());
-            model.updateExpr(0, expr.data());
-            model.updateScale(0, &scale);
-            // model.rotateYXZ(0);
-            // model.translate(0);
-            // model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
-            // model.updateMorphModel(0);
-        }
-    
     std::vector<snow::float2> landmarks;
     {
         int num;
@@ -80,22 +65,17 @@ int main() {
         fin.close();
     }
     std::vector<size_t> contourIndex;
-    for (int epoch = 0; epoch < 3; ++epoch) {
+    for (int epoch = 0; epoch < 5; ++epoch) {
         {
-            std::vector<double> iden(75, 0);
-            std::vector<double> expr(47, 0);
-            iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
-            expr[0] = 1.0;
-            model.updateIdenOnCore(0, iden.data());
-            model.updateExpr(0, expr.data());
-            model.updateScale(0);
+            model.updateIdenOnCore(0);
+            model.updateExpr(0);
             // model.rotateYXZ(0);
             // model.translate(0);
             // model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
             // model.updateMorphModel(0);
         }
 
-        {   
+        {
             // model.updateScale(0);
             std::vector<glm::dvec2> landmark_contour;
             for (int i = 0; i < 15; ++i) { landmark_contour.push_back({ landmarks[i].x, landmarks[i].y }); }
@@ -107,7 +87,7 @@ int main() {
                     *model.tv11(0).data(idx * 3+1),
                     *model.tv11(0).data(idx * 3+2)
                 };
-                auto *cost = new PoseScaleCost2DLine(landmark_contour, source3d, pvm);
+                auto *cost = new PoseScaleCost2DLine(landmark_contour, 1.0, source3d, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.poseParameter(0).trainRotateYXZ(),
                     model.poseParameter(0).trainTranslate(),
@@ -130,8 +110,7 @@ int main() {
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
             options.num_threads = 1;
-            // options.minimizer_type = ceres::LINE_SEARCH;
-            // options.line_search_direction_type = ceres::LBFGS;
+            options.max_num_iterations = 10;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
             std::cout << model.poseParameter(0) << std::endl;
@@ -140,6 +119,36 @@ int main() {
             model.scaleParameter().useTrained();
             std::cout << model.poseParameter(0) << std::endl;
             std::cout << model.scaleParameter() << std::endl;
+        }
+        if (epoch > 2) {
+            ceres::Problem problem;
+            glm::dmat4 pvm = (glm::dmat4)(rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat())) * model.poseParameter(0).matT() * model.poseParameter(0).matR();
+            for (int iLM = 15; iLM < 73; ++iLM) {
+                int idx = FaceDB::Landmarks73()[iLM];
+                Constraint2D constraint = { glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y}, 1.0 };
+                auto *cost = new IdenExprCostCost2DPoint(
+                    constraint, FaceDB::CoreTensor(), idx * 3, pvm);
+                problem.AddResidualBlock(cost, nullptr,
+                    model.idenParameter().train(),
+                    model.exprParameter(0).train(),
+                    model.scaleParameter().train());
+            }
+            {
+                auto *regIden = new RegTerm(FaceDB::NumDimIden(), 0.001);
+                auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0005);
+                problem.AddResidualBlock(regIden, nullptr, model.idenParameter().train());
+                problem.AddResidualBlock(regExpr, nullptr, model.exprParameter(0).train());
+            }
+            ceres::Solver::Options options;
+            options.minimizer_progress_to_stdout = true;
+            options.num_threads = 1;
+            options.max_num_iterations = 10;
+            ceres::Solver::Summary summary;
+            ceres::Solve(options, &problem, &summary);
+
+            model.idenParameter().useTrained();
+            model.exprParameter(0).useTrained();
+            model.scaleParameter().useTrained();
         }
         {
             model.updateScale(0);
@@ -156,6 +165,16 @@ int main() {
             contourIndex = model.getContourMeshIndex(contour_pair.second);
         }
     }
+    {
+        model.updateIdenOnCore(0);
+        model.updateExpr(0);
+        model.updateScale(0);
+        model.rotateYXZ(0);
+        model.translate(0);
+        model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
+        model.updateMorphModel(0);
+    }
+        
     // std::vector<snow::double3> contour3d;
     // for (size_t idx : contourIndex) {
     //     contour3d.push_back(model.meshVertex(0, idx));

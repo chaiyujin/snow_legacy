@@ -98,7 +98,6 @@ private:
 public:
     Scale(double s) : Transform(glm::scale(glm::dmat4(1.0), glm::dvec3(s, s, s))) {}
     std::vector<double> grad() const {
-        std::cout << mGradIn << std::endl;
         return { mInput.x * mGradIn.x + mInput.y * mGradIn.y + mInput.z * mGradIn.z };
     }
 };

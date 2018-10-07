@@ -15,12 +15,14 @@ class LandmarksShader : public snow::Shader {
 private:
     float * mPointsPtr;
     int     mNumPoints;
+    int     mMaxPoints;
     float   mPointSize;
     GLuint  mVAO, mVBO;
 public:
     LandmarksShader(int numPoints=75)
         : mPointsPtr(nullptr)
         , mNumPoints(numPoints)
+        , mMaxPoints(numPoints)
         , mPointSize(2.0f)
         , mVAO(0), mVBO(0)
     {
@@ -55,7 +57,7 @@ public:
     }
 
     void update2DLandmarks(const std::vector<snow::float2> &points) {
-        if (points.size() > mNumPoints) throw std::runtime_error("2d landmarks has too many points.");
+        if (points.size() > mMaxPoints) throw std::runtime_error("2d landmarks has too many points.");
         mNumPoints = (int)points.size();
         for (int i = 0; i < points.size(); ++i) {
             mPointsPtr[i * 3 + 0] = points[i].x;

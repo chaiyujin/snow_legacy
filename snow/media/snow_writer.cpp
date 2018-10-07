@@ -2,6 +2,7 @@
 #include "ffmpeg_functions.h"
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
 namespace snow {
 
@@ -63,7 +64,7 @@ static OutputStream * addStream(AVFormatContext *oc, AVCodec **codec, enum AVCod
             }
         }
         c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-        ost->mStreamPtr->time_base = (AVRational){ 1, c->sample_rate };
+        ost->mStreamPtr->time_base = AVRational{ 1, c->sample_rate };
         break;
 
     case AVMEDIA_TYPE_VIDEO:
@@ -77,7 +78,7 @@ static OutputStream * addStream(AVFormatContext *oc, AVCodec **codec, enum AVCod
          * of which frame timestamps are represented. For fixed-fps content,
          * timebase should be 1/framerate and timestamp increments should be
          * identical to 1. */
-        ost->mStreamPtr->time_base = (AVRational){ 1, fps };
+        ost->mStreamPtr->time_base = AVRational { 1, fps };
         c->time_base       = ost->mStreamPtr->time_base;
 
         c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
@@ -271,7 +272,7 @@ bool MediaWriter::writeAudioFrame() {
 
         // set to frame
         frame = ost->mFramePtr;
-        frame->pts = av_rescale_q(ost->mSamplesCount, (AVRational){1, c->sample_rate}, c->time_base);
+        frame->pts = av_rescale_q(ost->mSamplesCount, AVRational{1, c->sample_rate}, c->time_base);
         ost->mSamplesCount += dstNbSamples;
     }
     else frame = nullptr;

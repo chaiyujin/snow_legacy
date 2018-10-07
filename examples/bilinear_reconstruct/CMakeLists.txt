@@ -9,7 +9,16 @@ add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
 link_directories(   ${SNOW_LIBRARIES_DIRS})
 
-find_package(Ceres)
+if (WIN32)
+    add_definitions(-DGLOG_NO_ABBREVIATED_SEVERITIES)
+    include_directories(../../third_party/glog)
+    include_directories(../../third_party/ceres/include)
+    link_directories(../../third_party/ceres/lib/release)
+    set(SNOW_WIN32_DLLS "${SNOW_WIN32_DLLS}" "D:/Projects/snow/third_party/ceres/lib/release/ceres.dll" CACHE INTERNAL "snow win32 dlls")
+else()
+    find_package(Ceres)
+endif (WIN32)
+
 
 add_executable(${PROJECT_NAME}
     ./main.cpp

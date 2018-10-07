@@ -126,6 +126,20 @@ private:
 };
 
 template <>
+inline void Tensor3::mulVec<0>(const double *vec, Tensor3 &result) const {
+    if (!(result.mShape[0] == 1 && result.mShape[1] == mShape[1] && result.mShape[2] == mShape[2]))
+        result.resize({ 1, mShape[1], mShape[2] });
+    result.zero();
+    for (int i = 0; i < mShape[0]; ++i) {
+        for (int j = 0; j < mShape[1]; ++j) {
+            for (int k = 0; k < mShape[2]; ++k) {
+                *result.data(0, j, k) += *data(i, j, k) * vec[i];
+            }
+        }
+    }
+}
+
+template <>
 inline void Tensor3::mulVec<1>(const double *vec, Tensor3 &result) const {
     if (!(result.mShape[0] == mShape[0] && result.mShape[1] == 1 && result.mShape[2] == mShape[2]))
         result.resize({ mShape[0], 1, mShape[2] });

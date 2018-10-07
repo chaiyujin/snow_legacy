@@ -60,36 +60,3 @@ struct Point2Point2D {
         return Point2Point2D::diffSqrDistance(x, y, x0, y0) * Factor;
     }
 };
-
-
-/*********************
- *         Mat       *
- *********************/
-namespace operation {
-    struct Transform {
-        template<typename T, glm::qualifier Q>
-        static glm::vec<4, T, Q> forward (const glm::mat<4, 4, T, Q> &m, const glm::vec<4, T, Q> &input) {
-            return m * input;
-        }
-        template<typename T, glm::qualifier Q>
-        static glm::vec<4, T, Q> backward(const glm::mat<4, 4, T, Q> &m, const glm::vec<4, T, Q> &gradIn) {
-            return glm::transpose(m) * gradIn;
-        }
-    };
-    
-    struct Project {
-        template <typename T, glm::qualifier Q>
-        static glm::vec<4, T, Q> forward (const glm::vec<4, T, Q> &input) {
-            return input / input.w;
-        }
-        template <typename T, glm::qualifier Q>
-        static glm::vec<4, T, Q> backward(const glm::vec<4, T, Q> &input, const glm::vec<4, T, Q> &gradIn) {
-            T iw = (T)1 / input.w;
-            T iw2 = iw * iw;
-            return {
-                gradIn.x * iw, gradIn.y * iw, gradIn.z * iw,
-                -iw2 * (gradIn.x * input.x + gradIn.y * input.y + gradIn.z * input.z)
-            };
-        }
-    };
-}
