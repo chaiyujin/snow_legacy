@@ -35,7 +35,7 @@ struct PointToLine2D {
     }
 };
 
-struct Point2Point2D {
+struct PointToPoint2D {
     template <typename T>
     static T sqrDistance(T x, T y, T x0, T y0) {
         T A = (x - x0);
@@ -56,7 +56,7 @@ struct Point2Point2D {
     }
     template <typename T>
     static snow::_float2<T> diffDistance(T x, T y, T x0, T y0) {
-        T Factor = (T)0.5 / Point2Point2D::distance<T>(x, y, x0, y0);
-        return Point2Point2D::diffSqrDistance(x, y, x0, y0) * Factor;
+        T Factor = (T)0.5 / PointToPoint2D::distance<T>(x, y, x0, y0);
+        return PointToPoint2D::diffSqrDistance(x, y, x0, y0) * Factor;
     }
 };

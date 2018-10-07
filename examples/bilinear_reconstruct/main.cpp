@@ -28,10 +28,10 @@ int main() {
         std::cout << "\n";
 
         std::cout << "PointToPoint:\n";
-        std::cout << "sqr distance      " << Point2Point2D::sqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << Point2Point2D::diffSqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "sqr distance      " << Point2Point2D::distance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << Point2Point2D::diffDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "sqr distance      " << PointToPoint2D::sqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << PointToPoint2D::diffSqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "sqr distance      " << PointToPoint2D::distance(0.0, 0.0, 1.0, 1.0) << std::endl;
+        std::cout << "diff sqr distance " << PointToPoint2D::diffDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
         std::cout << "\n";
         
     }
@@ -74,11 +74,10 @@ int main() {
             // model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
             // model.updateMorphModel(0);
         }
-
+        std::vector<glm::dvec2> landmark_contour;
+        for (int i = 0; i < 15; ++i) { landmark_contour.push_back({ landmarks[i].x, landmarks[i].y }); }
         {
             // model.updateScale(0);
-            std::vector<glm::dvec2> landmark_contour;
-            for (int i = 0; i < 15; ++i) { landmark_contour.push_back({ landmarks[i].x, landmarks[i].y }); }
             glm::dmat4 pvm = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
             ceres::Problem problem;
             for (size_t idx: contourIndex) {
@@ -87,7 +86,8 @@ int main() {
                     *model.tv11(0).data(idx * 3+1),
                     *model.tv11(0).data(idx * 3+2)
                 };
-                auto *cost = new PoseScaleCost2DLine(landmark_contour, 1.0, source3d, pvm);
+                auto *cost = new PoseScaleCost2D(
+                    nullptr, 0.0, &landmark_contour, 1.0, source3d, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.poseParameter(0).trainRotateYXZ(),
                     model.poseParameter(0).trainTranslate(),
@@ -100,8 +100,9 @@ int main() {
                     *model.tv11(0).data(idx * 3+1),
                     *model.tv11(0).data(idx * 3+2)
                 };
-                Constraint2D constraint = { glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y}, 1.0 };
-                auto *cost = new PoseScaleCost2DPoint(constraint, source3d, pvm);
+                auto constraintP = glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y};
+                auto *cost = new PoseScaleCost2D(&constraintP, 1.0, nullptr, 0.0,
+                        source3d, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.poseParameter(0).trainRotateYXZ(),
                     model.poseParameter(0).trainTranslate(),
@@ -120,21 +121,44 @@ int main() {
             std::cout << model.poseParameter(0) << std::endl;
             std::cout << model.scaleParameter() << std::endl;
         }
-        if (epoch > 2) {
+        if (epoch > 0) {
+            {
+                model.updateScale(0);
+                model.rotateYXZ(0);
+                model.translate(0);
+                model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
+                model.updateMorphModel(0);
+            }
+            {
+                std::vector<snow::float2> contour2d;
+                projectToImageSpace(model.getMeshContourCands(0),
+                                    rsdevice.colorProjectionMat(), rsdevice.viewMat(), glm::mat4(1.0), contour2d);
+                auto contour_pair = getContourGrahamScan(contour2d);
+                contourIndex = model.getContourMeshIndex(contour_pair.second);
+            }
+            
             ceres::Problem problem;
             glm::dmat4 pvm = (glm::dmat4)(rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat())) * model.poseParameter(0).matT() * model.poseParameter(0).matR();
+            for (size_t idx: contourIndex) {
+                auto *cost = new IdenExprScaleCostCost2D(
+                    nullptr, 0.0, &landmark_contour, 1.0, FaceDB::CoreTensor(), idx, pvm);
+                problem.AddResidualBlock(cost, nullptr,
+                    model.idenParameter().train(),
+                    model.exprParameter(0).train(),
+                    model.scaleParameter().train());
+            }
             for (int iLM = 15; iLM < 73; ++iLM) {
                 int idx = FaceDB::Landmarks73()[iLM];
-                Constraint2D constraint = { glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y}, 1.0 };
-                auto *cost = new IdenExprCostCost2DPoint(
-                    constraint, FaceDB::CoreTensor(), idx * 3, pvm);
+                auto constraint = glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y};
+                auto *cost = new IdenExprScaleCostCost2D(
+                    &constraint, 1.0, nullptr, 0.0, FaceDB::CoreTensor(), idx, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.idenParameter().train(),
                     model.exprParameter(0).train(),
                     model.scaleParameter().train());
             }
             {
-                auto *regIden = new RegTerm(FaceDB::NumDimIden(), 0.001);
+                auto *regIden = new RegTerm(FaceDB::NumDimIden(), 0.0005);
                 auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0005);
                 problem.AddResidualBlock(regIden, nullptr, model.idenParameter().train());
                 problem.AddResidualBlock(regExpr, nullptr, model.exprParameter(0).train());
