@@ -85,6 +85,10 @@ public:
         mParamPtr[0] = mTrainPtr[0] = 0.01;
     }
 };
+inline std::ostream &operator<<(std::ostream &out, const ScaleParameter &param) {
+    out << "scale: [" << param.param()[0] << "]\n";
+    return out;
+}
 
 class IdenParameter : public Parameter {
 public:

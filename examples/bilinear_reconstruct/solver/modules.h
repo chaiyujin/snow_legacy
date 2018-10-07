@@ -1,6 +1,10 @@
 #pragma once
 #include <snow.h>
-#include "../tools/math_tools.h"
+#include "glm_grad.h"
+
+/****************************************************
+ *                        Module                    *
+ ****************************************************/
 
 class _Module {
 public:
@@ -8,10 +12,10 @@ public:
     virtual glm::dvec4 backward(const glm::dvec4 &gradIn) = 0;
 };
 
-class Net {
+class Sequential {
     std::vector<_Module *>  mModuleList;
 public:
-    Net() {}
+    Sequential() {}
     void addModule(_Module *m) { mModuleList.push_back(m); }
     glm::dvec4 forward(const glm::dvec4 &input) {
         glm::dvec4 tmp = input;
@@ -86,5 +90,54 @@ public:
         double drx = glm::dot(glm::transpose(Ry) * mGradIn, dRx * Rz * mInput);
         double drz = glm::dot(glm::transpose(Rx) * glm::transpose(Ry) * mGradIn, dRz * mInput);
         return { dry, drx, drx };
+    }
+};
+
+class Scale : public Transform {
+private:
+public:
+    Scale(double s) : Transform(glm::scale(glm::dmat4(1.0), glm::dvec3(s, s, s))) {}
+    std::vector<double> grad() const {
+        std::cout << mGradIn << std::endl;
+        return { mInput.x * mGradIn.x + mInput.y * mGradIn.y + mInput.z * mGradIn.z };
+    }
+};
+
+/****************************************************
+ *                      Criterion                   *
+ ****************************************************/
+
+/* sqr distance between points */
+class CriterionPointToPoint2D {
+private:
+    glm::dvec2  mPoint;
+    double      mWeight;
+public:
+    CriterionPointToPoint2D(const glm::dvec2 &point, double weight) : mPoint(point), mWeight(weight) {}
+    double     forward(const glm::dvec2 &input)  const { double A = (input.x - mPoint.x), B = (input.y - mPoint.y); return (A * A + B * B) * mWeight;               }
+    glm::dvec2 backward(const glm::dvec2 &input) const { double A = (input.x - mPoint.x), B = (input.y - mPoint.y); return { 2.0 * mWeight * A, 2.0 * mWeight * B };}
+};
+
+/* sqr distance between point and line */
+class CriterionPointToLine2D {
+private:
+    glm::dvec2  mPoint0, mPoint1;
+    double      mWeight;
+public:
+    CriterionPointToLine2D(const glm::dvec2 &p0, const glm::dvec2 &p1, double weight) : mPoint0(p0), mPoint1(p1), mWeight(weight) {}
+    double forward(const glm::dvec2 &input) const {
+        double A = mPoint1.y - mPoint0.y;
+        double B = mPoint0.x - mPoint1.x;
+        double C = mPoint1.x * mPoint0.y - mPoint0.x - mPoint1.y;
+        double f = (A * input.x + B * input.y + C);
+        return mWeight * (f * f) / (A * A + B * B);
+    }
+    glm::dvec2 backward(const glm::dvec2 &input) const {
+        double A = mPoint1.y - mPoint0.y;
+        double B = mPoint0.x - mPoint1.x;
+        double C = mPoint1.x * mPoint0.y - mPoint0.x - mPoint1.y;
+        double f = (A * input.x + B * input.y + C);
+        double Factor = mWeight * 2.0 * f / (A * A + B * B);
+        return { Factor * A, Factor * B };
     }
 };

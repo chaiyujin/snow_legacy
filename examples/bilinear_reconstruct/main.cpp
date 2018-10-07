@@ -49,19 +49,21 @@ int main() {
     rsdevice.updatePointCloud();
 
     BilinearModel model;
-    {
-        std::vector<double> iden(75, 0);
-        std::vector<double> expr(47, 0);
-        iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
-        expr[0] = 1.0;
-        model.updateIdenOnCore(0, iden.data());
-        model.updateExpr(0, expr.data());
-        model.updateScale(0);
-        model.rotateYXZ(0);
-        model.translate(0);
-        model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
-        model.updateMorphModel(0);
-    }
+
+        {
+            std::vector<double> iden(75, 0);
+            std::vector<double> expr(47, 0);
+            iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
+            expr[0] = 1.0;
+            double scale = 1.0;
+            model.updateIdenOnCore(0, iden.data());
+            model.updateExpr(0, expr.data());
+            model.updateScale(0, &scale);
+            // model.rotateYXZ(0);
+            // model.translate(0);
+            // model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
+            // model.updateMorphModel(0);
+        }
     
     std::vector<snow::float2> landmarks;
     {
@@ -78,31 +80,52 @@ int main() {
         fin.close();
     }
     std::vector<size_t> contourIndex;
-    for (int epoch = 0; epoch < 10; ++epoch) {
-        {   
+    for (int epoch = 0; epoch < 3; ++epoch) {
+        {
+            std::vector<double> iden(75, 0);
+            std::vector<double> expr(47, 0);
+            iden[0] = 1.0; iden[1] = -1; iden[2] = 1;
+            expr[0] = 1.0;
+            model.updateIdenOnCore(0, iden.data());
+            model.updateExpr(0, expr.data());
             model.updateScale(0);
+            // model.rotateYXZ(0);
+            // model.translate(0);
+            // model.transformMesh(0, glm::transpose(rsdevice.viewMat()));
+            // model.updateMorphModel(0);
+        }
+
+        {   
+            // model.updateScale(0);
             std::vector<glm::dvec2> landmark_contour;
             for (int i = 0; i < 15; ++i) { landmark_contour.push_back({ landmarks[i].x, landmarks[i].y }); }
             glm::dmat4 pvm = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
             ceres::Problem problem;
             for (size_t idx: contourIndex) {
-                auto source3d = model.meshVertex(0, idx);
-                auto *cost = new PoseCost2DLine(landmark_contour,
-                                                snow::toGLM(source3d),
-                                                pvm);
+                glm::dvec3 source3d = {
+                    *model.tv11(0).data(idx * 3),
+                    *model.tv11(0).data(idx * 3+1),
+                    *model.tv11(0).data(idx * 3+2)
+                };
+                auto *cost = new PoseScaleCost2DLine(landmark_contour, source3d, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.poseParameter(0).trainRotateYXZ(),
-                    model.poseParameter(0).trainTranslate());
+                    model.poseParameter(0).trainTranslate(),
+                    model.scaleParameter().train());
             }
             for (int iLM = 15; iLM < 73; ++iLM) {
-                auto source3d = model.meshVertex(0, FaceDB::Landmarks73()[iLM]);
+                int idx = FaceDB::Landmarks73()[iLM];
+                glm::dvec3 source3d = {
+                    *model.tv11(0).data(idx * 3),
+                    *model.tv11(0).data(idx * 3+1),
+                    *model.tv11(0).data(idx * 3+2)
+                };
                 Constraint2D constraint = { glm::dvec2 {landmarks[iLM].x, landmarks[iLM].y}, 1.0 };
-                auto *cost = new PoseCost2DPoint(constraint,
-                                                 snow::toGLM(source3d),
-                                                 pvm);
+                auto *cost = new PoseScaleCost2DPoint(constraint, source3d, pvm);
                 problem.AddResidualBlock(cost, nullptr,
                     model.poseParameter(0).trainRotateYXZ(),
-                    model.poseParameter(0).trainTranslate());
+                    model.poseParameter(0).trainTranslate(),
+                    model.scaleParameter().train());
             }
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
@@ -112,9 +135,11 @@ int main() {
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
             std::cout << model.poseParameter(0) << std::endl;
+            std::cout << model.scaleParameter() << std::endl;
             model.poseParameter(0).useTrained();
+            model.scaleParameter().useTrained();
             std::cout << model.poseParameter(0) << std::endl;
-
+            std::cout << model.scaleParameter() << std::endl;
         }
         {
             model.updateScale(0);
