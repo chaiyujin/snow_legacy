@@ -12,7 +12,8 @@
 
 int main() {
     const std::string RootFaceDB = "../../../assets/fw/";
-    const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+    // const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+    const std::string RootVideo  = "../../../assets/test_depth/";
     FaceDB::Initialize(RootFaceDB);
     
     std::vector<glm::dmat4> viewMatList;
