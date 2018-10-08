@@ -28,6 +28,9 @@ class VisualizerWindow : public snow::AbstractWindow {
     std::vector<std::vector<snow::float2>>  mLandmarksList;
     std::vector<PointCloud>                 mPointCloudList;
     std::vector<MorphModel>                 mMorphModelList;
+    std::vector<glm::mat4>                  mViewMatList;
+    std::vector<glm::mat4>                  mProjMatList;
+    std::vector<glm::mat4>                  mModelMatList;
 
     /*set data*/
     void setImage(const Image &image);
@@ -35,6 +38,11 @@ class VisualizerWindow : public snow::AbstractWindow {
     void setMorphModel(const MorphModel &morphModel);
     void set2DLandmarks(const std::vector<snow::float2> &landmarks);
     void set3DLandmarks(const std::vector<snow::float3> &landmarks);
+
+    /*set mat*/
+    void setModelMat(const glm::mat4 &model) { mModelMat = model; }
+    void setViewMat(const glm::mat4 &view)   { mViewMat = view;   }
+    void setProjMat(const glm::mat4 &proj)   { mProjMat = proj;   }
 
 public:
 
@@ -69,10 +77,9 @@ public:
     void appendMorphModel(const MorphModel &morphModel)                 { mMorphModelList.push_back(morphModel);    }
     void append2DLandmarks(const std::vector<snow::float2> &landmarks)  { mLandmarksList.push_back(landmarks);      }
 
-    /*set mat*/
-    void setModelMat(const glm::mat4 &model) { mModelMat = model; }
-    void setViewMat(const glm::mat4 &view)   { mViewMat = view;   }
-    void setProjMat(const glm::mat4 &proj)   { mProjMat = proj;   }
+    void appendModelMat(const glm::mat4 &model)                         { mModelMatList.push_back(model); }
+    void appendViewMat(const glm::mat4 &view)                           { mViewMatList.push_back(view);   }
+    void appendProjMat(const glm::mat4 &proj)                           { mProjMatList.push_back(proj);   }
 
     /*overwrite virtual functions*/
     void processEvent(SDL_Event &event);

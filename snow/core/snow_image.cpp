@@ -10,7 +10,7 @@
 namespace snow {
 
 Image Image::Read(std::string filename) {
-    if (!path::exists(filename)) throw std::runtime_error("[Image]: read() file not found");
+    if (!path::Exists(filename)) throw std::runtime_error("[Image]: read() file not found");
     int w, h, n;
     uint8_t *data = stbi_load(filename.c_str(), &w, &h, &n, STBI_rgb_alpha);
     n = STBI_rgb_alpha;

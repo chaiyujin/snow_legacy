@@ -72,6 +72,9 @@ void VisualizerWindow::draw() {
         if (0 <= mToShow && mToShow < mLandmarksList.size())    set2DLandmarks(mLandmarksList[mToShow]);
         if (0 <= mToShow && mToShow < mMorphModelList.size())   setMorphModel(mMorphModelList[mToShow]);
         if (0 <= mToShow && mToShow < mPointCloudList.size())   setPointCloud(mPointCloudList[mToShow]);
+        if (0 <= mToShow && mToShow < mViewMatList.size())      setViewMat(mViewMatList[mToShow]);
+        if (0 <= mToShow && mToShow < mProjMatList.size())      setProjMat(mProjMatList[mToShow]);
+        if (0 <= mToShow && mToShow < mModelMatList.size())     setModelMat(mModelMatList[mToShow]);
         mCurrentShow = mToShow;
     }
 

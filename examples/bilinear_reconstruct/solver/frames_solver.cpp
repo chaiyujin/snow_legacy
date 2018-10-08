@@ -1,5 +1,7 @@
 #include "frames_solver.h"
 
+#define NUM_THREADS 4
+
 void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks, const glm::dmat4 &pvm) {
     std::vector<glm::dvec2> landmarkContour;
     for (int i = 0; i < 15; ++i) { landmarkContour.push_back({ landmarks[i].x, landmarks[i].y }); }
@@ -58,7 +60,7 @@ void FramesSolver::solve(int epochs) {
             }
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
-            options.num_threads = 4;
+            options.num_threads = NUM_THREADS;
             options.max_num_iterations = 10;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
@@ -109,7 +111,7 @@ void FramesSolver::solve(int epochs) {
             }
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
-            options.num_threads = 4;
+            options.num_threads = NUM_THREADS;
             options.max_num_iterations = 10;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
