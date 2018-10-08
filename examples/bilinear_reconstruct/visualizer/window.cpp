@@ -56,12 +56,23 @@ void VisualizerWindow::draw() {
     /* ui */ {
         ImGui::Begin("tools");
         if (ImGui::Button("reset camera")) mCamera.reset();
+        if (mImageList.size() > 1) {
+            ImGui::SliderInt("Frame", &mToShow, 0, (int)mImageList.size() - 1);
+        }
         if (mImageShaderPtr) { ImGui::Checkbox("image",       &mShowImage); }
         if (mImageShaderPtr && mLandsShaderPtr) ImGui::SameLine();
         if (mLandsShaderPtr) { ImGui::Checkbox("landmarks",   &mShowLands); }
         if (mPointShaderPtr) { ImGui::Checkbox("point cloud", &mShowPoint); }
         if (mModelShaderPtr) { ImGui::Checkbox("model",       &mShowModel); }
         ImGui::End();
+    }
+
+    if (mToShow != mCurrentShow) {
+        if (0 <= mToShow && mToShow < mImageList.size())        setImage(mImageList[mToShow]);
+        if (0 <= mToShow && mToShow < mLandmarksList.size())    set2DLandmarks(mLandmarksList[mToShow]);
+        if (0 <= mToShow && mToShow < mMorphModelList.size())   setMorphModel(mMorphModelList[mToShow]);
+        if (0 <= mToShow && mToShow < mPointCloudList.size())   setPointCloud(mPointCloudList[mToShow]);
+        mCurrentShow = mToShow;
     }
 
     /* drawing */ {

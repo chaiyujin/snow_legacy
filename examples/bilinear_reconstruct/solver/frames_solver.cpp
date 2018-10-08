@@ -1,7 +1,7 @@
 #include "frames_solver.h"
 
-void FramesSolver::addFrame(const Landmark &landmarks) {
-    Contour landmarkContour;
+void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks) {
+    std::vector<glm::dvec2> landmarkContour;
     for (int i = 0; i < 15; ++i) { landmarkContour.push_back({ landmarks[i].x, landmarks[i].y }); }
     mContourList.push_back(landmarkContour);
     mLandmarkList.push_back(landmarks);
@@ -13,6 +13,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
     mModel.prepareAllModel();
     std::vector<std::vector<size_t>> contourIndexList(mModel.size());
     for (int iEpoch = 0; iEpoch < epochs; ++iEpoch) {
+        std::cout << "[Epoch]: " << iEpoch << std::endl;
         // each epoch
         /* update iden, expr */ for (size_t i = 0; i < mModel.size(); ++i) {
             mModel.updateIdenOnCore(i);
@@ -56,7 +57,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
             }
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
-            options.num_threads = 1;
+            options.num_threads = 4;
             options.max_num_iterations = 10;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
@@ -98,7 +99,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
                 }
             }
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
-                auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0001);
+                auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0005);
                 problem.AddResidualBlock(regExpr, nullptr, mModel.exprParameter(iMesh).train());
             }
             /* reg term of iden */ {
@@ -107,7 +108,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
             }
             ceres::Solver::Options options;
             options.minimizer_progress_to_stdout = true;
-            options.num_threads = 1;
+            options.num_threads = 4;
             options.max_num_iterations = 10;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);

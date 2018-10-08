@@ -5,15 +5,15 @@
 #include "cost_functions_2d.h"
 #include <snow.h>
 
-typedef std::vector<snow::float2> Landmark;
-typedef std::vector<glm::dvec2> Contour;
 class FramesSolver {
-    std::vector<Landmark> mLandmarkList;
-    std::vector<Contour>  mContourList;
+    std::vector<std::vector<snow::float2>> mLandmarkList;
+    std::vector<std::vector<glm::dvec2>>  mContourList;
     BilinearModel         mModel;
 public:
     FramesSolver() {}
-    void addFrame(const Landmark &landmarks);
+    void addFrame(const std::vector<snow::float2> &landmarks);
     void solve(int epochs, const glm::dmat4 &pvm);
     BilinearModel &model() { return mModel; }
+
+    const std::vector<snow::float2> &landmarks(size_t i) const { return mLandmarkList[i]; }
 };

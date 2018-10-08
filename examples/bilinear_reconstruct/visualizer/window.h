@@ -21,6 +21,20 @@ class VisualizerWindow : public snow::AbstractWindow {
     glm::mat4           mViewMat;
     glm::mat4           mProjMat;
     glm::mat4           mModelMat;
+    /* data */
+    int                                     mToShow;
+    int                                     mCurrentShow;
+    std::vector<Image>                      mImageList;
+    std::vector<std::vector<snow::float2>>  mLandmarksList;
+    std::vector<PointCloud>                 mPointCloudList;
+    std::vector<MorphModel>                 mMorphModelList;
+
+    /*set data*/
+    void setImage(const Image &image);
+    void setPointCloud(const PointCloud &pointCloud);
+    void setMorphModel(const MorphModel &morphModel);
+    void set2DLandmarks(const std::vector<snow::float2> &landmarks);
+    void set3DLandmarks(const std::vector<snow::float3> &landmarks);
 
 public:
 
@@ -37,7 +51,8 @@ public:
         , mPointShaderPtr(nullptr)
         , mModelShaderPtr(nullptr)
         , mShowImage(true), mShowLands(true), mShowPoint(true), mShowModel(true)
-        , mViewMat(1.0), mProjMat(1.0), mModelMat(1.0) {
+        , mViewMat(1.0), mProjMat(1.0), mModelMat(1.0)
+        , mToShow(0), mCurrentShow(-1) {
         mCamera.setSpeedMove(1.f);
         mCamera.setSpeedRotate(0.5f);
     }
@@ -48,12 +63,11 @@ public:
         delete mModelShaderPtr; mModelShaderPtr = nullptr;
     }
 
-    /*set data*/
-    void setImage(const Image &image);
-    void setPointCloud(const PointCloud &pointCloud);
-    void setMorphModel(const MorphModel &morphModel);
-    void set2DLandmarks(const std::vector<snow::float2> &landmarks);
-    void set3DLandmarks(const std::vector<snow::float3> &landmarks);
+    /* append data */
+    void appendImage(const Image &image)                                { mImageList.push_back(image);              }
+    void appendPointCloud(const PointCloud &pointCloud)                 { mPointCloudList.push_back(pointCloud);    }
+    void appendMorphModel(const MorphModel &morphModel)                 { mMorphModelList.push_back(morphModel);    }
+    void append2DLandmarks(const std::vector<snow::float2> &landmarks)  { mLandmarksList.push_back(landmarks);      }
 
     /*set mat*/
     void setModelMat(const glm::mat4 &model) { mModelMat = model; }
