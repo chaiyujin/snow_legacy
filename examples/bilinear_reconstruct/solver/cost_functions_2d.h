@@ -24,7 +24,7 @@ inline glm::dvec4 criterion2D(double *residuals,
     if (pointPtr) {
         residuals[0] = pointPtr->forward(inputPoint);
         auto grad2   = pointPtr->backward(inputPoint);
-        return glm::dvec4 {grad2.x, grad2.y, 0., 0.};
+        return {grad2.x, grad2.y, 0., 0.};
     }
     if (contourPtr) {
         const std::vector<glm::dvec2> &lms = *contourPtr;
@@ -36,24 +36,25 @@ inline glm::dvec4 criterion2D(double *residuals,
             double dist2Point = PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k].x, lms[k].y) +
                                 PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k + 1].x, lms[k + 1].y);
             double dist = dist2Line + dist2Point;
+            dist = dist2Point;
             if (dist < distance) {
                 index = k;
                 distance = dist;
                 residuals[0] = dist2Line * weightContour;
             }
         }
-
         auto grad2 = PointToLine2D::diffSqrDistance(
-                inputPoint.x, inputPoint.y,
-                lms[index].x, lms[index].y,
-                lms[index + 1].x, lms[index + 1].y) * weightContour;
+                        inputPoint.x, inputPoint.y,
+                        lms[index].x, lms[index].y,
+                        lms[index + 1].x, lms[index + 1].y) * 0.0
+                   + PointToPoint2D::diffSqrDistance(
+                        inputPoint.x, inputPoint.y,
+                        lms[index].x, lms[index].y)  * weightContour / 2.0
+                   + PointToPoint2D::diffSqrDistance(
+                        inputPoint.x, inputPoint.y,
+                        lms[index + 1].x, lms[index + 1].y)  * weightContour / 2.0;
 
-        glm::dvec4 gradIn = {grad2.x, grad2.y, 0., 0.};
-        if (index == 0 || index + 2 == lms.size()) {
-            distance = 0;
-            gradIn = glm::dvec4{0, 0, 0, 0};
-        }
-        return gradIn;
+        return {grad2.x, grad2.y, 0., 0.};
     }
     return glm::dvec4(0.0);
 }

@@ -1,6 +1,6 @@
 #include "frames_solver.h"
 
-#define NUM_THREADS 4
+#define NUM_THREADS 1
 
 void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks, const glm::dmat4 &pvm) {
     std::vector<glm::dvec2> landmarkContour;
@@ -27,21 +27,21 @@ void FramesSolver::solve(int epochs, bool verbose) {
         /* solve pose, scale */ {
             ceres::Problem problem;
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
-                // for (size_t idx: contourIndexList[iMesh]) {
-                //     glm::dvec3 source3d = {
-                //         *mModel.tv11(iMesh).data(idx * 3),
-                //         *mModel.tv11(iMesh).data(idx * 3+1),
-                //         *mModel.tv11(iMesh).data(idx * 3+2)
-                //     };
-                //     auto *cost = new PoseScaleCost2D(
-                //         nullptr, 0.0,
-                //         &mContourList[iMesh], weightContour,
-                //         source3d, mPVMList[iMesh]);
-                //     problem.AddResidualBlock(cost, nullptr,
-                //         mModel.poseParameter(iMesh).trainRotateYXZ(),
-                //         mModel.poseParameter(iMesh).trainTranslate(),
-                //         mModel.scaleParameter().train());
-                // }
+                for (size_t idx: contourIndexList[iMesh]) {
+                    glm::dvec3 source3d = {
+                        *mModel.tv11(iMesh).data(idx * 3),
+                        *mModel.tv11(iMesh).data(idx * 3+1),
+                        *mModel.tv11(iMesh).data(idx * 3+2)
+                    };
+                    auto *cost = new PoseScaleCost2D(
+                        nullptr, 0.0,
+                        &mContourList[iMesh], weightContour,
+                        source3d, mPVMList[iMesh]);
+                    problem.AddResidualBlock(cost, nullptr,
+                        mModel.poseParameter(iMesh).trainRotateYXZ(),
+                        mModel.poseParameter(iMesh).trainTranslate(),
+                        mModel.scaleParameter().train());
+                }
                 for (int iLM = 15; iLM < 73; ++iLM) {
                     int idx = FaceDB::Landmarks73()[iLM];
                     glm::dvec3 source3d = {
@@ -86,16 +86,16 @@ void FramesSolver::solve(int epochs, bool verbose) {
             ceres::Problem problem;
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
                 auto pvmtr = mPVMList[iMesh] ;
-                // for (size_t idx: contourIndexList[iMesh]) {
-                //     auto *cost = new IdenExprScalePoseCost2D(
-                //         nullptr, 0.0, &mContourList[iMesh], weightContour, FaceDB::CoreTensor(), idx, pvmtr);
-                //     problem.AddResidualBlock(cost, nullptr,
-                //         mModel.idenParameter().train(),
-                //         mModel.exprParameter(iMesh).train(),
-                //         mModel.scaleParameter().train(),
-                //         mModel.poseParameter(iMesh).trainRotateYXZ(),
-                //         mModel.poseParameter(iMesh).trainTranslate());
-                // }
+                for (size_t idx: contourIndexList[iMesh]) {
+                    auto *cost = new IdenExprScalePoseCost2D(
+                        nullptr, 0.0, &mContourList[iMesh], weightContour, FaceDB::CoreTensor(), idx, pvmtr);
+                    problem.AddResidualBlock(cost, nullptr,
+                        mModel.idenParameter().train(),
+                        mModel.exprParameter(iMesh).train(),
+                        mModel.scaleParameter().train(),
+                        mModel.poseParameter(iMesh).trainRotateYXZ(),
+                        mModel.poseParameter(iMesh).trainTranslate());
+                }
                 for (int iLM = 15; iLM < 73; ++iLM) {
                     int idx = FaceDB::Landmarks73()[iLM];
                     auto constraint = glm::dvec2 {mLandmarkList[iMesh][iLM].x, mLandmarkList[iMesh][iLM].y};
@@ -110,11 +110,11 @@ void FramesSolver::solve(int epochs, bool verbose) {
                 }
             }
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
-                auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0001);
+                auto *regExpr = new RegTerm(FaceDB::NumDimExpr(), 0.0005);
                 problem.AddResidualBlock(regExpr, nullptr, mModel.exprParameter(iMesh).train());
             }
             /* reg term of iden */ {
-                auto *regIden = new RegTerm(FaceDB::NumDimIden(), 0.001);
+                auto *regIden = new RegTerm(FaceDB::NumDimIden(), 0.00001);
                 problem.AddResidualBlock(regIden, nullptr, mModel.idenParameter().train());
             }
             ceres::Solver::Options options;

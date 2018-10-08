@@ -1,6 +1,7 @@
 #include "bilinear_model.h"
 #include "../tools/contour.h"
 #include "../tools/projection.h"
+#include "../tools/math_tools.h"
 
 snow::MemoryArena Parameter::gArena;
 
@@ -155,8 +156,44 @@ std::vector<size_t> BilinearModel::getContourMeshIndex(const std::vector<size_t>
 }
 
 std::vector<size_t> BilinearModel::getContourIndex(size_t index, const glm::dmat4 &PVM) {
-    std::vector<snow::float2> contour2d;
-    projectToImageSpace(getMeshContourCands(0), PVM, contour2d);
-    auto contour_pair = getContourGrahamScan(contour2d);
-    return getContourMeshIndex(contour_pair.second);
+    std::vector<snow::float2> cands2d;
+    projectToImageSpace(getMeshContourCands(index), PVM, cands2d);
+    auto contour_pair = getContourGrahamScan(cands2d);
+    std::vector<size_t> results;
+    for (size_t i = 0, k=0; i < FaceDB::Contours().size(); ++i) {
+        double compare = 0;
+        int select = -1;
+        for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j, ++k) {
+            int idx = FaceDB::Contours()[i][j];
+            if (i < 10) {
+                if (select < 0 || cands2d[k].x < compare) {
+                    compare = cands2d[k].x;
+                    select = idx;
+                }
+            }
+            else if (i >= FaceDB::Contours().size() - 10) {
+                if (select < 0 || cands2d[k].x > compare) {
+                    compare = cands2d[k].x;
+                    select = idx;
+                }
+            }
+            else {
+                for (size_t li = 0; li < contour_pair.first.size() - 1; ++li) {
+                    double dist = PointToLine2D::sqrDistance(
+                        cands2d[k].x, cands2d[k].y,
+                        contour_pair.first[li].x,
+                        contour_pair.first[li].y,
+                        contour_pair.first[li+1].x,
+                        contour_pair.first[li+1].y
+                    );
+                    if (select < 0 || dist < compare) {
+                        compare = dist;
+                        select = idx;
+                    }
+                }
+            }
+        }
+        if (select >= 0) results.push_back((size_t)select);
+    }
+    return results;
 }

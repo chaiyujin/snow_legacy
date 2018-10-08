@@ -2,17 +2,30 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#ifdef __APPLE__
+#include <sys/uio.h>
+#else
 #include <io.h>
+#endif
+#ifdef _WIN32
 #include <direct.h>
+#else
+#include <unistd.h>
+#include <dirent.h>
+#endif
 #include <regex>
 
 namespace snow {
 namespace path {
 inline bool Exists(const std::string &filename) {
+#ifdef _WIN32
     return _access(filename.c_str(), 0) != -1;
+#else
+    return access(filename.c_str(), 0) != -1;
+#endif
 }
 
-inline bool Exists(const std::vector<std::string> &file_list) {
+inline bool AllExists(const std::vector<std::string> &file_list) {
     for (size_t i = 0; i < file_list.size(); ++i)
         if (!Exists(file_list[i])) return false;
     return true;
@@ -28,6 +41,7 @@ inline std::string Join(const std::string &dirname, const std::string &basename)
     else return basename;
 }
 inline std::vector<std::string> FindFiles(const std::string &rootdir, const std::regex &pattern=std::regex("(.*)"), bool recursive=true) {
+#ifdef _WIN32
     char currentPath[2048];
     _getcwd(currentPath, 2048);
     _chdir(rootdir.c_str());
@@ -72,6 +86,35 @@ inline std::vector<std::string> FindFiles(const std::string &rootdir, const std:
     }
     _chdir(currentPath);
     return results;
+#else
+    std::vector<std::string> results;
+    DIR *dir = nullptr;
+    dirent *ent = nullptr;
+    std::vector<std::string> subdirs;
+    if ((dir = opendir(rootdir.c_str())) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            if (ent->d_type != DT_DIR) {
+                if (std::regex_match(ent->d_name, pattern)) {
+                    std::string file_path = snow::path::Join(rootdir, ent->d_name);
+                    results.emplace_back(file_path);
+                }
+            }
+            else if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) {
+                subdirs.push_back(ent->d_name);
+            }
+        }
+        closedir(dir);
+    }
+    if (recursive) {
+        for (size_t i = 0; i < subdirs.size(); ++i) {
+            auto subResults = FindFiles(subdirs[i], pattern, recursive);
+            for (size_t j = 0; j < subResults.size(); ++j) {
+                results.emplace_back(snow::path::Join(rootdir, subResults[j]));
+            }
+        }
+    }
+    return results;
+#endif
 }
 
 inline std::pair<std::string, std::string> SplitExtension(const std::string &filepath) {

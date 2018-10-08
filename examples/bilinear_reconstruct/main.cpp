@@ -18,6 +18,7 @@ int main() {
     
     std::vector<glm::dmat4> viewMatList;
     std::vector<glm::dmat4> projMatList;
+    std::vector<glm::dmat4> pvmMatList;
     
     FramesSolver solver;
     int Frames = 0;
@@ -26,13 +27,14 @@ int main() {
     for (const auto &filePath: fileList) {
         auto pathParams    = filePath + "_params_stream-1";
         auto pathLandmarks = filePath + "_lmrecord";
-        if (!snow::path::Exists({pathParams, pathLandmarks})) continue;
+        if (!snow::path::AllExists({pathParams, pathLandmarks})) continue;
 
         std::cout << "Find video: " << filePath << std::endl;
         glm::dmat4 PVM(1.0);
         /* read params */ {
             librealsense::RealSenseSource rsdevice(filePath + "_params_stream-1");
             PVM = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
+            pvmMatList.push_back(PVM);
             viewMatList.push_back(rsdevice.viewMat());
             projMatList.push_back(rsdevice.colorProjectionMat());
         }
@@ -45,27 +47,28 @@ int main() {
         }
         Frames ++;
     }
-    {
+    if (Frames) {
         printf("Begin to solve with %d frames\n", Frames);
         solver.solve(5, true);
         printf("Solve done.\n");
     }
+    if (Frames) {
+        snow::App app;
+        VisualizerWindow *win = new VisualizerWindow(75, 0, FaceDB::NumVertices(), FaceDB::NumTriangles());
 
-    snow::App app;
-    VisualizerWindow *win = new VisualizerWindow(75, 0, FaceDB::NumVertices(), FaceDB::NumTriangles());
+        // visualization
+        for (int iFrame = 0; iFrame < Frames; ++iFrame) {    
+            solver.model().transformMesh(iFrame, glm::transpose(viewMatList[iFrame]));
+            solver.model().updateMorphModel(iFrame);
+            // append to visualizer        
+            win->append2DLandmarks(solver.landmarks(iFrame));
+            win->appendMorphModel(solver.model().morphModel());
+            win->appendViewMat(viewMatList[iFrame]);
+            win->appendProjMat(projMatList[iFrame]);
+        }
 
-    // visualization
-    for (int iFrame = 0; iFrame < Frames; ++iFrame) {    
-        solver.model().transformMesh(iFrame, glm::transpose(viewMatList[iFrame]));
-        solver.model().updateMorphModel(iFrame);
-        // append to visualizer        
-        win->append2DLandmarks(solver.landmarks(iFrame));
-        win->appendMorphModel(solver.model().morphModel());
-        win->appendViewMat(viewMatList[iFrame]);
-        win->appendProjMat(projMatList[iFrame]);
+        app.addWindow(win);
+        app.run();
     }
-
-    app.addWindow(win);
-    app.run();
     return 0;
 }

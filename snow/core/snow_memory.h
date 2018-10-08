@@ -180,10 +180,10 @@ public:
 
     template <typename T>
     void free(T *ptr) {
-        std::lock_guard<std::mutex> lock(mMutex);
-
         if (ptr == nullptr) return;
         if (mCurBlockPtr == nullptr) return;
+        std::lock_guard<std::mutex> lock(mMutex);
+        
         const size_t count = Block::querySize(ptr) / sizeof(T);
         for (size_t i = 0; i < count; ++i) ptr[i].~T();
         Block * block = Block::free(ptr);

@@ -39,7 +39,7 @@ void FaceDB::Initialize(std::string dir) {
     std::string iden_s_path = snow::path::Join(dir, "iden_singular.txt");
     std::string expr_s_path = snow::path::Join(dir, "expr_singular.txt");
 
-    if (!snow::path::Exists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
+    if (!snow::path::AllExists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
         printf("Failed to find tensor information file.\n");
         exit(1);
     }
