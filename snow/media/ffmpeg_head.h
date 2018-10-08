@@ -27,7 +27,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
-};
+}
 
 // replace av log macro
 #undef av_ts2str

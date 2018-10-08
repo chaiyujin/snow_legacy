@@ -1,14 +1,15 @@
 #include "frames_solver.h"
 
-void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks) {
+void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks, const glm::dmat4 &pvm) {
     std::vector<glm::dvec2> landmarkContour;
     for (int i = 0; i < 15; ++i) { landmarkContour.push_back({ landmarks[i].x, landmarks[i].y }); }
     mContourList.push_back(landmarkContour);
     mLandmarkList.push_back(landmarks);
+    mPVMList.push_back(pvm);
     mModel.appendModel();
 }
 
-void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
+void FramesSolver::solve(int epochs) {
     if (epochs < 2) epochs = 2;
     mModel.prepareAllModel();
     std::vector<std::vector<size_t>> contourIndexList(mModel.size());
@@ -31,7 +32,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
                     auto *cost = new PoseScaleCost2D(
                         nullptr, 0.0,
                         &mContourList[iMesh], 1.0,
-                        source3d, pvm);
+                        source3d, mPVMList[iMesh]);
                     problem.AddResidualBlock(cost, nullptr,
                         mModel.poseParameter(iMesh).trainRotateYXZ(),
                         mModel.poseParameter(iMesh).trainTranslate(),
@@ -48,7 +49,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
                     auto *cost = new PoseScaleCost2D(
                         &constraintP, 1.0,
                         nullptr, 0.0,
-                        source3d, pvm);
+                        source3d, mPVMList[iMesh]);
                     problem.AddResidualBlock(cost, nullptr,
                         mModel.poseParameter(iMesh).trainRotateYXZ(),
                         mModel.poseParameter(iMesh).trainTranslate(),
@@ -70,7 +71,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
             mModel.updateScale(i);
             mModel.rotateYXZ(i);
             mModel.translate(i);
-            contourIndexList[i] = mModel.getContourIndex(i, pvm);
+            contourIndexList[i] = mModel.getContourIndex(i, mPVMList[i]);
         }
         /* update iden, expr */
         // if (true) continue;
@@ -78,7 +79,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
         else {
             ceres::Problem problem;
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
-                auto pvmtr = pvm * mModel.poseParameter(iMesh).matT() * mModel.poseParameter(iMesh).matR();
+                auto pvmtr = mPVMList[iMesh] * mModel.poseParameter(iMesh).matT() * mModel.poseParameter(iMesh).matR();
                 for (size_t idx: contourIndexList[iMesh]) {
                     auto *cost = new IdenExprScaleCostCost2D(
                         nullptr, 0.0, &mContourList[iMesh], 1.0, FaceDB::CoreTensor(), idx, pvmtr);
@@ -125,7 +126,7 @@ void FramesSolver::solve(int epochs, const glm::dmat4 &pvm) {
             mModel.updateScale(i);
             mModel.rotateYXZ(i);
             mModel.translate(i);
-            contourIndexList[i] = mModel.getContourIndex(i, pvm);
+            contourIndexList[i] = mModel.getContourIndex(i, mPVMList[i]);
         }
     }
 

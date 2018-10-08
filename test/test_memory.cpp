@@ -30,7 +30,7 @@ int main() {
         snow::StopWatch watch("arena");
         for (int i = 0; i < 10; ++i) {
             if (i % 2) arr1 = arena.alloc<Int>(10000000); else arr1 = arena.alloc<Int>(1000000);
-            if ((uintptr_t)arr1 % 32 != 0) printf("[arena]: error not aligned with 32!\n");
+            // if ((uintptr_t)arr1 % 32 != 0) printf("[arena]: error not aligned with 32!\n");
             arena.free<Int>(arr1);
         }
     }
@@ -38,7 +38,7 @@ int main() {
         snow::StopWatch watch("new");
         for (int i = 0; i < 10; ++i) {
             if (i % 2) arr1 = new Int[10000000]; else arr1 = new Int[1000000];
-            if ((uintptr_t)arr1 % 32 != 0) printf("[new]: error not aligned with 32!\n");
+            // if ((uintptr_t)arr1 % 32 != 0) printf("[new]: error not aligned with 32!\n");
             delete[] arr1;
         }
     }

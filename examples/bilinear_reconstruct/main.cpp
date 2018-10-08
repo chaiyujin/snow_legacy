@@ -20,61 +20,44 @@ static void readFrameBin(const char *filename, uint8_t *color, uint8_t *depth,
 }
 
 int main() {
-
-    /* test distance */ {
-        std::cout << "PointToLine:\n";
-        std::cout << "sqr distance      " << PointToLine2D::sqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << PointToLine2D::diffSqrDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
-        std::cout << "sqr distance      " << PointToLine2D::distance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << PointToLine2D::diffDistance(0.0, 0.0, 1.0, 0.0, 0.0, 1.0) << std::endl;
-        std::cout << "\n";
-
-        std::cout << "PointToPoint:\n";
-        std::cout << "sqr distance      " << PointToPoint2D::sqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << PointToPoint2D::diffSqrDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "sqr distance      " << PointToPoint2D::distance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "diff sqr distance " << PointToPoint2D::diffDistance(0.0, 0.0, 1.0, 1.0) << std::endl;
-        std::cout << "\n";
-        
-    }
-
     FaceDB::Initialize("../../../assets/fw");
     librealsense::RealSenseSource rsdevice("../../../assets/test_depth/1-0-1.mkv_params_stream-1");
-
-    snow::App app;
-    VisualizerWindow *win = new VisualizerWindow(75, rsdevice.depthImg().pixels(), FaceDB::NumVertices(), FaceDB::NumTriangles());
+    glm::dmat4 PVM = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
     
     Image color(1920, 1080, 4);
     Image depth(640, 480, 2);
     readFrameBin("../../../assets/test_depth/frame.bin", color.data(), depth.data());
-    rsdevice.updateFramePair(color.data(), depth.data());
-    rsdevice.updatePointCloud();
+    // rsdevice.updateFramePair(color.data(), depth.data());
+    // rsdevice.updatePointCloud();
 
     BilinearModel model;
     model.appendModel();
     model.prepareAllModel();
 
     FramesSolver solver;
-    int Frames = 10;
-    int Delta = 1;
+    int Frames = 5;
+    int Delta = 5;
     {
         std::ifstream fin("../../../assets/test_depth/1-0-1.mkv_lmrecord");
         for (int iFrame = 0; iFrame < Frames; ++iFrame) {
             Landmarks lms;
             for (int i = 0; i < Delta; ++i)
                 fin >> lms;
-            solver.addFrame(lms.landmarks());
+            solver.addFrame(lms.landmarks(), PVM);
         }
         fin.close();
     }
-    solver.solve(5, rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat()));
+    solver.solve(5);
+
+    snow::App app;
+    VisualizerWindow *win = new VisualizerWindow(75, rsdevice.depthImg().pixels(), FaceDB::NumVertices(), FaceDB::NumTriangles());
 
     // append data
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {    
         solver.model().transformMesh(iFrame, glm::transpose(rsdevice.viewMat()));
         solver.model().updateMorphModel(iFrame);
         
-        win->appendImage(rsdevice.colorImg());
+        // win->appendImage(rsdevice.colorImg());
         win->append2DLandmarks(solver.landmarks(iFrame));
         win->appendMorphModel(solver.model().morphModel());
         // win->appendPointCloud(rsdevice.pointCloud());

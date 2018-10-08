@@ -205,7 +205,7 @@ public:
         }
         for (int i = 1; i < 65536; ++i) hist[i] += hist[i - 1];
 
-#pragma omp parallel for schedule(dynamic)
+// #pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < pixels; ++i) {
             if (depth[i] == 0) continue;
             float val = (float)hist[depth[i]] / hist[0xFFFF];

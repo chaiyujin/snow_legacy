@@ -211,9 +211,9 @@ int MediaReader::processInput(MediaType request_type) {
     }
     if (ret == AVERROR_EOF) {
         // push null frame to tell it's over
-        for (int i = 0; i < mVideoQueues.size(); ++i)
+        for (size_t i = 0; i < mVideoQueues.size(); ++i)
             mVideoQueues[i]->push(VideoFrame());
-        for (int i = 0; i < mAudioQueues.size(); ++i)
+        for (size_t i = 0; i < mAudioQueues.size(); ++i)
             mAudioQueues[i]->push(AudioFrame());
         return ret;
     }
@@ -303,7 +303,7 @@ void MediaReader::syncVideoStreams() {
     int64_t max_pts = -1000.0;
     int count = 0;
     do {
-        for (int i = 0; i < mVideoQueues.size(); ++i) {
+        for (size_t i = 0; i < mVideoQueues.size(); ++i) {
             if (mVideoQueues[i]->size()) {
                 ++count;
                 max_pts = std::max(max_pts, mVideoQueues[i]->front().timestamp());

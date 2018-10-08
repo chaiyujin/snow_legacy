@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdexcept>
 #include <algorithm>
+#include <mutex>
 
 #define MEMORY_ALIGNMENT 32
 
@@ -119,6 +120,7 @@ private:
     size_t                  mBlockSize;
     std::list<Block *>      mUsedBlocks;
     std::list<Block *>      mAvailableBlocks;
+    std::mutex              mMutex;
 
 public:
     MemoryArena(size_t blockSize=32768)
@@ -136,6 +138,8 @@ public:
     }
 
     void *alloc(size_t size) {
+        std::lock_guard<std::mutex> lock(mMutex);
+
         void * ret = nullptr;
         if (!mCurBlockPtr || !(ret = mCurBlockPtr->alloc(size))) {
             // store in used
@@ -176,6 +180,8 @@ public:
 
     template <typename T>
     void free(T *ptr) {
+        std::lock_guard<std::mutex> lock(mMutex);
+
         if (ptr == nullptr) return;
         if (mCurBlockPtr == nullptr) return;
         const size_t count = Block::querySize(ptr) / sizeof(T);
@@ -201,6 +207,8 @@ public:
     }
 
     void reset() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        
         mAvailableBlocks.splice(mAvailableBlocks.begin(), mUsedBlocks);
     }
 

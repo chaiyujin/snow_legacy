@@ -114,9 +114,9 @@ std::vector<float> resample(const std::vector<float> &audio, int srcSampleRate, 
                                                  dstNumSamples, AV_SAMPLE_FMT_FLT, 0);
         if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Could not allocate destination samples\n"); break; /* goto end; */ }
 
-        while (index + srcNumSamples <= audio.size()) {
+        while (index + srcNumSamples <= (int)audio.size()) {
             /* generate synthetic audio */
-            for (size_t si = 0; si < srcNumSamples; ++si) {
+            for (int si = 0; si < srcNumSamples; ++si) {
                 ((float *)srcData[0])[si] = audio[index++];
             }
 
@@ -136,7 +136,7 @@ std::vector<float> resample(const std::vector<float> &audio, int srcSampleRate, 
             if (ret < 0) { av_log(nullptr, AV_LOG_ERROR, "Error while converting\n"); break; /* goto end; */ }
             dstBufferSize = av_samples_get_buffer_size(&dstLineSize, dstNumChannels, ret, AV_SAMPLE_FMT_FLT, 1);
             if (dstBufferSize < 0) { av_log(nullptr, AV_LOG_ERROR, "Could not get sample buffer size\n"); break;  /* goto end; */ }
-            for (size_t si = 0; si < ret; ++si) {
+            for (int si = 0; si < ret; ++si) {
                 resampledAudio.push_back(((float *)dstData[0])[si]);
             }
         }

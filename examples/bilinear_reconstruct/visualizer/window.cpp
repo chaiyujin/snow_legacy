@@ -56,8 +56,8 @@ void VisualizerWindow::draw() {
     /* ui */ {
         ImGui::Begin("tools");
         if (ImGui::Button("reset camera")) mCamera.reset();
-        if (mImageList.size() > 1) {
-            ImGui::SliderInt("Frame", &mToShow, 0, (int)mImageList.size() - 1);
+        if (mLandmarksList.size() > 1) {
+            ImGui::SliderInt("Frame", &mToShow, 0, (int)mLandmarksList.size() - 1);
         }
         if (mImageShaderPtr) { ImGui::Checkbox("image",       &mShowImage); }
         if (mImageShaderPtr && mLandsShaderPtr) ImGui::SameLine();
