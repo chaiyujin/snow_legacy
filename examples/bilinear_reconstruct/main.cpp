@@ -12,53 +12,56 @@
 
 int main() {
     const std::string RootFaceDB = "../../../assets/fw/";
-    const std::string RootVideo  = "../../../assets/test_depth/";
-
-    auto fileList = snow::path::FindFiles(RootVideo, "*", true);
-    for (auto &str: fileList) {
-        std::cout << "Find file " << str << std::endl;
-    }
-    return 0;
-
+    const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
     FaceDB::Initialize(RootFaceDB);
-    librealsense::RealSenseSource rsdevice("../../../assets/test_depth/1-0-1.mkv_params_stream-1");
-    glm::dmat4 PVM = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
     
-    BilinearModel model;
-    model.appendModel();
-    model.prepareAllModel();
-
+    std::vector<glm::dmat4> viewMatList;
+    std::vector<glm::dmat4> projMatList;
+    
     FramesSolver solver;
-    int Frames = 20;
-    int Delta = 1;
-    {
-        std::ifstream fin("../../../assets/test_depth/1-0-1.mkv_lmrecord");
-        for (int iFrame = 0; iFrame < Frames; ++iFrame) {
-            Landmarks lms;
-            for (int i = 0; i < Delta; ++i)
-                fin >> lms;
-            solver.addFrame(lms.landmarks(), PVM);
+    int Frames = 0;
+    // auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d\\-\\d\\-\\d).mkv"), true);
+    auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-0-1.mkv"), true);
+    for (const auto &filePath: fileList) {
+        auto pathParams    = filePath + "_params_stream-1";
+        auto pathLandmarks = filePath + "_lmrecord";
+        if (!snow::path::Exists({pathParams, pathLandmarks})) continue;
+
+        std::cout << "Find video: " << filePath << std::endl;
+        glm::dmat4 PVM(1.0);
+        /* read params */ {
+            librealsense::RealSenseSource rsdevice(filePath + "_params_stream-1");
+            PVM = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
+            viewMatList.push_back(rsdevice.viewMat());
+            projMatList.push_back(rsdevice.colorProjectionMat());
         }
-        fin.close();
+        /* read first landmarks */ {
+            std::ifstream fin(filePath + "_lmrecord");
+            Landmarks lms;
+            fin >> lms;
+            solver.addFrame(lms.landmarks(), PVM);
+            fin.close();
+        }
+        Frames ++;
     }
-    printf("begin to solve\n");
-    solver.solve(5);
+    {
+        printf("Begin to solve with %d frames\n", Frames);
+        solver.solve(5, true);
+        printf("Solve done.\n");
+    }
 
     snow::App app;
     VisualizerWindow *win = new VisualizerWindow(75, 0, FaceDB::NumVertices(), FaceDB::NumTriangles());
 
-    // append data
+    // visualization
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {    
-        solver.model().transformMesh(iFrame, glm::transpose(rsdevice.viewMat()));
+        solver.model().transformMesh(iFrame, glm::transpose(viewMatList[iFrame]));
         solver.model().updateMorphModel(iFrame);
-        
-        // win->appendImage(rsdevice.colorImg());
+        // append to visualizer        
         win->append2DLandmarks(solver.landmarks(iFrame));
         win->appendMorphModel(solver.model().morphModel());
-        // win->appendPointCloud(rsdevice.pointCloud());
-        // set mats
-        win->appendViewMat(rsdevice.viewMat());
-        win->appendProjMat(rsdevice.colorProjectionMat());
+        win->appendViewMat(viewMatList[iFrame]);
+        win->appendProjMat(projMatList[iFrame]);
     }
 
     app.addWindow(win);

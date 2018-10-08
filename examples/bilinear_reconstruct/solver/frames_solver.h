@@ -13,7 +13,7 @@ class FramesSolver {
 public:
     FramesSolver() {}
     void addFrame(const std::vector<snow::float2> &landmarks, const glm::dmat4 &pvm);
-    void solve(int epochs);
+    void solve(int epochs, bool verbose=true);
     BilinearModel &model() { return mModel; }
 
     const std::vector<snow::float2> &landmarks(size_t i) const { return mLandmarkList[i]; }

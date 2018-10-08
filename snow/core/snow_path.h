@@ -4,6 +4,7 @@
 #include <string>
 #include <io.h>
 #include <direct.h>
+#include <regex>
 
 namespace snow {
 namespace path {
@@ -26,7 +27,7 @@ inline std::string Join(const std::string &dirname, const std::string &basename)
     }
     else return basename;
 }
-inline std::vector<std::string> FindFiles(const std::string &rootdir, const std::string &pattern, bool recursive) {
+inline std::vector<std::string> FindFiles(const std::string &rootdir, const std::regex &pattern=std::regex("(.*)"), bool recursive=true) {
     char currentPath[2048];
     _getcwd(currentPath, 2048);
     _chdir(rootdir.c_str());
@@ -39,9 +40,10 @@ inline std::vector<std::string> FindFiles(const std::string &rootdir, const std:
         do {
             // if not a directory, insert into result
             if (!(info.attrib & _A_SUBDIR)) {
-                std::string file_path = snow::path::Join(rootdir, info.name);
-                results.emplace_back(file_path);
-                // printf("Find file: %s\n", file_path.c_str());
+                if (std::regex_match(info.name, pattern)) {
+                    std::string file_path = snow::path::Join(rootdir, info.name);
+                    results.emplace_back(file_path);
+                }
             }
         } while (_findnext(handle, &info) == 0);
         _findclose(handle);
