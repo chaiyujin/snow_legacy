@@ -55,32 +55,57 @@ inline std::pair<double, glm::dvec4>criterion2D(
         throw std::runtime_error("error contour2d.");
 }
 
-#define PoseScaleForward(iR, iT, iS, PVM, Source) \
-    RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);\
-    Translate  translate(params[iT][0], params[iT][1], params[iT][2]);\
-    Scale      scale    (params[iS][0]);\
-    Project    project  (PVM);\
-    Sequential seq;\
-    seq.addModule(&scale);\
-    seq.addModule(&rotateYXZ);\
-    seq.addModule(&translate);\
-    seq.addModule(&project);\
-    auto Q       = seq.forward(Source);\
-    auto point   = glm::dvec2{Q.x, Q.y};
-#define PoseScaleBackward(iR, iT, iS, GradIn) \
-    seq.backward(GradIn);\
-    if (jacobians && jacobians[iR]) {\
-        std::vector<double> grad = rotateYXZ.grad();\
-        jacobians[iR][0] = grad[0]; jacobians[iR][1] = grad[1]; jacobians[iR][2] = grad[2];\
-    }\
-    if (jacobians && jacobians[iT]) {\
-        std::vector<double> grad = translate.grad();\
-        jacobians[iT][0] = grad[0]; jacobians[iT][1] = grad[1]; jacobians[iT][2] = grad[2];\
-    }\
-    if (jacobians && jacobians[iS]) {\
-        std::vector<double> grad = scale.grad();\
-        jacobians[iS][0] = grad[0];\
+struct PoseCost2D : public ceres::SizedCostFunction<1, 3, 3> {
+    CriterionPointToPoint2D *mPointPtr;
+    std::vector<glm::dvec2> *mContourPtr;
+    double                   mWeightPoint;
+    double                   mWeightContour;
+    glm::dvec4               mSource;
+    glm::dmat4               mPVM;
+    
+    PoseCost2D(const glm::dvec2 *pointConstraint, double weightPoint,
+               const std::vector<glm::dvec2> *contourConstraint, double weightContour,
+               const glm::dvec3 &source3d, const glm::dmat4 &pvm)
+        : mPointPtr(nullptr), mContourPtr(nullptr)
+        , mWeightPoint(weightPoint), mWeightContour(weightContour)
+        , mSource(source3d.x, source3d.y, source3d.z, 1.0)
+        , mPVM(pvm) {
+        if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
+        if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
+        if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
+            throw std::runtime_error("only point constraint or only contour constraint at once.");
+        }
     }
+    ~PoseCost2D() { delete mPointPtr; delete mContourPtr; }
+
+    virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
+        const int iR = 0, iT = 1;
+        RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);
+        Translate  translate(params[iT][0], params[iT][1], params[iT][2]);
+        Project    project  (mPVM);
+        Sequential seq;
+        seq.addModule(&rotateYXZ);
+        seq.addModule(&translate);
+        seq.addModule(&project);
+        auto Q       = seq.forward(mSource);
+        auto point   = glm::dvec2{Q.x, Q.y};
+        
+        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        residuals[0] = res.first;
+        glm::dvec4 gradIn = res.second;
+        
+        seq.backward(gradIn);
+        if (jacobians && jacobians[iR]) {
+            std::vector<double> grad = rotateYXZ.grad();
+            jacobians[iR][0] = grad[0]; jacobians[iR][1] = grad[1]; jacobians[iR][2] = grad[2];
+        }
+        if (jacobians && jacobians[iT]) {
+            std::vector<double> grad = translate.grad();
+            jacobians[iT][0] = grad[0]; jacobians[iT][1] = grad[1]; jacobians[iT][2] = grad[2];
+        }
+        return true;
+    }
+};
 
 struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
     CriterionPointToPoint2D *mPointPtr;
@@ -93,19 +118,12 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
     PoseScaleCost2D(const glm::dvec2 *pointConstraint, double weightPoint,
                     const std::vector<glm::dvec2> *contourConstraint, double weightContour,
                     const glm::dvec3 &source3d, const glm::dmat4 &pvm)
-        : mPointPtr(nullptr)
-        , mContourPtr(nullptr)
-        , mWeightPoint(weightPoint)
-        , mWeightContour(weightContour)
+        : mPointPtr(nullptr), mContourPtr(nullptr)
+        , mWeightPoint(weightPoint), mWeightContour(weightContour)
         , mSource(source3d.x, source3d.y, source3d.z, 1.0)
         , mPVM(pvm) {
-        if (pointConstraint) {
-            mPointPtr = new CriterionPointToPoint2D(*pointConstraint, weightPoint);
-        }
-        if (contourConstraint) {
-            mContourPtr = new std::vector<glm::dvec2>();
-            *mContourPtr = *contourConstraint;
-        }
+        if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
+        if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
             throw std::runtime_error("only point constraint or only contour constraint at once.");
         }
@@ -113,18 +131,39 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
     ~PoseScaleCost2D() { delete mPointPtr; delete mContourPtr; }
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
-        // from parameter
-        PoseScaleForward(0, 1, 2, mPVM, mSource);
+        const int iR = 0, iT = 1, iS = 2;
+        RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);
+        Translate  translate(params[iT][0], params[iT][1], params[iT][2]);
+        Scale      scale    (params[iS][0]);
+        Project    project  (mPVM);
+        Sequential seq;
+        seq.addModule(&scale);
+        seq.addModule(&rotateYXZ);
+        seq.addModule(&translate);
+        seq.addModule(&project);
+        auto Q       = seq.forward(mSource);
+        auto point   = glm::dvec2{Q.x, Q.y};
+        
         auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
         residuals[0] = res.first;
         glm::dvec4 gradIn = res.second;
-        PoseScaleBackward(0, 1, 2, gradIn);
+         
+        seq.backward(gradIn);
+        if (jacobians && jacobians[iR]) {
+            std::vector<double> grad = rotateYXZ.grad();
+            jacobians[iR][0] = grad[0]; jacobians[iR][1] = grad[1]; jacobians[iR][2] = grad[2];
+        }
+        if (jacobians && jacobians[iT]) {
+            std::vector<double> grad = translate.grad();
+            jacobians[iT][0] = grad[0]; jacobians[iT][1] = grad[1]; jacobians[iT][2] = grad[2];
+        }
+        if (jacobians && jacobians[iS]) {
+            std::vector<double> grad = scale.grad();
+            jacobians[iS][0] = grad[0];
+        }
         return true;
     }
 };
-
-#undef PoseScaleForward
-#undef PoseScaleBackward
 
 struct IdenExprScaleCost2D : public ceres::CostFunction {
     CriterionPointToPoint2D *mPointPtr;

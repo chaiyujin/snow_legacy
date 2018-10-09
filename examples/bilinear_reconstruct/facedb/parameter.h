@@ -2,6 +2,8 @@
 
 #include <snow.h>
 #include <iostream>
+#include <iomanip>
+#include <limits>
 #include "tensor.h"
 #include "facedb.h"
 
@@ -69,9 +71,25 @@ public:
 #undef getR
 };
 inline std::ostream &operator<<(std::ostream &out, const PoseParameter &param) {
-    out << "rotateYXZ: [" << param.rotateYXZ()[0] << ", " << param.rotateYXZ()[1] << ", " << param.rotateYXZ()[2] << "]\n"
-        << "translate: [" << param.translate()[0] << ", " << param.translate()[1] << ", " << param.translate()[2] << "]\n";
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "rotateYXZ: [ " << std::setw(32) << param.rotateYXZ()[0] << " , " << std::setw(32) << param.rotateYXZ()[1] << " , " << std::setw(32) << param.rotateYXZ()[2] << " ]\n"
+        << "translate: [ " << std::setw(32) << param.translate()[0] << " , " << std::setw(32) << param.translate()[1] << " , " << std::setw(32) << param.translate()[2] << " ]\n";
     return out;
+}
+inline std::istream &operator>>(std::istream &in, PoseParameter &param) {
+    std::string str;
+    in >> str; if (str != "rotateYXZ:") { printf("[pose]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.trainRotateYXZ()[0] >> str >> param.trainRotateYXZ()[1] >> str >> param.trainRotateYXZ()[2];
+    std::getline(in, str);
+
+    in >> str; if (str != "translate:") { printf("[pose]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.trainTranslate()[0] >> str >> param.trainTranslate()[1] >> str >> param.trainTranslate()[2];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
 }
 
 class ScaleParameter: public Parameter {
@@ -86,8 +104,19 @@ public:
     }
 };
 inline std::ostream &operator<<(std::ostream &out, const ScaleParameter &param) {
-    out << "scale: [" << param.param()[0] << "]\n";
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "scale:     [ " << std::setw(32) << param.param()[0] << " ]\n";
     return out;
+}
+inline std::istream &operator>>(std::istream &in, ScaleParameter &param) {
+    std::string str;
+    in >> str; if (str != "scale:") { printf("[scale]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.train()[0];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
 }
 
 class IdenParameter : public Parameter {
@@ -99,13 +128,43 @@ public:
         memset(mParamPtr, 0, sizeof(double) * Length);
         memset(mTrainPtr, 0, sizeof(double) * Length);
         mParamPtr[0] = mTrainPtr[0] = 1;
-    }
-    
+    }  
 };
+inline std::ostream &operator<<(std::ostream &out, const IdenParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "iden: " << std::setw(2) << IdenParameter::Length << "   [ ";
+    for (int i = 0; i < IdenParameter::Length; ++i) {
+        out << std::setw(32) << param.param()[i];
+        if (i + 1 < IdenParameter::Length) {
+            out << " , ";
+            if (i % 5 == 4) out << "\n             ";
+        } else {
+            out << " ]\n";
+        }
+    }
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, IdenParameter &param) {
+    std::string str;
+    int len;
+    in >> str; if (str != "iden:")               { printf("[iden]: error at istream >>"); exit(1); };
+    in >> len; if (len != IdenParameter::Length) { printf("[iden]: error at istream >>: length is different"); exit(1); }
+    for (int i = 0; i < IdenParameter::Length; ++i)
+        in >> str >> param.train()[i];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}
 
 class ExprParameter : public Parameter {
 public:
-    static const int Length      = FaceDB::LengthExpression;
+    static const int  Length      = FaceDB::LengthExpression;
+#ifdef PARAMETER_FACS
+    static const char Type        = 'F';
+#else
+    static const char Type        = 'E';
+#endif
 
     ExprParameter() : Parameter(Length) { reset(); }
 
@@ -140,3 +199,31 @@ public:
         return grad;
     }
 };
+
+inline std::ostream &operator<<(std::ostream &out, const ExprParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "expr: " << ExprParameter::Type << " " << std::setw(2) << ExprParameter::Length << " [ ";
+    for (int i = 0; i < ExprParameter::Length; ++i) {
+        out << std::setw(32) << param.param()[i];
+        if (i + 1 < ExprParameter::Length) {
+            out << " , ";
+            if (i % 5 == 4) out << "\n             ";
+        } else {
+            out << " ]\n";
+        }
+    }
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, ExprParameter &param) {
+    std::string str; char typ;
+    int len;
+    in >> str; if (str != "expr:")               { printf("[expr]: error at istream >>"); exit(1); };
+    in >> typ; if (typ != ExprParameter::Type)   { printf("[expr]: error at istream >>: type is different"); exit(1); };
+    in >> len; if (len != ExprParameter::Length) { printf("[expr]: error at istream >>: length is different"); exit(1); }
+    for (int i = 0; i < ExprParameter::Length; ++i)
+        in >> str >> param.train()[i];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}

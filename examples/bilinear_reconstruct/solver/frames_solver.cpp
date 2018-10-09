@@ -2,7 +2,7 @@
 
 #define NUM_THREADS 1
 
-void FramesSolver::addFrame(const std::vector<snow::float2> &landmarks, const glm::dmat4 &pvm) {
+void FramesSolver::addFrame(const Landmarks &landmarks, const glm::dmat4 &pvm) {
     std::vector<glm::dvec2> landmarkContour;
     for (int i = 0; i < 15; ++i) { landmarkContour.push_back({ landmarks[i].x, landmarks[i].y }); }
     mContourList.push_back(landmarkContour);
@@ -89,7 +89,7 @@ void FramesSolver::solve(int epochs, bool verbose) {
                 auto pvm = mPVMList[iMesh];
                 for (size_t idx: contourIndexList[iMesh]) {
                     auto *cost = new IdenExprScalePoseCost2D(nullptr, 0.0, &mContourList[iMesh], weightContour,
-                                                             FaceDB::CoreTensor(), idx, pvm);
+                                                             FaceDB::CoreTensor(), (int)idx, pvm);
                     problem.AddResidualBlock(cost, nullptr,
                                              mModel.idenParameter().train()      + 1,
                                              mModel.exprParameter(iMesh).train() + 1,
@@ -101,7 +101,7 @@ void FramesSolver::solve(int epochs, bool verbose) {
                     int idx = FaceDB::Landmarks73()[iLM];
                     auto constraint = glm::dvec2 {mLandmarkList[iMesh][iLM].x, mLandmarkList[iMesh][iLM].y};
                     auto *cost = new IdenExprScalePoseCost2D(&constraint, weightPoint, nullptr, 0.0,
-                                                             FaceDB::CoreTensor(), idx, pvm);
+                                                             FaceDB::CoreTensor(), (int)idx, pvm);
                     problem.AddResidualBlock(cost, nullptr,
                                              mModel.idenParameter().train()      + 1,
                                              mModel.exprParameter(iMesh).train() + 1,
@@ -115,7 +115,7 @@ void FramesSolver::solve(int epochs, bool verbose) {
             //     auto tr  = mModel.poseParameter(iMesh).matT() * mModel.poseParameter(iMesh).matR(); 
             //     for (size_t idx: contourIndexList[iMesh]) {
             //         auto *cost = new IdenExprScaleCost2D(nullptr, 0.0, &mContourList[iMesh], weightContour,
-            //                                              FaceDB::CoreTensor(), idx, pvm * tr);
+            //                                              FaceDB::CoreTensor(), (int)idx, pvm * tr);
             //         problem.AddResidualBlock(cost, nullptr,
             //                                  mModel.idenParameter().train() + 1,
             //                                  mModel.exprParameter(iMesh).train() + 1,
@@ -125,7 +125,7 @@ void FramesSolver::solve(int epochs, bool verbose) {
             //         int idx = FaceDB::Landmarks73()[iLM];
             //         auto constraint = glm::dvec2 {mLandmarkList[iMesh][iLM].x, mLandmarkList[iMesh][iLM].y};
             //         auto *cost = new IdenExprScaleCost2D(&constraint, weightPoint, nullptr, 0.0,
-            //                                              FaceDB::CoreTensor(), idx, pvm * tr);
+            //                                              FaceDB::CoreTensor(), (int)idx, pvm * tr);
             //         problem.AddResidualBlock(cost, nullptr,
             //                                  mModel.idenParameter().train() + 1,
             //                                  mModel.exprParameter(iMesh).train() + 1,
