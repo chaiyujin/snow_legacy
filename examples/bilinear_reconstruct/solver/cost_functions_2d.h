@@ -68,8 +68,7 @@ struct PoseCost2D : public ceres::SizedCostFunction<1, 3, 3> {
                const glm::dvec3 &source3d, const glm::dmat4 &pvm)
         : mPointPtr(nullptr), mContourPtr(nullptr)
         , mWeightPoint(weightPoint), mWeightContour(weightContour)
-        , mSource(source3d.x, source3d.y, source3d.z, 1.0)
-        , mPVM(pvm) {
+        , mSource(source3d.x, source3d.y, source3d.z, 1.0), mPVM(pvm) {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
@@ -80,20 +79,19 @@ struct PoseCost2D : public ceres::SizedCostFunction<1, 3, 3> {
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iR = 0, iT = 1;
+        // forward
         RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);
         Translate  translate(params[iT][0], params[iT][1], params[iT][2]);
         Project    project  (mPVM);
         Sequential seq;
-        seq.addModule(&rotateYXZ);
-        seq.addModule(&translate);
-        seq.addModule(&project);
+        seq.addModule(&rotateYXZ); seq.addModule(&translate); seq.addModule(&project);
         auto Q       = seq.forward(mSource);
         auto point   = glm::dvec2{Q.x, Q.y};
-        
-        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        // criterion
+        auto res     = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
         residuals[0] = res.first;
         glm::dvec4 gradIn = res.second;
-        
+        // grads
         seq.backward(gradIn);
         if (jacobians && jacobians[iR]) {
             std::vector<double> grad = rotateYXZ.grad();
@@ -120,8 +118,7 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
                     const glm::dvec3 &source3d, const glm::dmat4 &pvm)
         : mPointPtr(nullptr), mContourPtr(nullptr)
         , mWeightPoint(weightPoint), mWeightContour(weightContour)
-        , mSource(source3d.x, source3d.y, source3d.z, 1.0)
-        , mPVM(pvm) {
+        , mSource(source3d.x, source3d.y, source3d.z, 1.0), mPVM(pvm) {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
@@ -132,22 +129,19 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iR = 0, iT = 1, iS = 2;
+        // forward
         RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);
         Translate  translate(params[iT][0], params[iT][1], params[iT][2]);
         Scale      scale    (params[iS][0]);
         Project    project  (mPVM);
-        Sequential seq;
-        seq.addModule(&scale);
-        seq.addModule(&rotateYXZ);
-        seq.addModule(&translate);
-        seq.addModule(&project);
+        Sequential seq; seq.addModule(&scale); seq.addModule(&rotateYXZ); seq.addModule(&translate); seq.addModule(&project);
         auto Q       = seq.forward(mSource);
         auto point   = glm::dvec2{Q.x, Q.y};
-        
-        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        // criterion
+        auto res     = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
         residuals[0] = res.first;
         glm::dvec4 gradIn = res.second;
-         
+        // grads
         seq.backward(gradIn);
         if (jacobians && jacobians[iR]) {
             std::vector<double> grad = rotateYXZ.grad();
@@ -165,6 +159,86 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
     }
 };
 
+struct ExprPoseCost2D : public ceres::CostFunction {
+    CriterionPointToPoint2D *mPointPtr;
+    std::vector<glm::dvec2> *mContourPtr;
+    double                   mWeightPoint;
+    double                   mWeightContour;
+    Tensor3                  mTv1e;
+    glm::dmat4               mPVM;
+    double                   mScale;
+    ExprPoseCost2D(const glm::dvec2 *pointConstraint, double weightPoint,
+                   const std::vector<glm::dvec2> *contourConstraint, double weightContour,
+                   const Tensor3 &tv1e, int vertIndex,
+                   const glm::dmat4 &pvm, double scale)
+        : mPointPtr(nullptr), mContourPtr(nullptr)
+        , mWeightPoint(weightPoint), mWeightContour(weightContour)
+        , mTv1e(tv1e, vertIndex * 3, 3), mPVM(pvm), mScale(scale) {
+        if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
+        if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
+        if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
+            throw std::runtime_error("only point constraint or only contour constraint at once.");
+        mutable_parameter_block_sizes()->clear();
+        mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
+        mutable_parameter_block_sizes()->push_back(3);
+        mutable_parameter_block_sizes()->push_back(3);
+        set_num_residuals(1);
+    }
+    virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
+        const int iE = 0, iR = 1, iT = 2;
+        std::vector<double> expr(FaceDB::LengthExpression); expr[0] = 1.0;
+        memcpy(&expr[1], params[iE], sizeof(double) * (FaceDB::LengthExpression - 1));
+        // bilinear
+        Tensor3 tv11;
+#ifdef PARAMETER_FACS
+        auto facs = ExprParameter::FACS2Expr(expr.data());
+        mTv1e.mulVec<2> (facs.data(), tv11);
+#else
+        mTv1e.mulVec<2> (expr.data(), tv11);
+#endif
+        glm::dvec4 P = { *tv11.data(0), *tv11.data(1), *tv11.data(2), 1.0 };
+        Scale      scale    (mScale);
+        RotateYXZ  rotateYXZ(params[iR][0], params[iR][1], params[iR][2]);
+        Translate  translate(params[iT][0], params[iT][1], params[iT][2]);
+        Project    project  (mPVM);
+        Sequential seq; seq.addModule(&scale); seq.addModule(&rotateYXZ); seq.addModule(&translate); seq.addModule(&project);
+        auto Q     = seq.forward(P);
+        auto point = glm::dvec2 { Q.x, Q.y };
+
+        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        residuals[0] = res.first;
+        glm::dvec4 gradIn = res.second;
+
+        glm::dvec4 tensorGradIn = seq.backward(gradIn);
+        if (jacobians && jacobians[iR]) {
+            std::vector<double> grad = rotateYXZ.grad();
+            jacobians[iR][0] = grad[0]; jacobians[iR][1] = grad[1]; jacobians[iR][2] = grad[2];
+        }
+        if (jacobians && jacobians[iT]) {
+            std::vector<double> grad = translate.grad();
+            jacobians[iT][0] = grad[0]; jacobians[iT][1] = grad[1]; jacobians[iT][2] = grad[2];
+        }
+        if (jacobians && jacobians[iE]) {
+            Tensor3 grad;
+            mTv1e.mulVec<0>(glm::value_ptr(tensorGradIn), grad);
+            std::vector<double> exprGrad(grad.shape(2));
+            for (int i = 0; i < grad.shape(2); ++i) exprGrad[i] = *grad.data(0, 0, i);
+            exprGrad[0] = 0;
+#ifdef PARAMETER_FACS
+            auto facsGrad = ExprParameter::DiffFACS2Expr(exprGrad.data());
+            for (int i = 1; i < facsGrad.size(); ++i) {
+                jacobians[iE][i - 1] = facsGrad[i];
+            }
+#else
+            for (int i = 1; i < grad.shape(2); ++i) {
+                jacobians[iE][i - 1] = exprGrad[i];
+            }
+#endif
+        }
+        return true;
+    }
+};
+
 struct IdenExprScaleCost2D : public ceres::CostFunction {
     CriterionPointToPoint2D *mPointPtr;
     std::vector<glm::dvec2> *mContourPtr;
@@ -177,22 +251,13 @@ struct IdenExprScaleCost2D : public ceres::CostFunction {
                         const std::vector<glm::dvec2> *contourConstraint, double weightContour,
                         const Tensor3 &tvie, int vertIndex,
                         const glm::dmat4 &pvm)
-        : mPointPtr(nullptr)
-        , mContourPtr(nullptr)
-        , mWeightPoint(weightPoint)
-        , mWeightContour(weightContour)
-        , mCore(tvie, vertIndex * 3, 3)
-        , mPVM(pvm) {
-        if (pointConstraint) {
-            mPointPtr = new CriterionPointToPoint2D(*pointConstraint, weightPoint);
-        }
-        if (contourConstraint) {
-            mContourPtr = new std::vector<glm::dvec2>();
-            *mContourPtr = *contourConstraint;
-        }
-        if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
+        : mPointPtr(nullptr), mContourPtr(nullptr)
+        , mWeightPoint(weightPoint), mWeightContour(weightContour)
+        , mCore(tvie, vertIndex * 3, 3), mPVM(pvm) {
+        if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
+        if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
+        if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
             throw std::runtime_error("only point constraint or only contour constraint at once.");
-        }
         mutable_parameter_block_sizes()->clear();
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthIdentity   - 1);
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
@@ -208,9 +273,7 @@ struct IdenExprScaleCost2D : public ceres::CostFunction {
         memcpy(&iden[1], params[iI], sizeof(double) * (FaceDB::LengthIdentity   - 1));
         memcpy(&expr[1], params[iE], sizeof(double) * (FaceDB::LengthExpression - 1));
         // bilinear
-        Tensor3 tv1e;
-        Tensor3 tvi1;
-        Tensor3 tv11;
+        Tensor3 tv1e, tvi1, tv11;
         mCore.mulVec<1>(iden.data(), tv1e);
 #ifdef PARAMETER_FACS
         auto facs = ExprParameter::FACS2Expr(expr.data());
@@ -279,12 +342,9 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
                             const std::vector<glm::dvec2> *contourConstraint, double weightContour,
                             const Tensor3 &tvie, int vertIndex,
                             const glm::dmat4 &pvm)
-        : mPointPtr(nullptr)
-        , mContourPtr(nullptr)
-        , mWeightPoint(weightPoint)
-        , mWeightContour(weightContour)
-        , mCore(tvie, vertIndex * 3, 3)
-        , mPVM(pvm) {
+        : mPointPtr(nullptr), mContourPtr(nullptr)
+        , mWeightPoint(weightPoint), mWeightContour(weightContour)
+        , mCore(tvie, vertIndex * 3, 3), mPVM(pvm) {
         if (pointConstraint)    { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
         if (contourConstraint)  { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
@@ -306,9 +366,7 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
         memcpy(&iden[1], params[iI], sizeof(double) * (FaceDB::LengthIdentity   - 1));
         memcpy(&expr[1], params[iE], sizeof(double) * (FaceDB::LengthExpression - 1));
         // bilinear
-        Tensor3 tv1e;
-        Tensor3 tvi1;
-        Tensor3 tv11;
+        Tensor3 tv1e, tvi1, tv11;
         mCore.mulVec<1>(iden.data(), tv1e);
 #ifdef PARAMETER_FACS
         auto facs = ExprParameter::FACS2Expr(expr.data());

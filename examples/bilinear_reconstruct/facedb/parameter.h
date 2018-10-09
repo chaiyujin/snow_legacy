@@ -13,12 +13,14 @@ protected:
     double * mParamPtr;
     double * mTrainPtr;
     int      mLength;
-    Parameter(const Parameter &) {}
 public:
     Parameter(int length)
         : mParamPtr(gArena.alloc<double>(length))
         , mTrainPtr(gArena.alloc<double>(length))
-        , mLength(length) { }
+        , mLength(length) {}
+    Parameter(const Parameter &param) : Parameter(param.mLength) {
+        copyFrom(&param);
+    }
     virtual ~Parameter() {
         gArena.free<double>(mParamPtr);
         gArena.free<double>(mTrainPtr);
@@ -46,6 +48,10 @@ public:
     static const int LengthRotateYXZ = 3;
     static const int LengthTranslate = 3;
     PoseParameter(): Parameter(Length) { reset(); }
+    PoseParameter(const PoseParameter &param) : PoseParameter() {
+        copyFrom(&param);
+    }
+
     void reset() {
         memset(mTrainPtr, 0, sizeof(double) * Length);
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -96,6 +102,9 @@ class ScaleParameter: public Parameter {
 public:
     static const int Length = 1;
     ScaleParameter() : Parameter(Length) { reset(); }
+    ScaleParameter(const ScaleParameter &param) : ScaleParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -123,6 +132,9 @@ class IdenParameter : public Parameter {
 public:
     static const int Length  = FaceDB::LengthIdentity;
     IdenParameter() : Parameter(Length) { reset(); }
+    IdenParameter(const IdenParameter &param) : IdenParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -167,6 +179,9 @@ public:
 #endif
 
     ExprParameter() : Parameter(Length) { reset(); }
+    ExprParameter(const ExprParameter &param) : ExprParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);

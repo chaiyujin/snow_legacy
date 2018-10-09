@@ -12,7 +12,8 @@
 #include <snow.h>
 
 const std::string RootFaceDB = "../../../assets/fw/";
-const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+// const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
 
 void usage();
 void solveIden(bool visualize);
@@ -141,7 +142,7 @@ void solveVideo(std::string videoPath, bool visualize) {
     }
     {
         std::cout << "Begin to solve " << solver.landmarksList().size() << " frames from video: " << videoPath << std::endl;
-        solver.solve(5, true);
+        solver.solve(5, false);
         std::cout << "Done." << std::endl;
     }
     if (visualize) {

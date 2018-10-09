@@ -2,14 +2,11 @@
 #include <vector>
 #include <fstream>
 #include <string>
-#ifdef __APPLE__
-#include <sys/uio.h>
-#else
-#include <io.h>
-#endif
 #ifdef _WIN32
 #include <direct.h>
+#include <io.h>
 #else
+#include <sys/uio.h>
 #include <unistd.h>
 #include <dirent.h>
 #endif
