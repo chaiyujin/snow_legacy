@@ -82,65 +82,64 @@ void VisualizerWindow::draw() {
     /* drawing */ {
         glm::mat4 viewMat = mCamera.viewMatrix() * mViewMat;
 
-        {
-            // std::vector<snow::float3> cands;
-            // std::vector<size_t> candsIndex;
-            // for (size_t i = 0; i < FaceDB::Contours().size(); ++i) {
-            //     for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j) {
-            //         int idx = FaceDB::Contours()[i][j];
-            //         cands.push_back({
-            //             mModelShaderPtr->pointsPtr()[idx * 8],
-            //             mModelShaderPtr->pointsPtr()[idx * 8+1],
-            //             mModelShaderPtr->pointsPtr()[idx * 8+2]
-            //         });
-            //         candsIndex.push_back(idx);
-            //     }
-            // }
+        // {
+        //     std::vector<snow::float3> cands;
+        //     std::vector<size_t> candsIndex;
+        //     for (size_t i = 0; i < FaceDB::Contours().size(); ++i) {
+        //         for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j) {
+        //             int idx = FaceDB::Contours()[i][j];
+        //             cands.push_back({
+        //                 mModelShaderPtr->pointsPtr()[idx * 8],
+        //                 mModelShaderPtr->pointsPtr()[idx * 8+1],
+        //                 mModelShaderPtr->pointsPtr()[idx * 8+2]
+        //             });
+        //             candsIndex.push_back(idx);
+        //         }
+        //     }
             
-            // std::vector<snow::float2> cands2d;
-            // projectToImageSpace(cands, mProjMat, viewMat, mModelMat, cands2d);
-            // auto contour_pair = getContourGrahamScan(cands2d);
-            // std::vector<snow::float2> finalContour;
-            // {
-            //     for (size_t i = 0, k=0; i < FaceDB::Contours().size(); ++i) {
-            //         double compare = 0;
-            //         int select = -1;
-            //         for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j, ++k) {
-            //             int idx = FaceDB::Contours()[i][j];
-            //             if (i < 10) {
-            //                 if (select < 0 || cands2d[k].x < compare) {
-            //                     compare = cands2d[k].x;
-            //                     select = k;
-            //                 }
-            //             }
-            //             else if (i >= FaceDB::Contours().size() - 10) {
-            //                 if (select < 0 || cands2d[k].x > compare) {
-            //                     compare = cands2d[k].x;
-            //                     select = k;
-            //                 }
-            //             }
-            //             else {
-            //                 for (size_t li = 0; li < contour_pair.first.size() - 1; ++li) {
-            //                     double dist = PointToLine2D::sqrDistance(
-            //                         cands2d[k].x, cands2d[k].y,
-            //                         contour_pair.first[li].x,
-            //                         contour_pair.first[li].y,
-            //                         contour_pair.first[li+1].x,
-            //                         contour_pair.first[li+1].y
-            //                     );
-            //                     if (select < 0 || dist < compare) {
-            //                         compare = dist;
-            //                         select = k;
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //         if (select >= 0) finalContour.push_back(cands2d[select]);
-            //     }
-            // }
-            // std::cout << finalContour.size() << std::endl;
-            // set2DLandmarks(finalContour);
-        }
+        //     std::vector<snow::float2> cands2d;
+        //     projectToImageSpace(cands, mProjMat, viewMat, mModelMat, cands2d);
+        //     auto contour_pair = getContourGrahamScan(cands2d);
+        //     std::vector<snow::float2> finalContour;
+        //     {
+        //         for (size_t i = 0, k=0; i < FaceDB::Contours().size(); ++i) {
+        //             double compare = 0;
+        //             int select = -1;
+        //             for (size_t j = 0; j < FaceDB::Contours()[i].size(); ++j, ++k) {
+        //                 int idx = FaceDB::Contours()[i][j];
+        //                 if (i < 10) {
+        //                     if (select < 0 || cands2d[k].x < compare) {
+        //                         compare = cands2d[k].x;
+        //                         select = k;
+        //                     }
+        //                 }
+        //                 else if (i >= FaceDB::Contours().size() - 10) {
+        //                     if (select < 0 || cands2d[k].x > compare) {
+        //                         compare = cands2d[k].x;
+        //                         select = k;
+        //                     }
+        //                 }
+        //                 else {
+        //                     for (size_t li = 0; li < contour_pair.first.size() - 1; ++li) {
+        //                         double dist = PointToLine2D::sqrDistance(
+        //                             cands2d[k].x, cands2d[k].y,
+        //                             contour_pair.first[li].x,
+        //                             contour_pair.first[li].y,
+        //                             contour_pair.first[li+1].x,
+        //                             contour_pair.first[li+1].y
+        //                         );
+        //                         if (select < 0 || dist < compare) {
+        //                             compare = dist;
+        //                             select = k;
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //             if (select >= 0) finalContour.push_back(cands2d[select]);
+        //         }
+        //     }
+        //     set2DLandmarks(finalContour);
+        // }
 
         // image
         if (mImageShaderPtr && mShowImage) { glClear(GL_DEPTH_BUFFER_BIT); mImageShaderPtr->use(); mImageShaderPtr->draw(); }

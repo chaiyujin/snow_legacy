@@ -89,7 +89,7 @@ public:
         double dry = glm::dot(mGradIn, dRy * Rx * Rz * mInput);
         double drx = glm::dot(glm::transpose(Ry) * mGradIn, dRx * Rz * mInput);
         double drz = glm::dot(glm::transpose(Rx) * glm::transpose(Ry) * mGradIn, dRz * mInput);
-        return { dry, drx, drx };
+        return { dry, drx, drz };
     }
 };
 
@@ -98,7 +98,7 @@ private:
 public:
     Scale(double s) : Transform(glm::scale(glm::dmat4(1.0), glm::dvec3(s, s, s))) {}
     std::vector<double> grad() const {
-        return { mInput.x * mGradIn.x + mInput.y * mGradIn.y + mInput.z * mGradIn.z };
+        return { (mInput.x * mGradIn.x + mInput.y * mGradIn.y + mInput.z * mGradIn.z) / 3.0 };
     }
 };
 

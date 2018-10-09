@@ -2,6 +2,7 @@
 #pragma once
 #include <ceres/ceres.h>
 #include <snow.h>
+#include <map>
 #include "modules.h"
 #include "../tools/math_tools.h"
 
@@ -17,46 +18,41 @@ typedef _Constraint<glm::dvec3> Constraint3D;
  * pointPtr   != nullptr -> the point2point criterion
  * contourPtr != nullptr -> the point2line  criterion
  * */
-inline glm::dvec4 criterion2D(double *residuals,
+inline std::pair<double, glm::dvec4>criterion2D(
                               const glm::dvec2 &inputPoint,
                               const CriterionPointToPoint2D *pointPtr,
                               const std::vector<glm::dvec2> *contourPtr, double weightContour) {
     if (pointPtr) {
-        residuals[0] = pointPtr->forward(inputPoint);
+        double loss  = pointPtr->forward(inputPoint);
         auto grad2   = pointPtr->backward(inputPoint);
-        return {grad2.x, grad2.y, 0., 0.};
+        return {loss, glm::dvec4{grad2.x, grad2.y, 0., 0.}};
     }
-    if (contourPtr) {
+    else if (contourPtr) {
         const std::vector<glm::dvec2> &lms = *contourPtr;
         double distance = 100000;
+        double loss = 0.0;
         int index = 0;
+        snow::double2 grad2;
         /* find line */ 
         for (int k = 0; k < lms.size() - 1; ++k) {
-            double dist2Line  = PointToLine2D::sqrDistance (inputPoint.x, inputPoint.y, lms[k].x, lms[k].y, lms[k + 1].x, lms[k + 1].y);
-            double dist2Point = PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k].x, lms[k].y) +
-                                PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k + 1].x, lms[k + 1].y);
-            double dist = dist2Line + dist2Point;
-            dist = dist2Point;
+            double dist2Line  = PointToLine2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k].x, lms[k].y, lms[k+1].x, lms[k+1].y);
+            double dist = dist2Line;
             if (dist < distance) {
                 index = k;
                 distance = dist;
-                residuals[0] = dist2Line * weightContour;
+                loss = dist * weightContour;
+                
+                grad2 = PointToLine2D::diffSqrDistance(
+                                inputPoint.x, inputPoint.y,
+                                lms[k].x, lms[k].y,
+                                lms[k+1].x, lms[k+1].y) * weightContour;
             }
         }
-        auto grad2 = PointToLine2D::diffSqrDistance(
-                        inputPoint.x, inputPoint.y,
-                        lms[index].x, lms[index].y,
-                        lms[index + 1].x, lms[index + 1].y) * 0.0
-                   + PointToPoint2D::diffSqrDistance(
-                        inputPoint.x, inputPoint.y,
-                        lms[index].x, lms[index].y)  * weightContour / 2.0
-                   + PointToPoint2D::diffSqrDistance(
-                        inputPoint.x, inputPoint.y,
-                        lms[index + 1].x, lms[index + 1].y)  * weightContour / 2.0;
 
-        return {grad2.x, grad2.y, 0., 0.};
+        return {loss, glm::dvec4{grad2.x, grad2.y, 0., 0.}};
     }
-    return glm::dvec4(0.0);
+    else
+        throw std::runtime_error("error contour2d.");
 }
 
 #define PoseScaleForward(iR, iT, iS, PVM, Source) \
@@ -119,7 +115,9 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         // from parameter
         PoseScaleForward(0, 1, 2, mPVM, mSource);
-        glm::dvec4 gradIn = criterion2D(residuals, point, mPointPtr, mContourPtr, mWeightContour);
+        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        residuals[0] = res.first;
+        glm::dvec4 gradIn = res.second;
         PoseScaleBackward(0, 1, 2, gradIn);
         return true;
     }
@@ -127,42 +125,6 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
 
 #undef PoseScaleForward
 #undef PoseScaleBackward
-
-#define IdenExprScaleForward(iI, iE, iS, CoreTensor, PVM)\
-    Tensor3 tv1e;\
-    Tensor3 tvi1;\
-    Tensor3 tv11;\
-    CoreTensor.mulVec<1>(params[iI], tv1e);\
-    CoreTensor.mulVec<2>(params[iE], tvi1);\
-    tv1e.mulVec<2>      (params[iE], tv11);\
-    glm::dvec4 P = { *tv11.data(0), *tv11.data(1), *tv11.data(2), 1.0 };\
-    Scale   scale(params[iS][0]);\
-    Project project(PVM);\
-    Sequential seq;\
-    seq.addModule(&scale);\
-    seq.addModule(&project);\
-    auto Q = seq.forward(P);\
-    auto point = glm::dvec2 { Q.x, Q.y };
-#define IdenExprScaleBackward(iI, iE, iS, GradIn)\
-    glm::dvec4 tensorGradIn = seq.backward(GradIn);\
-    if (jacobians && jacobians[iI]) {\
-        Tensor3 grad;\
-        tvi1.mulVec<0>(glm::value_ptr(tensorGradIn), grad);\
-        for (int i = 0; i < grad.shape(1); ++i) {\
-            jacobians[iI][i] = *grad.data(0, i);\
-        }\
-    }\
-    if (jacobians && jacobians[iE]) {\
-        Tensor3 grad;\
-        tv1e.mulVec<0>(glm::value_ptr(tensorGradIn), grad);\
-        for (int i = 0; i < grad.shape(2); ++i) {\
-            jacobians[iE][i] = *grad.data(0, 0, i);\
-        }\
-    }\
-    if (jacobians && jacobians[iS]) {\
-        std::vector<double> grad = scale.grad();\
-        jacobians[iS][0] = grad[0];\
-    }
 
 struct IdenExprScaleCost2D : public ceres::CostFunction {
     CriterionPointToPoint2D *mPointPtr;
@@ -193,22 +155,78 @@ struct IdenExprScaleCost2D : public ceres::CostFunction {
             throw std::runtime_error("only point constraint or only contour constraint at once.");
         }
         mutable_parameter_block_sizes()->clear();
-        mutable_parameter_block_sizes()->push_back(FaceDB::NumDimIden());
-        mutable_parameter_block_sizes()->push_back(FaceDB::NumDimExpr());
+        mutable_parameter_block_sizes()->push_back(FaceDB::LengthIdentity   - 1);
+        mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
         mutable_parameter_block_sizes()->push_back(1);
         set_num_residuals(1);
     }
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
-        IdenExprScaleForward(0, 1, 2, mCore, mPVM);
-        glm::dvec4 gradIn = criterion2D(residuals, point, mPointPtr, mContourPtr, mWeightContour);
-        IdenExprScaleBackward(0, 1, 2, gradIn);
+        const int iI = 0, iE = 1, iS = 2;
+        std::vector<double> iden(FaceDB::LengthIdentity);
+        std::vector<double> expr(FaceDB::LengthExpression);
+        iden[0] = expr[0] = 1.0;
+        memcpy(&iden[1], params[iI], sizeof(double) * (FaceDB::LengthIdentity   - 1));
+        memcpy(&expr[1], params[iE], sizeof(double) * (FaceDB::LengthExpression - 1));
+        // bilinear
+        Tensor3 tv1e;
+        Tensor3 tvi1;
+        Tensor3 tv11;
+        mCore.mulVec<1>(iden.data(), tv1e);
+#ifdef PARAMETER_FACS
+        auto facs = ExprParameter::FACS2Expr(expr.data());
+        mCore.mulVec<2>(facs.data(), tvi1);
+        tv1e.mulVec<2> (facs.data(), tv11);
+#else
+        mCore.mulVec<2>(expr.data(), tvi1);
+        tv1e.mulVec<2> (expr.data(), tv11);
+#endif
+        glm::dvec4 P = { *tv11.data(0), *tv11.data(1), *tv11.data(2), 1.0 };
+        Scale   scale(params[iS][0]);
+        Project project(mPVM);
+        Sequential seq;
+        seq.addModule(&scale);
+        seq.addModule(&project);
+        auto Q = seq.forward(P);
+        auto point = glm::dvec2 { Q.x, Q.y };
+
+        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        residuals[0] = res.first;
+        glm::dvec4 gradIn = res.second;
+
+        glm::dvec4 tensorGradIn = seq.backward(gradIn);
+        if (jacobians && jacobians[iI]) {
+            Tensor3 grad;
+            tvi1.mulVec<0>(glm::value_ptr(tensorGradIn), grad);
+            for (int i = 1; i < grad.shape(1); ++i) {
+                jacobians[iI][i - 1] = *grad.data(0, i);
+            }
+        }
+        if (jacobians && jacobians[iE]) {
+            Tensor3 grad;
+            tv1e.mulVec<0>(glm::value_ptr(tensorGradIn), grad);
+            std::vector<double> exprGrad(grad.shape(2));
+            for (int i = 0; i < grad.shape(2); ++i) exprGrad[i] = *grad.data(0, 0, i);
+            exprGrad[0] = 0;
+#ifdef PARAMETER_FACS
+            auto facsGrad = ExprParameter::DiffFACS2Expr(exprGrad.data());
+            for (int i = 1; i < facsGrad.size(); ++i) {
+                jacobians[iE][i - 1] = facsGrad[i];
+            }
+#else
+            for (int i = 1; i < grad.shape(2); ++i) {
+                jacobians[iE][i - 1] = exprGrad[i];
+            }
+#endif
+        }
+        if (jacobians && jacobians[iS]) {
+            std::vector<double> grad = scale.grad();
+            jacobians[iS][0] = grad[0];
+        }
         return true;
     }
 };
 
-#undef IdenExprScaleForward
-#undef IdenExprScaleBackward
 
 struct IdenExprScalePoseCost2D : public ceres::CostFunction {    
     CriterionPointToPoint2D *mPointPtr;
@@ -233,8 +251,8 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
             throw std::runtime_error("only point constraint or only contour constraint at once.");
         mutable_parameter_block_sizes()->clear();
-        mutable_parameter_block_sizes()->push_back(FaceDB::NumDimIden());
-        mutable_parameter_block_sizes()->push_back(FaceDB::NumDimExpr());
+        mutable_parameter_block_sizes()->push_back(FaceDB::LengthIdentity   - 1);
+        mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
         mutable_parameter_block_sizes()->push_back(1);
         mutable_parameter_block_sizes()->push_back(3);
         mutable_parameter_block_sizes()->push_back(3);
@@ -243,13 +261,24 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iI = 0, iE = 1, iS = 2, iR = 3, iT = 4;
+        std::vector<double> iden(FaceDB::LengthIdentity);
+        std::vector<double> expr(FaceDB::LengthExpression);
+        iden[0] = expr[0] = 1.0;
+        memcpy(&iden[1], params[iI], sizeof(double) * (FaceDB::LengthIdentity   - 1));
+        memcpy(&expr[1], params[iE], sizeof(double) * (FaceDB::LengthExpression - 1));
         // bilinear
         Tensor3 tv1e;
         Tensor3 tvi1;
         Tensor3 tv11;
-        mCore.mulVec<1>(params[iI], tv1e);
-        mCore.mulVec<2>(params[iE], tvi1);
-        tv1e.mulVec<2> (params[iE], tv11);
+        mCore.mulVec<1>(iden.data(), tv1e);
+#ifdef PARAMETER_FACS
+        auto facs = ExprParameter::FACS2Expr(expr.data());
+        mCore.mulVec<2>(facs.data(), tvi1);
+        tv1e.mulVec<2> (facs.data(), tv11);
+#else
+        mCore.mulVec<2>(expr.data(), tvi1);
+        tv1e.mulVec<2> (expr.data(), tv11);
+#endif
         glm::dvec4 P = { *tv11.data(0), *tv11.data(1), *tv11.data(2), 1.0 };
         // mats
         Scale      scale    (params[iS][0]);
@@ -264,22 +293,34 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
         auto Q       = seq.forward(P);
         auto point   = glm::dvec2{Q.x, Q.y};
 
-        glm::dvec4 gradIn = criterion2D(residuals, point, mPointPtr, mContourPtr, mWeightContour);
+        auto res = criterion2D(point, mPointPtr, mContourPtr, mWeightContour);
+        residuals[0] = res.first;
+        glm::dvec4 gradIn = res.second;
         
         glm::dvec4 tensorGradIn = seq.backward(gradIn);
         if (jacobians && jacobians[iI]) {
             Tensor3 grad;
             tvi1.mulVec<0>(glm::value_ptr(tensorGradIn), grad);
-            for (int i = 0; i < grad.shape(1); ++i) {
-                jacobians[iI][i] = *grad.data(0, i);
+            for (int i = 1; i < grad.shape(1); ++i) {
+                jacobians[iI][i - 1] = *grad.data(0, i);
             }
         }
-        if (jacobians && jacobians[iE]) {
+        if (jacobians && jacobians[iE]) {      
             Tensor3 grad;
             tv1e.mulVec<0>(glm::value_ptr(tensorGradIn), grad);
-            for (int i = 0; i < grad.shape(2); ++i) {
-                jacobians[iE][i] = *grad.data(0, 0, i);
+            std::vector<double> exprGrad(grad.shape(2));
+            for (int i = 0; i < grad.shape(2); ++i) exprGrad[i] = *grad.data(0, 0, i);
+            exprGrad[0] = 0;
+#ifdef PARAMETER_FACS
+            auto facsGrad = ExprParameter::DiffFACS2Expr(exprGrad.data());
+            for (int i = 1; i < facsGrad.size(); ++i) {
+                jacobians[iE][i - 1] = facsGrad[i];
             }
+#else
+            for (int i = 1; i < grad.shape(2); ++i) {
+                jacobians[iE][i - 1] = exprGrad[i];
+            }
+#endif
         }
         if (jacobians && jacobians[iS]) {
             std::vector<double> grad = scale.grad();

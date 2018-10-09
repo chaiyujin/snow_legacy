@@ -12,18 +12,19 @@
 
 int main() {
     const std::string RootFaceDB = "../../../assets/fw/";
-    // const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
-    const std::string RootVideo  = "../../../assets/test_depth/";
+    const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+    // const std::string RootVideo  = "../../../assets/test_depth/";
     FaceDB::Initialize(RootFaceDB);
     
     std::vector<glm::dmat4> viewMatList;
     std::vector<glm::dmat4> projMatList;
-    std::vector<glm::dmat4> pvmMatList;
     
     FramesSolver solver;
+    solver.setRegIden(1e-4);
+    solver.setRegExpr(1e-4);
     int Frames = 0;
     // auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d\\-\\d\\-\\d).mkv"), true);
-    auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-0-1.mkv"), true);
+    auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-[0-2]-1.mkv"), true);
     for (const auto &filePath: fileList) {
         auto pathParams    = filePath + "_params_stream-1";
         auto pathLandmarks = filePath + "_lmrecord";
@@ -34,7 +35,6 @@ int main() {
         /* read params */ {
             librealsense::RealSenseSource rsdevice(filePath + "_params_stream-1");
             PVM = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());
-            pvmMatList.push_back(PVM);
             viewMatList.push_back(rsdevice.viewMat());
             projMatList.push_back(rsdevice.colorProjectionMat());
         }

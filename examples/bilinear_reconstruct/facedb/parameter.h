@@ -126,8 +126,17 @@ public:
     }
     static void FACS2Expr(const double *facs, double *expr) {
         Eigen::VectorXd E_BS = Eigen::Map<const Eigen::Matrix<double, -1, 1>>(facs, FaceDB::ExprUT().cols());
-        // E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#ifdef USE_50_25
+        E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#else
         E_BS[0] = 1;
+#endif
         memcpy(expr, E_BS.data(), sizeof(double) * E_BS.size());
+    }
+    static Eigen::VectorXd DiffFACS2Expr(const double *exprGrad) {
+        Eigen::VectorXd _exprGrad = Eigen::Map<const Eigen::Matrix<double, -1, 1>>(exprGrad, FaceDB::ExprUT().rows());
+        Eigen::VectorXd grad = FaceDB::ExprUT().transpose() * _exprGrad;
+        grad[0] = 0;
+        return grad;
     }
 };
