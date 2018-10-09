@@ -12,8 +12,8 @@
 #include <snow.h>
 
 const std::string RootFaceDB = "../../../assets/fw/";
-// const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
-const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
+const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+// const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
 
 void usage();
 void solveIden(bool visualize);
@@ -21,15 +21,23 @@ void solveVideo(std::string videoPath, bool visualize);
 
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); }
-    
+    FaceDB::Initialize(RootFaceDB);
     bool visualize = false;
     if (argc >= 3) visualize = !strcmp(argv[2], "-v");
 
     if (!strcmp(argv[1], "iden"))
         solveIden(visualize);
-    else
-        solveVideo(argv[1], visualize);
-    
+    else {    
+        auto fileList = snow::path::FindFiles(RootVideo, std::regex(argv[1]), true);
+        for (const auto &file : fileList)
+            std::cout << "Find video " << file << std::endl;
+        std::cout << "Totally " << fileList.size() << std::endl;
+        for (size_t iFile = 0; iFile < fileList.size(); ++iFile) {
+            std::cout << "[ " << iFile << " / " << fileList.size() << " ]: "
+                      << snow::path::Basename(fileList[iFile]) << std::endl;
+            solveVideo(fileList[iFile], visualize);
+        }
+    }
     return 0;
 }
 
@@ -39,7 +47,6 @@ void usage() {
 }
 
 void solveIden(bool visualize) {
-    FaceDB::Initialize(RootFaceDB);
     std::vector<glm::dmat4> viewMatList;
     std::vector<glm::dmat4> projMatList;
     
@@ -101,9 +108,9 @@ void solveIden(bool visualize) {
 }
 
 void solveVideo(std::string videoPath, bool visualize) {
-    videoPath = snow::path::Join(RootVideo, videoPath);
     auto pathParams    = videoPath + "_params_stream-1";
     auto pathLandmarks = videoPath + "_lmrecord";
+    auto pathResult    = videoPath + "_pose_expr_params.txt";
     auto pathShared    = snow::path::Join(RootVideo, "shared_params.txt");
     if (!snow::path::AllExists({pathParams, pathLandmarks})) {
         std::cout << "Failed to find landmarks and camera params of video `" << videoPath << "`" << std::endl;
@@ -113,7 +120,6 @@ void solveVideo(std::string videoPath, bool visualize) {
         std::cout << "Failed to find shared parameters" << std::endl;
         return;
     }
-    FaceDB::Initialize(RootFaceDB);
     glm::dmat4 pvmMat(1.0), viewMat(1.0), projMat(1.0);
     VideoSolver solver;
     /* read params */ {
@@ -144,6 +150,16 @@ void solveVideo(std::string videoPath, bool visualize) {
         std::cout << "Begin to solve " << solver.landmarksList().size() << " frames from video: " << videoPath << std::endl;
         solver.solve(5, false);
         std::cout << "Done." << std::endl;
+        /* output results */ {
+            std::ofstream fout(pathResult);
+            fout << solver.numResults() << std::endl;
+            for (int iFrame = 0; iFrame < solver.numResults(); ++iFrame) {
+                fout << solver.landmarks(iFrame).timestamp() << std::endl
+                     << solver.resultPoseList()[iFrame]
+                     << solver.resultExprList()[iFrame];
+            }
+            fout.close();
+        }
     }
     if (visualize) {
         snow::App app;

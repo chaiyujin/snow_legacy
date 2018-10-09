@@ -24,16 +24,14 @@ void VideoSolver::solve(int epochs, bool verbose) {
     mModel.updateIdenOnCore(0);
     std::vector<size_t> contourIndex(0);
     auto afterTraining = [&](void) -> void {
-        // mModel.idenParameter().useTrained();
-        // mModel.scaleParameter().useTrained();
         mModel.exprParameter(0).useTrained();
         mModel.poseParameter(0).useTrained();
     };
 
     int Frames = mLandmarkList.size();
-    // Frames = 10;
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {
-        std::cout << "[Frame]: " << iFrame << std::endl;
+        std::cout << "[Frame]: " << iFrame;
+        if (verbose) std::cout << std::endl; else std::cout << "\r";
         for (int iEpoch = 0; iEpoch < epochs; ++iEpoch) {
             if (verbose) std::cout << "[Epoch]: " << iEpoch << std::endl;
             // each epoch
@@ -142,4 +140,5 @@ void VideoSolver::solve(int epochs, bool verbose) {
         mResultPoseList.emplace_back(mModel.poseParameter(0));
         mResultExprList.emplace_back(mModel.exprParameter(0));
     }
+    std::cout << std::endl;
 }
