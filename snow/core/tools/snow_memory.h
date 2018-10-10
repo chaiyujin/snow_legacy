@@ -112,7 +112,6 @@ struct Block {
 
 /**
  * MemoryArena: keep alloced blocks
- * 
  * */
 class MemoryArena {
 private:

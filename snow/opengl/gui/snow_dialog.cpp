@@ -1,7 +1,6 @@
 #include <iostream>
 #include <thread>
 #include "snow_dialog.h"
-#include "../core/snow_string.h"
 
 namespace snow {
 #if !defined(__APPLE__)

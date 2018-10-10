@@ -2,7 +2,6 @@
 #include <regex>
 // snow
 #include "snow_app.h"
-#include "../core/snow_string.h"
 
 namespace snow {
     App::App(int major, int minor, std::string glslVersion)

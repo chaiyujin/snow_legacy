@@ -89,7 +89,7 @@ namespace snow {
         auto v0 = _to_vec(mPrevPos);
         auto v1 = _to_vec(mCurrPos);
 
-        mDelta = snow::quatBetween(v0, v1, mSpeed);
+        mDelta = snow::QuatBetween(v0, v1, mSpeed);
     }
 
     void Arcball::processMouseEvent(SDL_Event &event) {

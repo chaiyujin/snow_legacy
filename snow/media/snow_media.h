@@ -1,10 +1,8 @@
 #pragma once
 
-
 #ifdef SNOW_MODULE_FFMPEG
-#include "snow_reader.h"
-#include "snow_writer.h"
+#include "ffmpeg/snow_reader.h"
+#include "ffmpeg/snow_writer.h"
 #endif
 
-#include "snow_wav.h"
-
+#include "basic/snow_wav.h"

@@ -9,9 +9,9 @@ namespace snow {
     glm::vec3 CameraBase::gStandardRight = glm::vec3(1, 0, 0);
 
     glm::quat CameraBase::QuatFromStandard(const glm::vec3 &up, const glm::vec3 &front) {
-        auto q0 = snow::quatBetween(gStandardUp, up);
+        auto q0 = snow::QuatBetween(gStandardUp, up);
         auto f0 = glm::rotate(q0, gStandardFront);
-        auto q1 = snow::quatBetween(f0, front);
+        auto q1 = snow::QuatBetween(f0, front);
         return glm::cross(q0, q1);
     }
 
@@ -53,8 +53,8 @@ namespace snow {
         mRight = glm::normalize(glm::cross(mFront, mUp));
         mUp    = glm::normalize(glm::cross(mRight, mFront));
         // get quat
-        mQuatAroundCenter = snow::quatBetween(gStandardFront, mFront);
-        mQuatAroundFront  = snow::quatBetween(glm::rotate(mQuatAroundCenter, gStandardFront + gStandardUp) - mFront, mUp);
+        mQuatAroundCenter = snow::QuatBetween(gStandardFront, mFront);
+        mQuatAroundFront  = snow::QuatBetween(glm::rotate(mQuatAroundCenter, gStandardFront + gStandardUp) - mFront, mUp);
         this->_updateCameraVectors();
     }
     

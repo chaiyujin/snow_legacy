@@ -2,7 +2,7 @@
 #include "ffmpeg_head.h"
 #include <string>
 #include <vector>
-#include "../core/snow_image.h"
+#include "../../core/snow_core.h"
 
 namespace snow {
 

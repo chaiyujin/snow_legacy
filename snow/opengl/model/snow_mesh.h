@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 // snow
-#include "../core/snow_math.h"
-#include "../gui/snow_shader.h"
+#include "../../core/snow_core.h"
+#include "../tools/snow_shader.h"
 
 namespace snow {
     struct Vertex {

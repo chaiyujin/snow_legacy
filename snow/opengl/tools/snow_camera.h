@@ -4,10 +4,11 @@
 // third-party
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
-// snow
-#include "common.h"
+#include "../../core/snow_core.h"
 
 namespace snow {
+    class Arcball;
+    
     /**
      *  Standard camera is: Right (1, 0, 0), Up (0, 1, 0), Front (0, 0, -1)
      *

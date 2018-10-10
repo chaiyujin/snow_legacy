@@ -1,8 +1,6 @@
 #pragma once
 #include <math.h>
 #include <ctype.h>
-#include <iostream>
-#include <iomanip>
 // eigen
 #ifdef _WIN32
 #include <Eigen/Core>
@@ -17,9 +15,7 @@
 
 namespace snow {
 
-inline glm::dvec3 homoCoord(glm::dvec4 &q) { return glm::dvec3(q.x / q.w, q.y / q.w, q.z / q.w); }
-
-inline glm::vec3 anyPerpendicularTo(glm::vec3 v) {
+inline glm::vec3 AnyPerpendicularTo(glm::vec3 v) {
     // special case : (0, 0, 0)
     if (glm::all(glm::equal(v, glm::vec3(0, 0, 0)))) return glm::vec3(0, 1, 0);
     if (v.x != 0) { return glm::vec3(v.y / v.x, 1, 0); }
@@ -28,13 +24,13 @@ inline glm::vec3 anyPerpendicularTo(glm::vec3 v) {
     return glm::vec3(0, 1, 0);
 }
 
-inline glm::quat quatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float angleScale=1.0) {
+inline glm::quat QuatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float angleScale=1.0) {
     auto _v0 = glm::normalize(vec0);
     auto _v1 = glm::normalize(vec1);
     float angle = std::acos(glm::dot(_v0, _v1));
     glm::vec3 axis = glm::normalize(glm::cross(_v0, _v1));
     if (std::isnan(angle))  angle = 0.f;
-    if (std::isnan(axis.x)) axis = snow::anyPerpendicularTo(_v0);
+    if (std::isnan(axis.x)) axis = snow::AnyPerpendicularTo(_v0);
     auto q = glm::angleAxis(angle * angleScale, axis);
     return q;
 }

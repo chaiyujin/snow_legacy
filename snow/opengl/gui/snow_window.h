@@ -6,10 +6,10 @@
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
 // snow
-#include "snow_imgui.h"
-#include "../core/snow_core.h"
+#include "../../core/snow_core.h"
 #include "../tools/snow_arcball.h"
 #include "../tools/snow_camera.h"
+#include "snow_imgui.h"
 
 namespace snow {
     class AbstractWindow

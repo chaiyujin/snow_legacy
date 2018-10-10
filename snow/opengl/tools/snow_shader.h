@@ -8,7 +8,7 @@
 // third-party
 #include <glad/glad.h>
 // snow
-#include "../core/snow_math.h"
+#include "../../core/snow_core.h"
 
 namespace snow {
 class Shader

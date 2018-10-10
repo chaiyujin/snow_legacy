@@ -11,9 +11,9 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 // snow
+#include "../../core/snow_core.h"
+#include "../tools/snow_shader.h"
 #include "snow_mesh.h"
-#include "../core/snow_math.h"
-#include "../gui/snow_shader.h"
 
 namespace snow {
     

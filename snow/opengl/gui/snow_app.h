@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 // snow
+#include "../../core/snow_core.h"
 #include "snow_window.h"
 
 namespace snow {

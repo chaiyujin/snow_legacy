@@ -1,7 +1,7 @@
 #pragma once
+#include "../../core/snow_core.h"
+#include "../basic/snow_wav.h"
 #include "ffmpeg_head.h"
-#include "../core/snow_core.h"
-#include "snow_wav.h"
 #include <memory>
 #include <vector>
 

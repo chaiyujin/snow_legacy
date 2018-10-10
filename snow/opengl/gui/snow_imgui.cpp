@@ -1,7 +1,7 @@
+#include <SDL2/SDL_syswm.h>
 #include <iostream>
 // snow
 #include "snow_imgui.h"
-#include <SDL2/SDL_syswm.h>
 
 namespace snow {
 

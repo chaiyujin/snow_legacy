@@ -11,7 +11,9 @@ OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
 OPTION(SNOW_MODULE_FP        "Build with module functional programming" off)
 
+# ====================================
 # ============== Begin ===============
+# ====================================
 set(SNOW_SOURCES        "")
 set(SNOW_INCLUDE_DIRS   "${PROJECT_SOURCE_DIR}")
 set(SNOW_LIBRARIES_DIRS "")
@@ -19,16 +21,34 @@ set(SNOW_LIBRARIES      "")
 set(SNOW_WIN32_DLLS     "")
 set(SNOW_DEFINITIONS    "")
 
+# add defitions
+if (SNOW_RELEASE)
+    list(APPEND SNOW_DEFINITIONS    "-DNDEBUG")
+    if (NOT MSVC)
+        list(APPEND SNOW_DEFINITIONS    "-O3")
+    endif()
+endif (SNOW_RELEASE)
+if (SNOW_AVX)
+    list(APPEND SNOW_DEFINITIONS    "-mavx")
+    list(APPEND SNOW_DEFINITIONS    "-DSNOW_AVX")
+endif (SNOW_AVX)
+
+# warnings
+if (MSVC)
+    list(APPEND SNOW_DEFINITIONS    "-D_CRT_SECURE_NO_WARNINGS")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -pedantic")
+endif (MSVC)
+
+
 # ====================================
 # =========== Module Core ============
 # ====================================
-set(SNOW_CORE_SOURCES
-    "${PROJECT_SOURCE_DIR}/core/snow_image.cpp")
-set(SNOW_CORE_INCLUDE_DIRS
-    # third-party
-    "${PROJECT_SOURCE_DIR}/third-party/stb/")
+set(SNOW_CORE_SOURCES        "${PROJECT_SOURCE_DIR}/core/data/snow_image.cpp")
+set(SNOW_CORE_INCLUDE_DIRS   "${PROJECT_SOURCE_DIR}/third-party/stb/")
 set(SNOW_CORE_LIBRARIES_DIRS "")
 set(SNOW_CORE_LIBRARIES      "")
+
 # glm
 if (SNOW_AVX)
     set(GLM_TEST_ENABLE_SIMD_AVX on CACHE BOOL "enable glm avx" FORCE)
@@ -36,36 +56,20 @@ endif (SNOW_AVX)
 add_subdirectory("${PROJECT_SOURCE_DIR}/third-party/glm-stable")
 list(APPEND SNOW_INCLUDE_DIRS   ${GLM_INCLUDE_DIRS})
 list(APPEND SNOW_LIBRARIES      glm)
+
 # eigen3
 find_package(Eigen3 3.3 REQUIRED)
 list(APPEND SNOW_LIBRARIES      Eigen3::Eigen)
 
+# append to snow
 list(APPEND SNOW_SOURCES        ${SNOW_CORE_SOURCES})
 list(APPEND SNOW_INCLUDE_DIRS   ${SNOW_CORE_INCLUDE_DIRS})
 list(APPEND SNOW_LIBRARIES_DIRS ${SNOW_CORE_LIBRARIES_DIRS})
 list(APPEND SNOW_LIBRARIES      ${SNOW_CORE_LIBRARIES})
-if (SNOW_RELEASE)
-    list(APPEND SNOW_DEFINITIONS    "-DNDEBUG")
-    if (NOT MSVC) 
-        list(APPEND SNOW_DEFINITIONS    "-O3")
-    endif()
-else()
-    list(APPEND SNOW_DEFINITIONS    "-D__DEBUG__")
-endif (SNOW_RELEASE)
-if (SNOW_AVX)
-    list(APPEND SNOW_DEFINITIONS    "-mavx")
-    list(APPEND SNOW_DEFINITIONS    "-DSNOW_AVX")
-endif (SNOW_AVX)
-if (MSVC)
-    list(APPEND SNOW_DEFINITIONS    "-D_CRT_SECURE_NO_WARNINGS")
-endif (MSVC)
-if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -pedantic")
-endif (NOT MSVC)
 
 
 # ====================================
-# =========== Module Core ============
+# ============ Module FP =============
 # ====================================
 if (SNOW_MODULE_FP)
     # c++ 14
@@ -75,20 +79,21 @@ if (SNOW_MODULE_FP)
     list(APPEND SNOW_INCLUDE_DIRS ${SNOW_FP_INCLUDE_DIRS})
 endif (SNOW_MODULE_FP)
 
+
 # ====================================
 # ========== Module OpenGL ===========
 # ====================================
 if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_OPENGL")
     set(SNOW_OPENGL_SOURCES
-        "${PROJECT_SOURCE_DIR}/gui/snow_app.cpp"
-        "${PROJECT_SOURCE_DIR}/gui/snow_imgui.cpp"
-        "${PROJECT_SOURCE_DIR}/gui/snow_window.cpp"
-        "${PROJECT_SOURCE_DIR}/gui/snow_dialog.cpp"
-        "${PROJECT_SOURCE_DIR}/model/snow_mesh.cpp"
-        "${PROJECT_SOURCE_DIR}/model/snow_model.cpp"
-        "${PROJECT_SOURCE_DIR}/tools/snow_arcball.cpp"
-        "${PROJECT_SOURCE_DIR}/tools/snow_camera.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/tools/snow_arcball.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/tools/snow_camera.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/gui/snow_app.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/gui/snow_imgui.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/gui/snow_window.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/gui/snow_dialog.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/model/snow_mesh.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/model/snow_model.cpp"
         # third-party ==== ImGui ====
         "${PROJECT_SOURCE_DIR}/third-party/imgui/imgui.cpp"
         "${PROJECT_SOURCE_DIR}/third-party/imgui/imgui_draw.cpp"
@@ -98,7 +103,7 @@ if (SNOW_MODULE_OPENGL)
         "${PROJECT_SOURCE_DIR}/third-party/imgui/"
         "${PROJECT_SOURCE_DIR}/third-party/glad/include/")
     set(SNOW_OPENGL_LIBRARIES_DIRS "")
-    set(SNOW_OPENGL_LIBRARIES     "")
+    set(SNOW_OPENGL_LIBRARIES      "")
 
     # === GLAD ===
     # add_library(OPENGL_GLAD STATIC "${PROJECT_SOURCE_DIR}/third-party/glad/src/glad.c")
@@ -140,27 +145,29 @@ if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_LIBRARIES      ${SNOW_OPENGL_LIBRARIES})
 endif (SNOW_MODULE_OPENGL)
 
-# ====================================
-# ========== Module FFmpeg ===========
-# ====================================
 
+# ====================================
+# ========== Module Media ============
+# ====================================
+# simple media
+list(APPEND SNOW_SOURCES
+        "${PROJECT_SOURCE_DIR}/media/basic/snow_wav.cpp")
+# ffmpeg
 if (SNOW_MODULE_FFMPEG)
     list(APPEND SNOW_DEFINITIONS "-DSNOW_MODULE_FFMPEG")
     
     include(cmake_modules/FFmpeg.cmake)
-    set(SNOW_FFMPEG_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_reader.cpp"
-                            "${PROJECT_SOURCE_DIR}/media/snow_writer.cpp"
-                            "${PROJECT_SOURCE_DIR}/media/ffmpeg_functions.cpp")
+    set(SNOW_FFMPEG_SOURCES
+        "${PROJECT_SOURCE_DIR}/media/ffmpeg/snow_reader.cpp"
+        "${PROJECT_SOURCE_DIR}/media/ffmpeg/snow_writer.cpp"
+        "${PROJECT_SOURCE_DIR}/media/ffmpeg/ffmpeg_functions.cpp")
 
     list(APPEND SNOW_SOURCES            "${SNOW_FFMPEG_SOURCES}")
     list(APPEND SNOW_INCLUDE_DIRS       "${FFMPEG_INCLUDE_DIRS}")
     list(APPEND SNOWL_LIBRARIES_DIRS    "${FFMPEG_LIBRARIES_DIRS}")
     list(APPEND SNOW_WIN32_DLLS         "${FFMPEG_WIN32_DLLS}")
     list(APPEND SNOW_LIBRARIES          "${FFMPEG_LIBRARIES}")
-    
 endif (SNOW_MODULE_FFMPEG)
-# simple media
-list(APPEND SNOW_SOURCES "${PROJECT_SOURCE_DIR}/media/snow_wav.cpp")
 
 
 # === CACHE ===
@@ -170,6 +177,7 @@ set(SNOW_LIBRARIES_DIRS "${SNOW_LIBRARIES_DIRS}" CACHE INTERNAL "snow link direc
 set(SNOW_LIBRARIES      "${SNOW_LIBRARIES}"      CACHE INTERNAL "snow libraries")
 set(SNOW_WIN32_DLLS     "${SNOW_WIN32_DLLS}"     CACHE INTERNAL "snow win32 dlls")
 set(SNOW_DEFINITIONS    "${SNOW_DEFINITIONS}"    CACHE INTERNAL "snow definitions")
+
 
 # === macro to copy dlls ===
 macro (SNOW_COPY_DLL projectName)
@@ -182,7 +190,8 @@ macro (SNOW_COPY_DLL projectName)
     endforeach(THEDLL ${SNOW_WIN32_DLLS})
 endmacro()
 
-# exec and link libaraies
+
+# === exec and link libaraies ===
 add_definitions      (${SNOW_DEFINITIONS})
 include_directories  (${SNOW_INCLUDE_DIRS}                  )
 link_directories     (${SNOW_LIBRARIES_DIRS}                )

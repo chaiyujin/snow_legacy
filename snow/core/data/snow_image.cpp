@@ -1,5 +1,5 @@
 #include "snow_image.h"
-#include "snow_path.h"
+#include "../tools/snow_path.h"
 #include <memory.h>
 #include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION

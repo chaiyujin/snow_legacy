@@ -12,7 +12,8 @@
 #include <snow.h>
 
 const std::string RootFaceDB = "../../../assets/fw/";
-const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
+const std::string RootVideo = "../../../assets/test_depth/";
+// const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
 // const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
 
 void usage();
