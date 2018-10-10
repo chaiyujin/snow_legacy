@@ -22,4 +22,18 @@ namespace snow {
         TrimEnd(s);
         return s;
     }
+    
+    static inline std::string Replace(const std::string &s, const std::string &old, const std::string &replace) {
+        std::string ret;
+        for (size_t i = 0; i < s.length(); ) {
+            if (i + old.length() <= s.length() && s.substr(i, old.length()) == old) {
+                ret += replace;
+                i += old.length();
+            }
+            else {
+                ret += s[i++];
+            }
+        }
+        return ret;        
+    }
 }

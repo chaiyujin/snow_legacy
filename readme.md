@@ -1,18 +1,17 @@
 # Modules
 - Core:
-    - glm
-    - extened_types
-    - simple simd functions
-    - string operation
-    - [ ] stb_image
+    - glm, eigen3, extened_types(such as `int3`)
+    - simple simd functions, string operations, path operations (like python os.path)
+    - image (based on stb_image)
     - stream, frame, input (for data streaming)
-- [ ] Functional Programming
-- OpenGL: (optional)
+    - [ ] argparse
+- OpenGL:
     - GUI: glad, SDL2, ImGui
     - Model: Naive obj reader, Assimp (optional)
 - Media
-    - WAV
-    - FFmpeg (optional): Video reader
-- Vision: (optional)
-    - [ ] OpenCV    (optional)
-    - [ ] Dlib      (optional)
+    - `WAV` writer and reader
+    - FFmpeg(optional): media writer and reader
+- [ ] Vision:
+    - [ ] OpenCV
+    - [ ] Dlib
+- [ ] Functional Programming
