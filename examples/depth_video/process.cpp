@@ -10,8 +10,9 @@ void setAudioTrack(int track) { AudioTrack = track; }
 void setSampleRate(int sr)    { SampleRate = sr;    }
 
 double collectVideo(const std::string &filename,
-                  std::vector<ModelFrame> &modelFrames,
-                  std::vector<float> &audioTrack) {
+                    ModelShared &modelShared,
+                    std::vector<ModelFrame> &modelFrames,
+                    std::vector<float> &audioTrack) {
     snow::MediaReader::initializeFFmpeg();
     snow::MediaReader reader(filename);
     reader.setDstAudioSampleRate(SampleRate);
@@ -20,66 +21,32 @@ double collectVideo(const std::string &filename,
         return -1.0;
     }
 
-    modelFrames.clear();
-    /* read bilinear parameters */ {
-        std::string paramFile = filename + "_3d_params.txt";
-        std::ifstream fin(paramFile);
-        if (!fin.is_open()) {
-            printf("%s has no bilinear parameters.\n", paramFile.c_str());
+    /* read shared */ {
+        auto pathShared = snow::path::Join(snow::path::Dirname(filename), "shared_params.txt");
+        if (!snow::path::Exists(pathShared)) {
+            std::cout << "Failed to find shared parameters `" << pathShared << "`\n";
             return -1.0;
         }
-        std::string str;
-        int id; double val;
-        while (!fin.eof()) {
+        std::ifstream fin(pathShared);
+        fin >> modelShared;
+        fin.close();
+    }
+
+    modelFrames.clear();
+    /* read bilinear parameters */ {
+        std::string paramFile = filename + "_pose_expr_params.txt";
+        std::ifstream fin(paramFile);
+        if (!fin.is_open()) {
+            std::cout << "Failed to find bilinear parameters `" << paramFile << "`\n";
+            return -1.0;
+        }
+        int num; fin >> num;
+        while (num--) {
             ModelFrame frame;
-            fin >> frame.mTimestamp;
-            if (fin.eof()) break;
-            // read parameters
-            fin >> str >> str >> frame.mRotation[0] >> str >> frame.mRotation[1] >> str >> frame.mRotation[2] >> str;
-            fin >> str >> str >> frame.mTranslation[0] >> str >> frame.mTranslation[1] >> str >> frame.mTranslation[2] >> str;
-            fin >> str >> str >> frame.mScale >> str;
-            std::getline(fin, str);
-            std::getline(fin, str);
-            while (true) {
-                std::getline(fin, str);
-                snow::Trim(str);
-                if (str.length() == 0) break;
-                std::istringstream ssin(str);
-                while (!ssin.eof()) { ssin >> val; frame.mIden.push_back(val); }
-            }
-            std::getline(fin, str);
-            while (true) {
-                std::getline(fin, str);
-                snow::Trim(str);
-                if (str.length() == 0) break;
-                std::istringstream ssin(str);
-                while (!ssin.eof()) { ssin >> id >> val; frame.mExpr.push_back(val); }
-            }
-            // frame.print();
+            fin >> frame;
             modelFrames.push_back(frame);
         }
         fin.close();
-    }
-    /* process identity and scale */ {
-        double meanScale = 0.0;
-        std::vector<double> meanIden(modelFrames[0].mIden.size(), 0.0);
-        for (const auto &frame : modelFrames) {
-            meanScale += frame.mScale;
-            for (size_t i = 0; i < meanIden.size(); ++i) {
-                meanIden[i] += frame.mIden[i];
-            }
-        }
-        meanScale /= (double)modelFrames.size();
-        for (size_t i = 0; i < meanIden.size(); ++i) {
-            meanIden[i] /= (double)modelFrames.size();
-        }
-        // assign
-        for (auto &frame : modelFrames) {
-            frame.mScale = meanScale;
-            for (size_t i = 0; i < meanIden.size(); ++i) {
-                frame.mIden[i] = meanIden[i];
-            }
-        }
     }
 
     double fps = reader.fps();
@@ -96,8 +63,6 @@ double collectVideo(const std::string &filename,
             if (srcI + 1 >= modelFrames.size()) break;
             resampled.emplace_back();
             resampled.back().mTimestamp = (int64_t)ms;
-            resampled.back().mScale = modelFrames[0].mScale;
-            resampled.back().mIden  = modelFrames[0].mIden;
             double l = (double)modelFrames[srcI].mTimestamp;
             double r = (double)modelFrames[srcI + 1].mTimestamp;
             double a = (r - ms) / (r - l);

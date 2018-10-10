@@ -37,8 +37,8 @@ void runBilinear(const char *fwPath) {
     Application::setExprList("bilinear", exprList);
     Application::setIden("bilinear2", iden);
     Application::setExprList("bilinear2", exprList);
-    Application::offscreen("../../../assets/test_offscreen.mp4", 25.0, 1280, 480);
-    // Application::run(25.0);
+    // Application::offscreen("../../../assets/test_offscreen.mp4", 25.0, 1280, 480);
+    Application::run(25.0);
     Application::terminate();
 }
 

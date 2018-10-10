@@ -1,6 +1,9 @@
 #pragma once
 
 #include <snow.h>
+#include <iostream>
+#include <iomanip>
+#include <limits>
 #include "tensor.h"
 #include "facedb.h"
 
@@ -10,12 +13,14 @@ protected:
     double * mParamPtr;
     double * mTrainPtr;
     int      mLength;
-    Parameter(const Parameter &) {}
 public:
     Parameter(int length)
         : mParamPtr(gArena.alloc<double>(length))
         , mTrainPtr(gArena.alloc<double>(length))
-        , mLength(length) { }
+        , mLength(length) {}
+    Parameter(const Parameter &param) : Parameter(param.mLength) {
+        copyFrom(&param);
+    }
     virtual ~Parameter() {
         gArena.free<double>(mParamPtr);
         gArena.free<double>(mTrainPtr);
@@ -43,6 +48,10 @@ public:
     static const int LengthRotateYXZ = 3;
     static const int LengthTranslate = 3;
     PoseParameter(): Parameter(Length) { reset(); }
+    PoseParameter(const PoseParameter &param) : PoseParameter() {
+        copyFrom(&param);
+    }
+
     void reset() {
         memset(mTrainPtr, 0, sizeof(double) * Length);
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -67,11 +76,35 @@ public:
 #undef getT
 #undef getR
 };
+inline std::ostream &operator<<(std::ostream &out, const PoseParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "rotateYXZ: [ " << std::setw(32) << param.rotateYXZ()[0] << " , " << std::setw(32) << param.rotateYXZ()[1] << " , " << std::setw(32) << param.rotateYXZ()[2] << " ]\n"
+        << "translate: [ " << std::setw(32) << param.translate()[0] << " , " << std::setw(32) << param.translate()[1] << " , " << std::setw(32) << param.translate()[2] << " ]\n";
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, PoseParameter &param) {
+    std::string str;
+    in >> str; if (str != "rotateYXZ:") { printf("[pose]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.trainRotateYXZ()[0] >> str >> param.trainRotateYXZ()[1] >> str >> param.trainRotateYXZ()[2];
+    std::getline(in, str);
+
+    in >> str; if (str != "translate:") { printf("[pose]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.trainTranslate()[0] >> str >> param.trainTranslate()[1] >> str >> param.trainTranslate()[2];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}
 
 class ScaleParameter: public Parameter {
 public:
     static const int Length = 1;
     ScaleParameter() : Parameter(Length) { reset(); }
+    ScaleParameter(const ScaleParameter &param) : ScaleParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -79,25 +112,76 @@ public:
         mParamPtr[0] = mTrainPtr[0] = 0.01;
     }
 };
+inline std::ostream &operator<<(std::ostream &out, const ScaleParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "scale:     [ " << std::setw(32) << param.param()[0] << " ]\n";
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, ScaleParameter &param) {
+    std::string str;
+    in >> str; if (str != "scale:") { printf("[scale]: error at istream >>!"); exit(1); };
+    in >> str;
+    in >> param.train()[0];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}
 
 class IdenParameter : public Parameter {
 public:
     static const int Length  = FaceDB::LengthIdentity;
     IdenParameter() : Parameter(Length) { reset(); }
+    IdenParameter(const IdenParameter &param) : IdenParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
         memset(mTrainPtr, 0, sizeof(double) * Length);
         mParamPtr[0] = mTrainPtr[0] = 1;
-    }
-    
+    }  
 };
+inline std::ostream &operator<<(std::ostream &out, const IdenParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "iden: " << std::setw(2) << IdenParameter::Length << "   [ ";
+    for (int i = 0; i < IdenParameter::Length; ++i) {
+        out << std::setw(32) << param.param()[i];
+        if (i + 1 < IdenParameter::Length) {
+            out << " , ";
+            if (i % 5 == 4) out << "\n             ";
+        } else {
+            out << " ]\n";
+        }
+    }
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, IdenParameter &param) {
+    std::string str;
+    int len;
+    in >> str; if (str != "iden:")               { printf("[iden]: error at istream >>"); exit(1); };
+    in >> len; if (len != IdenParameter::Length) { printf("[iden]: error at istream >>: length is different"); exit(1); }
+    for (int i = 0; i < IdenParameter::Length; ++i)
+        in >> str >> param.train()[i];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}
 
 class ExprParameter : public Parameter {
 public:
-    static const int Length      = FaceDB::LengthExpression;
+    static const int  Length      = FaceDB::LengthExpression;
+#ifdef PARAMETER_FACS
+    static const char Type        = 'F';
+#else
+    static const char Type        = 'E';
+#endif
 
     ExprParameter() : Parameter(Length) { reset(); }
+    ExprParameter(const ExprParameter &param) : ExprParameter() {
+        copyFrom(&param);
+    }
 
     void reset() {
         memset(mParamPtr, 0, sizeof(double) * Length);
@@ -116,8 +200,45 @@ public:
     }
     static void FACS2Expr(const double *facs, double *expr) {
         Eigen::VectorXd E_BS = Eigen::Map<const Eigen::Matrix<double, -1, 1>>(facs, FaceDB::ExprUT().cols());
-        // E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#ifdef USE_50_25
+        E_BS[0] = 1 - (E_BS.sum() - E_BS[0]);
+#else
         E_BS[0] = 1;
+#endif
         memcpy(expr, E_BS.data(), sizeof(double) * E_BS.size());
     }
+    static Eigen::VectorXd DiffFACS2Expr(const double *exprGrad) {
+        Eigen::VectorXd _exprGrad = Eigen::Map<const Eigen::Matrix<double, -1, 1>>(exprGrad, FaceDB::ExprUT().rows());
+        Eigen::VectorXd grad = FaceDB::ExprUT().transpose() * _exprGrad;
+        grad[0] = 0;
+        return grad;
+    }
 };
+
+inline std::ostream &operator<<(std::ostream &out, const ExprParameter &param) {
+    out.precision(std::numeric_limits<double>::max_digits10);
+    out << "expr: " << ExprParameter::Type << " " << std::setw(2) << ExprParameter::Length << " [ ";
+    for (int i = 0; i < ExprParameter::Length; ++i) {
+        out << std::setw(32) << param.param()[i];
+        if (i + 1 < ExprParameter::Length) {
+            out << " , ";
+            if (i % 5 == 4) out << "\n             ";
+        } else {
+            out << " ]\n";
+        }
+    }
+    return out;
+}
+inline std::istream &operator>>(std::istream &in, ExprParameter &param) {
+    std::string str; char typ;
+    int len;
+    in >> str; if (str != "expr:")               { printf("[expr]: error at istream >>"); exit(1); };
+    in >> typ; if (typ != ExprParameter::Type)   { printf("[expr]: error at istream >>: type is different"); exit(1); };
+    in >> len; if (len != ExprParameter::Length) { printf("[expr]: error at istream >>: length is different"); exit(1); }
+    for (int i = 0; i < ExprParameter::Length; ++i)
+        in >> str >> param.train()[i];
+    std::getline(in, str);
+
+    param.useTrained();
+    return in;
+}

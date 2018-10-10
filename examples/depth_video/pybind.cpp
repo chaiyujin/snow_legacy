@@ -15,15 +15,16 @@ void set_fps(double fps) {
 }
 
 py::dict collect_video(const std::string &filepath) {
+    ModelShared             shared;
     std::vector<ModelFrame> frames;
     std::vector<float>      audio;
-    double fps = collectVideo(filepath, frames, audio);
+    double fps = collectVideo(filepath, shared, frames, audio);
 
     if (fps < 0.0 || frames.size() == 0 || audio.size() == 0) return py::none();
 
-    double scale = frames[0].mScale;
+    double scale = shared.mScale;
     py::array_t<float> np_audio(audio.size());
-    py::array_t<double> np_iden(frames[0].mIden.size());
+    py::array_t<double> np_iden(shared.mIden.size());
     py::array_t<double> np_exprs({frames.size(), frames[0].mExpr.size()});
    
     /* copy audio */
@@ -31,7 +32,7 @@ py::dict collect_video(const std::string &filepath) {
     
     /* iden */
     py::buffer_info buf = np_iden.request();
-    memcpy(np_iden.mutable_data(), frames[0].mIden.data(), sizeof(double) * frames[0].mIden.size());
+    memcpy(np_iden.mutable_data(), shared.mIden.data(), sizeof(double) * shared.mIden.size());
     
     /* exprs */ for (int r = 0; r < (int)frames.size(); ++r) {
         memcpy(np_exprs.mutable_data(r), frames[r].mExpr.data(), sizeof(double) * frames[r].mExpr.size());

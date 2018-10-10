@@ -2,7 +2,7 @@
 
 snow::MemoryArena Parameter::gArena;
 
-BilinearModel::BilinearModel(size_t count)
+BilinearModel::BilinearModel()
     : Core(FaceDB::CoreTensor())
     , mTvi1List(0), mTv1eList(0)
     , mTv11List(0), mMeshList(0)
@@ -11,10 +11,7 @@ BilinearModel::BilinearModel(size_t count)
     , mParamPosePtrList(0)
     , mParamExprPtrList(0)
     , mCount(0)
-    , mIsChild(false) {
-    appendModel(count);
-    prepareAllModel();
-}
+    , mIsChild(false) {}
 BilinearModel::BilinearModel(const BilinearModel &father, int startVertexIndex)
     : Core(FaceDB::CoreTensor())
     , mParamScalePtr(father.mParamScalePtr)
@@ -40,7 +37,6 @@ BilinearModel::~BilinearModel() {
         }
     }
 }
-
 void BilinearModel::appendModel(size_t count) {
     if (mIsChild) throw std::runtime_error("[BilinearModel]: appendModel() should not be child.\n");
     ++mCount;
@@ -107,7 +103,6 @@ void BilinearModel::translate(size_t index, const double *translate) {
         data[0] += translate[0]; data[1] += translate[1]; data[2] += translate[2];
     }
 }
-
 void BilinearModel::transformMesh(size_t index, const glm::mat4 &extraTransform) {
     double *data;
     for (int i = 0; i < mMeshList[index].shape(0); i += 3) {

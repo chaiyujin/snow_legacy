@@ -21,6 +21,13 @@ private:
     size_t                          mCount;
     bool                            mIsChild;
 
+public:
+    static int NumVertices() { return FaceDB::NumVertices(); }
+
+    BilinearModel();
+    BilinearModel(const BilinearModel &father, int startVertexId);
+    ~BilinearModel();
+
     /**
      * It takes lots of time to do copy construction for Tensor3
      * So, firstly append empty tensors.
@@ -29,23 +36,19 @@ private:
     void appendModel(size_t count=1);
     void prepareAllModel();
 
-public:
-    BilinearModel(size_t count=1);
-    BilinearModel(const BilinearModel &father, int startVertexId);
-    ~BilinearModel();
-
     size_t size()                     const { return mCount;       }
-
     Tensor3 &mesh(size_t i=0)               { return mMeshList[i]; }
     Tensor3 &tv11(size_t i)                 { return mTv11List[i]; }
     Tensor3 &tv1e(size_t i)                 { return mTv1eList[i]; }
     Tensor3 &tvi1(size_t i)                 { return mTvi1List[i]; }
     const Tensor3 &mesh(size_t i=0)   const { return mMeshList[i]; }
+    snow::double3 meshVertex(size_t iMesh, size_t iVert) { return { *mMeshList[iMesh].data((int)iVert * 3), *mMeshList[iMesh].data((int)iVert * 3+1), *mMeshList[iMesh].data((int)iVert * 3+2) }; }
 
     /**
      * There are two possible paths of applying parameters
      * 1. iden -> expr -> scale -> rotate -> translate
      * 2. expr -> iden -> scale -> rotate -> translate
+     * Any extra transform can be done with transformMesh()
      * */
 
     /* path 1 start with */
@@ -70,7 +73,12 @@ public:
     /* update all parameter for mesh i */
     void updateMesh         (size_t i=0){ updateIdenOnCore(i); updateExpr(i); updateScale(i); rotateYXZ(i); translate(i); }
 
-    void transformMesh(size_t i, const glm::mat4 &extraTransform);
+    void transformMesh      (size_t i, const glm::mat4 &extraTransform);
+    void updateMorphModel   (size_t mesh_index);
+
+    std::vector<snow::double3> getMeshContourCands(size_t i);
+    std::vector<size_t>        getContourMeshIndex(const std::vector<size_t> &candidateIndex);
+    std::vector<size_t>        getContourIndex(size_t i, const glm::dmat4 &PVM);
 
     ScaleParameter &        scaleParameter()              { return *mParamScalePtr;       }
     IdenParameter  &        idenParameter()               { return *mParamIdenPtr;        }

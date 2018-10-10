@@ -37,23 +37,19 @@ class FaceDB
     static const std::vector<int>           gLandmarks73;
 public:
 #ifdef USE_75_45
-
     static const int LengthIdentity = 75;
 #ifdef PARAMETER_FACS
     static const int LengthExpression = 47;
 #else
     static const int LengthExpression = 45;
 #endif
-
 #else
-
     static const int LengthIdentity = 50;
 #ifdef PARAMETER_FACS
     static const int LengthExpression = 47;
 #else
     static const int LengthExpression = 25;
 #endif
-
 #endif
 
     static double MAX_ALLOWED_WEIGHT_RANGE;

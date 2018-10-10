@@ -35,10 +35,13 @@ void ShowModel::updateFromTensor(const Tensor3 &tensor) {
 VisualizerWindow::VisualizerWindow()
     : snow::CameraWindow("")
     , mGLModel()
-    , mBilinearModel(1)
+    , mBilinearModel()
     , mIden(FaceDB::LengthIdentity)
     , mExpr(FaceDB::LengthExpression)
 {
+    mBilinearModel.appendModel(1);
+    mBilinearModel.prepareAllModel();
+    
     DrawArcball = false;
     mShaderPtr = new snow::Shader();
     mShaderPtr->buildFromCode(VERT_GLSL, FRAG_NOTEX_GLSL);

@@ -10,5 +10,6 @@ void   setFPS(double fps);
 void   setAudioTrack(int track);
 void   setSampleRate(int sr); 
 double collectVideo(const std::string &filename,
+                    ModelShared &modelShared,
                     std::vector<ModelFrame> &modelFrames,
                     std::vector<float> &audioTrack);

@@ -13,7 +13,7 @@ class ShowModel : public snow::Model {
     void load();
     void updateFromTensor(const Tensor3 &tensor);
 public:
-    ShowModel() { load(); }
+    ShowModel() { mBilinearModel.appendModel(1); mBilinearModel.prepareAllModel(); load(); }
     ~ShowModel() {}
     
     void updateIden(const std::vector<double> &iden);
