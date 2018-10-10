@@ -16,17 +16,21 @@ const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
 // const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
 
 void usage();
-void solveIden(bool visualize);
-void solveVideo(std::string videoPath, bool visualize);
+void solveIden(bool visualize, bool replace);
+void solveVideo(std::string videoPath, bool visualize, bool replace);
 
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); }
     FaceDB::Initialize(RootFaceDB);
     bool visualize = false;
-    if (argc >= 3) visualize = !strcmp(argv[2], "-v");
-
+    bool replace   = false;
+    for (int i = 2; i < argc; ++i) {
+        visualize = visualize || !strcmp(argv[i], "-v");
+        replace   = replace   || !strcmp(argv[i], "-y");
+    }
+    
     if (!strcmp(argv[1], "iden"))
-        solveIden(visualize);
+        solveIden(visualize, replace);
     else {    
         auto fileList = snow::path::FindFiles(RootVideo, std::regex(argv[1]), true);
         for (const auto &file : fileList)
@@ -35,18 +39,24 @@ int main(int argc, char **argv) {
         for (size_t iFile = 0; iFile < fileList.size(); ++iFile) {
             std::cout << "[ " << iFile << " / " << fileList.size() << " ]: "
                       << snow::path::Basename(fileList[iFile]) << std::endl;
-            solveVideo(fileList[iFile], visualize);
+            solveVideo(fileList[iFile], visualize, replace);
         }
     }
     return 0;
 }
 
 void usage() {
-    printf("Usage: BilinearReconstruct [iden|video_path] [-v]");
+    printf("Usage: BilinearReconstruct [iden|video_path] [-v] [-y]");
     exit(1);
 }
 
-void solveIden(bool visualize) {
+void solveIden(bool visualize, bool replace) {
+    std::string pathResult = snow::path::Join(RootVideo, "shared_params.txt");
+    if (snow::path::Exists(pathResult) && !replace) {
+        std::cout << "Result exists. use -y" << std::endl;
+        return;
+    }
+
     std::vector<glm::dmat4> viewMatList;
     std::vector<glm::dmat4> projMatList;
     
@@ -81,7 +91,7 @@ void solveIden(bool visualize) {
         solver.solve(5, true);
         printf("Solve done.\n");
         {
-            std::ofstream fout(snow::path::Join(RootVideo, "shared_params.txt"));
+            std::ofstream fout(pathResult);
             fout << solver.model().scaleParameter()
                  << solver.model().idenParameter();
             fout.close();
@@ -107,11 +117,15 @@ void solveIden(bool visualize) {
     }
 }
 
-void solveVideo(std::string videoPath, bool visualize) {
+void solveVideo(std::string videoPath, bool visualize, bool replace) {
     auto pathParams    = videoPath + "_params_stream-1";
     auto pathLandmarks = videoPath + "_lmrecord";
     auto pathResult    = videoPath + "_pose_expr_params.txt";
     auto pathShared    = snow::path::Join(RootVideo, "shared_params.txt");
+    if (snow::path::Exists(pathResult) && !replace) {
+        std::cout << "Result exists. use -y" << std::endl;
+        return;
+    }
     if (!snow::path::AllExists({pathParams, pathLandmarks})) {
         std::cout << "Failed to find landmarks and camera params of video `" << videoPath << "`" << std::endl;
         return;
