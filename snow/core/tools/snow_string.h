@@ -30,9 +30,8 @@ namespace snow {
                 ret += replace;
                 i += old.length();
             }
-            else {
+            else 
                 ret += s[i++];
-            }
         }
         return ret;        
     }
