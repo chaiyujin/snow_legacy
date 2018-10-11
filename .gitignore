@@ -5,6 +5,6 @@
 *CMakeFiles/
 *assets/
 third_party/
-pybind11/
+pybind11_tmp/
 *.py[cod]
 *.npy

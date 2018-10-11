@@ -53,7 +53,8 @@ public:
         }
     }
     void addArgument(std::string shortName, std::string longName, char needValue=0, bool required=false) {
-        auto invalidChar = [](const std::string &name) -> bool {
+        auto invalidName = [](const std::string &name) -> bool {
+            if (name == "help") return true;
             for (char c : name) {
                 if (c == '-' || c == ' ' || c == '=' || c == '\\') return true;
             }
@@ -61,7 +62,7 @@ public:
         };
         Argument arg = {(int)needValue, required, false, {}};
         if (shortName.length()) {
-            if (shortName.length() < 2 || invalidChar(shortName.substr(1))) throw std::invalid_argument("invalid argument short name");
+            if (shortName.length() < 2 || invalidName(shortName.substr(1))) throw std::invalid_argument("invalid argument short name");
             if (mShortNameMap.find(shortName.substr(1)) != mShortNameMap.end()) {
                 std::cout << shortName << " is duplicated." << std::endl;
                 throw std::invalid_argument("duplicated.");
@@ -71,7 +72,7 @@ public:
             std::cout << "insert short name: " << shortName.substr(1) << " " << longName.substr(2) << std::endl;
 #endif
         }
-        if (longName.length() < 3  || invalidChar(longName.substr(2)))  throw std::invalid_argument("invalid argument long name");
+        if (longName.length() < 3  || invalidName(longName.substr(2)))  throw std::invalid_argument("invalid argument long name");
         if (mLongNameMap.find(longName.substr(2)) != mLongNameMap.end()) {
             std::cout << longName << " is duplicated." << std::endl;
             throw std::invalid_argument("duplicated.");
@@ -80,6 +81,10 @@ public:
 #ifdef TEST_ARGPARSE
         std::cout << "insert long name: " << longName.substr(2) << std::endl;
 #endif
+    }
+
+    void help() {
+
     }
 
     std::map<std::string, Argument>::iterator getIter(std::string name) {
@@ -275,12 +280,12 @@ public:
     }
 };
 
-template <> bool ArgumentParser::get<bool>(const std::string &name) {
+template <> inline bool ArgumentParser::get<bool>(const std::string &name) {
     auto iter = getIter(name);
     return iter->second.mFind;
 }
 
-template <typename T> T ArgumentParser::get(const std::string &name) {
+template <typename T> inline T ArgumentParser::get(const std::string &name) {
     auto iter = getIter(name);
     if (iter->second.mValue.size() != 1) {
         std::cout << "failed to get `" << name << "`" << std::endl;
@@ -292,7 +297,7 @@ template <typename T> T ArgumentParser::get(const std::string &name) {
     return ret;
 }
 
-template <typename T> std::vector<T> ArgumentParser::getList(const std::string &name) {
+template <typename T> inline std::vector<T> ArgumentParser::getList(const std::string &name) {
     auto iter = getIter(name);
     std::vector<T> ret;
     for (const auto &str : iter->second.mValue) {
