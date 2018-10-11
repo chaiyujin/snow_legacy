@@ -78,7 +78,7 @@ public:
     }
 
     void updateWithPointCloud(const PointCloud &points) {
-        if (points.size() > mNumPoints) throw std::runtime_error("point cloud has too many points.");
+        if (points.size() > mNumPoints) snow::fatal("point cloud has too many points.");
         mNumPoints = points.size();
         const auto &vertice = points.verticeList();
         const auto &texture = points.textureCoordList();

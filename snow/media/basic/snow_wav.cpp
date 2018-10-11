@@ -1,11 +1,12 @@
-#include "snow_wav.h"
 #include <iostream>
+#include "snow_wav.h"
+#include "../../core/snow_core.h"
 
 namespace snow {
 
 bool WavPCM::read(const std::string &path) {
     if (!std::ifstream(path).good()) {
-        printf("[WavPCM] No such file: %s\n", path.c_str());
+        snow::error("[WavPCM]: No such file `{0}`", path);
         return false;
     }
     
@@ -15,11 +16,11 @@ bool WavPCM::read(const std::string &path) {
 
     /* check if the mHeader is valid */ {    
         if (mHeader.mSubChunk1Size < 16) {
-            printf("[WavPCM]: Wrong mHeader %s.\n", path.c_str());
+            snow::error("[WavPCM]: Wrong mHeader `{0}`", path);
             return false;
         }
         if (mHeader.mAudioFormat != 1) {
-            printf("[WavPCM]: Not PCM %s\n", path.c_str());
+            snow::error("[WavPCM]: Not PCM `{0}`", path);
             return false;
         }
     }
@@ -31,8 +32,6 @@ bool WavPCM::read(const std::string &path) {
     Chunk chunk;
     for (;;) {
         fin.read((char *)&(chunk), sizeof(Chunk));
-        // printf("%c%c%c%c\t%d\n", chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3], chunk.size);
-        // if (*(uint32_t *)(chunk.mId) == 0x61746164)  // == "data"
         if (chunk.mId[0] == 'd' && chunk.mId[1] == 'a' && chunk.mId[2] == 't' && chunk.mId[3] == 'a')
             break;
         fin.seekg(chunk.mSize, std::ios_base::cur);  // skip not important subchunk
@@ -40,7 +39,6 @@ bool WavPCM::read(const std::string &path) {
 
     int samples_count = chunk.mSize * 8 / mHeader.mBitsPerSample / mHeader.mNumChannels;
 
-    // printf("Samples count = %i\n", samples_count);
     mData.clear();
     for (uint16_t i = 0; i < mHeader.mNumChannels; ++i) {
         mData.emplace_back(samples_count);
@@ -49,7 +47,7 @@ bool WavPCM::read(const std::string &path) {
     for (int i = 0; i < samples_count; ++i) {
         for (int ch = 0; ch < mHeader.mNumChannels; ++ch) {
             if (fin.eof()) {
-                printf("[WavPCM] Reach end of file.\n");
+                snow::error("[WavPCM] Reach end of file.");
                 return false;
             }
             // write data according to bits
@@ -67,15 +65,11 @@ bool WavPCM::read(const std::string &path) {
                 break;
             }
             default:
-                printf("[WavPCM] unsupport bit_depth %d\n", mHeader.mBitsPerSample);
+                snow::error("[WavPCM] unsupport bit_depth {0:d}", mHeader.mBitsPerSample);
                 return false;
             }
         }
     }
-
-    // printf("%lu channels\n", data_.size());
-    // for (size_t i = 0; i < data_.size(); ++i)
-        // printf("%lu samples\n", data_[i].size());
 
     fin.close();
 
@@ -83,9 +77,9 @@ bool WavPCM::read(const std::string &path) {
 }
 
 bool WavPCM::write(const std::string &path) {
-    if (mData.size() == 0)        { printf("No tracks!\n"); return false;               }
-    if (mData.size() > 1)         { printf("Ignore channels rather than channel-0.\n"); }
-    if (mHeader.mSampleRate == 0) { printf("Sample rate is not set!\n"); return false;  }
+    if (mData.size() == 0)        { snow::error("No tracks!"); return false;               }
+    if (mData.size() > 1)         { snow::warn("Ignore channels rather than channel-0.");  }
+    if (mHeader.mSampleRate == 0) { snow::error("Sample rate is not set!"); return false;  }
     // set header
     mHeader.mChunkId[0] = 'R'; mHeader.mChunkId[1] = 'I'; mHeader.mChunkId[2] = 'F'; mHeader.mChunkId[3] = 'F';
     mHeader.mFormat[0]  = 'W'; mHeader.mFormat[1]  = 'A'; mHeader.mFormat[2]  = 'V'; mHeader.mFormat[3]  = 'E';
@@ -136,6 +130,5 @@ void WavPCM::dumpHeader() const {
     printf("Bits per Sample * Channels / 8: %d\n", mHeader.mBlockAlign);
     printf("Bits per Sample: %d\n", mHeader.mBitsPerSample);
 }
-
 
 }

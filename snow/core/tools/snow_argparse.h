@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <tuple>
+#include "snow_log.h"
 
 namespace snow {
 
@@ -11,6 +13,7 @@ struct Argument {
     int                      mNeedValue;
     bool                     mRequired;
     bool                     mFind;
+    std::string              mHelp;
     std::vector<std::string> mValue;
 };
 
@@ -31,60 +34,129 @@ public:
     static const char AtLeastOne = -1;
 
     ArgumentParser() : mPositionCount(0) {}
-    void addArgument(std::string name, char needValue=0, bool required=false) {
+    void addArgument(std::string name, char needValue=0, bool required=false, std::string help="") {
         std::string shortName = "";
         std::string longName = "";
-        if (name.length() == 0) throw std::invalid_argument("empty argument name");
-
+        if (name.length() == 0) snow::fatal("empty argument name");
         if (name.length() < 2 || name[0] != '-') {
             // positional
-            shortName = std::string("-#") + std::to_string(mPositionCount);
+            shortName = std::string("-#") + std::to_string(mPositionCount++);
             longName  = "--" + name;
             if (needValue == 0) needValue = 1;
-            if (needValue == ArgumentParser::ZeroOrMore || needValue == ArgumentParser::AtLeastOne) {
-                throw std::invalid_argument("Positional argument do not support `ZeroOrMore` and `AtLeastOne`.");
-            }
-            addArgument(shortName, longName, needValue, required);
+            if (needValue == ArgumentParser::ZeroOrMore || needValue == ArgumentParser::AtLeastOne)
+                snow::fatal("Positional argument {0} do not support `ZeroOrMore` and `AtLeastOne`.", name);
+            addArgument(shortName, longName, needValue, required, help);
         }
         else {
             if (name[0] == '-' && name[1] == '-')    longName = name;
             else                                     { shortName = name; longName = std::string("-") + shortName; }
-            addArgument(shortName, longName, needValue, required);
+            addArgument(shortName, longName, needValue, required, help);
         }
     }
-    void addArgument(std::string shortName, std::string longName, char needValue=0, bool required=false) {
+    void addArgument(std::string shortName, std::string longName, char needValue=0, bool required=false, std::string help="") {
         auto invalidName = [](const std::string &name) -> bool {
             if (name == "help") return true;
             for (char c : name) {
-                if (c == '-' || c == ' ' || c == '=' || c == '\\') return true;
+                if (c == '-' || c == ' ' || c == '=' || c == '\\'
+                    || c == '(' || c == ')'
+                    || c == '[' || c == ']'
+                    || c == '{' || c == '}') return true;
             }
             return false;
         };
-        Argument arg = {(int)needValue, required, false, {}};
+        Argument arg = {(int)needValue, required, false, help, {}};
         if (shortName.length()) {
-            if (shortName.length() < 2 || invalidName(shortName.substr(1))) throw std::invalid_argument("invalid argument short name");
-            if (mShortNameMap.find(shortName.substr(1)) != mShortNameMap.end()) {
-                std::cout << shortName << " is duplicated." << std::endl;
-                throw std::invalid_argument("duplicated.");
-            }
+            if (shortName.length() < 2 || invalidName(shortName.substr(1)))
+                snow::fatal("invalid argument short name: {0}", shortName);
+            if (mShortNameMap.find(shortName.substr(1)) != mShortNameMap.end())
+                snow::fatal("short name {0} is duplicated.", shortName);
             mShortNameMap.insert({shortName.substr(1), longName.substr(2)});
 #ifdef TEST_ARGPARSE
             std::cout << "insert short name: " << shortName.substr(1) << " " << longName.substr(2) << std::endl;
 #endif
         }
-        if (longName.length() < 3  || invalidName(longName.substr(2)))  throw std::invalid_argument("invalid argument long name");
-        if (mLongNameMap.find(longName.substr(2)) != mLongNameMap.end()) {
-            std::cout << longName << " is duplicated." << std::endl;
-            throw std::invalid_argument("duplicated.");
-        }
+        if (longName.length() < 3  || invalidName(longName.substr(2)))
+            snow::fatal("invalid argument long name: {0}", longName);
+        if (mLongNameMap.find(longName.substr(2)) != mLongNameMap.end())
+            snow::fatal("long name {0} is duplicated.", longName);
         mLongNameMap.insert({longName.substr(2), arg});
 #ifdef TEST_ARGPARSE
         std::cout << "insert long name: " << longName.substr(2) << std::endl;
 #endif
     }
 
-    void help() {
-
+    void help(int argc, char **argv) {
+#define POSPAIR std::pair<std::string, Argument>
+#define VALTUPLE std::tuple<std::string, std::string, Argument>
+        std::vector<POSPAIR>  posArgs;
+        std::vector<VALTUPLE> keyArgs;
+        std::map<std::string, int> flags;
+        size_t maxNameLength = 0;
+        for (auto it = mShortNameMap.begin(); it != mShortNameMap.end(); ++it) {
+            auto arg = mLongNameMap.find(it->second)->second;
+            if (it->first[0] == '#') {
+                posArgs.push_back({it->first, arg});
+            }
+            else {
+                VALTUPLE tuple;
+                if (it->first == it->second) // only short
+                    tuple = { it->first, "", arg };
+                else // short long
+                    tuple = { it->first, it->second, arg };
+                keyArgs.push_back(tuple);
+                if (it->second.length() > maxNameLength) maxNameLength = it->second.length();
+            }
+            flags.insert({it->second, 0});
+        }
+        for (auto it = mLongNameMap.begin(); it != mLongNameMap.end(); ++it) {
+            if (flags.find(it->first) == flags.end()) {
+                VALTUPLE tuple = { "", it->first, it->second };
+                keyArgs.push_back(tuple);
+                flags.insert({it->first, 0});
+                if (it->first.length() > maxNameLength) maxNameLength = it->first.length();
+            }
+        }
+        // sort pos args
+        std::sort(posArgs.begin(), posArgs.end(), [](const POSPAIR &a, const POSPAIR &b)->bool{ return a.first < b.first; });
+        std::sort(keyArgs.begin(), keyArgs.end(), [](const VALTUPLE &a, const VALTUPLE &b)->bool{
+            return (std::get<2>(a).mRequired > std::get<2>(b).mRequired) ||
+                   (std::get<2>(a).mRequired == std::get<2>(b).mRequired && std::get<0>(a) <  std::get<0>(b)) ||
+                   (std::get<2>(a).mRequired == std::get<2>(b).mRequired && std::get<0>(a) == std::get<0>(b) && std::get<1>(a) < std::get<1>(b));
+        });
+        std::cout << "Usage: " << argv[0] << " ";
+        for (const auto &pair : posArgs) {
+            std::cout << mShortNameMap.find(pair.first)->second;
+            switch (pair.second.mNeedValue) {
+            case ZeroOrMore: std::cout << "(*) "; break;
+            case AtLeastOne: std::cout << "(+) "; break;
+            default:         std::cout << '(' << pair.second.mNeedValue << ") ";
+            }
+        }
+        std::cout << std::endl;
+        maxNameLength += 8;
+        for (const auto &tup : keyArgs) {
+            std::string shortName = std::get<0>(tup);
+            std::string longName = std::get<1>(tup);
+            Argument arg = std::get<2>(tup);
+            std::string key;
+            if (shortName.length() == 0) key = std::string("--") + longName;
+            else if (longName.length() == 0) key = std::string("-") + shortName;
+            else key = std::string("-") + shortName + ",--" + longName;
+            {
+                std::cout << "  " << std::setw(maxNameLength) << std::left << key;
+                if (arg.mRequired) std::cout << "[required] "; else std::cout << "           ";
+                switch (arg.mNeedValue) {
+                case ZeroOrMore: std::cout << std::setw(8) << std::left << "(*)"; break;
+                case AtLeastOne: std::cout << std::setw(8) << std::left << "(+)"; break;
+                case 0         : std::cout << std::setw(8) << std::left << "(bool)"; break;
+                default:         std::cout << std::setw(8) << std::left << '(' << arg.mNeedValue << ")";
+                }
+                std::cout << arg.mHelp;
+                std::cout << std::endl;
+            }
+        }
+#undef POSPAIR
+#undef VALTUPLE
     }
 
     std::map<std::string, Argument>::iterator getIter(std::string name) {
@@ -96,10 +168,8 @@ public:
             if (it != mShortNameMap.end()) name = it->second;
             iter = mLongNameMap.find(name);
         }
-        if (iter == mLongNameMap.end()) {
-            std::cout << "`" << oldName << "` not found in args." << std::endl;
-            throw std::invalid_argument("argument not found.");
-        }
+        if (iter == mLongNameMap.end())
+            snow::fatal("unknown key `{}`", name);
         return iter;
     }
 
@@ -134,10 +204,8 @@ public:
                 std::string value;
                 while (true) {
                     if (j >= len || (argline[j] != ' ' && argline[j] != '=')) {
-                        if (requireValue > 0 || (requireValue == AtLeastOne)) {
-                            std::cout << "Failed to get value for `" << key << "`\n";
-                            throw std::invalid_argument("Failed to get value.");
-                        }
+                        if (requireValue > 0 || (requireValue == AtLeastOne))
+                            snow::fatal("failed to get value for `{0}`", key);
                         else break;
                     }
                     i = j + 1;
@@ -149,10 +217,8 @@ public:
                     }
                     else i = j-1;
                     if (value.length() == 0) {
-                        if (requireValue > 0 || (requireValue == AtLeastOne)) {
-                            std::cout << "Failed to get value for `" << key << "`\n";
-                            throw std::invalid_argument("Failed to get value.");
-                        }
+                        if (requireValue > 0 || (requireValue == AtLeastOne))
+                            snow::fatal("failed to get value for `{0}`", key);
                         else break;
                     }
                     else {
@@ -168,32 +234,27 @@ public:
                 }
             }
             else {
-                if (j < len && argline[j] == '=') {
-                    std::cout << "Assign value for `" << key << "` with `=`, however it doesn't need value.\n";
-                    throw std::invalid_argument("Assign unnecessary value.");
-                }
+                if (j < len && argline[j] == '=')
+                    snow::fatal("assign value for `{0}` with `=`, however it doesn't need any more.", key);
             }
             return values;
         };
         int countKeyValues = 0;
         int countPosValues = 0;
         auto addKeyValue = [&](const std::string &key, const std::vector<std::string> &value) {
-            if (key.length() == 0) throw std::invalid_argument("empty key (only -- or only -) in args");
+            if (key.length() == 0)
+                snow::fatal("empty key (only -- or only -) in args");
             auto it = mLongNameMap.find(key);
-            if (it->second.mFind) {
-                std::cout << "Found twice " << key << std::endl;
-                throw std::invalid_argument("twice");
-            }
+            if (it->second.mFind)
+                snow::fatal("`{0}` found twice", key);
             it->second.mFind = true;
             it->second.mValue = value;
             countKeyValues += 1;
         };
         auto addPosValue = [&](const std::string &key, const std::vector<std::string> &value) {
             auto it = mLongNameMap.find(key);
-            if (it->second.mFind) {
-                std::cout << "Found twice " << key << std::endl;
-                throw std::invalid_argument("twice");
-            }
+            if (it->second.mFind)
+                snow::fatal("`{0}` found twice", key);
             it->second.mFind = true;
             it->second.mValue = value;
             countPosValues += 1;
@@ -209,15 +270,20 @@ public:
                     j = i;
                     while (validIndex(j)) ++j;
                     std::string key = subStr(i, j);
-                    auto it = mLongNameMap.find(key);
-                    if (it == mLongNameMap.end()) {
-                        std::cout << "unknown " << key << std::endl;
-                        throw std::invalid_argument("unknown key.");
+                    int requireValue = 0;
+                    if (key == "help") {
+                        help(argc, argv);
+                        if (countPosValues == 0 && countKeyValues == 0) { exit(0); }
                     }
-                    int requireValue = it->second.mNeedValue;
+                    else {
+                        auto it = mLongNameMap.find(key);
+                        if (it == mLongNameMap.end())
+                            snow::fatal("unknown key `{0}`", key);
+                        requireValue = it->second.mNeedValue;
+                    }
                     // read value
                     auto values = readValue(key, requireValue, i, j);
-                    addKeyValue(key, values);
+                    if (key != "help") addKeyValue(key, values);
                 }
                 else {
                     // short name
@@ -231,10 +297,8 @@ public:
                         ++j;
 
                         auto it = mShortNameMap.find(key);
-                        if (it == mShortNameMap.end()) {
-                            std::cout << "unknown " << key << std::endl;
-                            throw std::invalid_argument("unknown key.");
-                        }
+                        if (it == mShortNameMap.end())
+                            snow::fatal("unknown key `{0}`", key);
                         int requireValue = mLongNameMap.find(it->second)->second.mNeedValue;
                         key = it->second;
                         values = readValue(key, requireValue, i, j);
@@ -245,12 +309,11 @@ public:
             }
             else if (validIndex(i)) {
                 // positional
-                if (countKeyValues > 0) {
-                    throw std::invalid_argument("positional arguments should be front of key-values.");
-                }
+                if (countKeyValues > 0)
+                    snow::fatal("positional arguments should be front of key-values.");
                 std::string key = std::string("#") + std::to_string(countPosValues);
                 auto it = mShortNameMap.find(key);
-                if (it == mShortNameMap.end()) throw std::invalid_argument("too many positional args.");
+                if (it == mShortNameMap.end()) snow::fatal("too many positional args.");
                 auto itt = mLongNameMap.find(it->second);
                 std::vector<std::string> values;
                 key = itt->first;
@@ -269,10 +332,8 @@ public:
 
         // check for required
         for (auto it = mLongNameMap.begin(); it != mLongNameMap.end(); ++it) {
-            if (it->second.mRequired && !it->second.mFind) {
-                std::cout << it->first << " is required, but not found.\n";
-                throw std::invalid_argument("missing required argument.");
-            }
+            if (it->second.mRequired && !it->second.mFind)
+                snow::fatal("`{0}` is required, but not found.", it->first);
 #ifdef TEST_ARGPARSE
             std::cout << "key " << it->first << ": " << it->second.mValue << std::endl;
 #endif
@@ -287,10 +348,10 @@ template <> inline bool ArgumentParser::get<bool>(const std::string &name) {
 
 template <typename T> inline T ArgumentParser::get(const std::string &name) {
     auto iter = getIter(name);
-    if (iter->second.mValue.size() != 1) {
-        std::cout << "failed to get `" << name << "`" << std::endl;
-        throw std::invalid_argument("values size != 1");
-    }
+    if (iter->second.mValue.size() == 0)
+        throw std::runtime_error("empty value");
+    if (iter->second.mValue.size() > 1)
+        snow::fatal("failed to get `{0}`, because it have values of size `{1:d}`", name, iter->second.mValue.size());
     std::istringstream ss(iter->second.mValue[0]);
     T ret;
     ss >> ret;

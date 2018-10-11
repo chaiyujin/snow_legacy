@@ -75,7 +75,7 @@ void new_app(std::string type) {
     else if (type == "bilinear")
         Application::newAPP(ModelType::Bilinear);
     else
-        throw std::runtime_error("[anime_viewer]: new_app(type), type should be `obj` or `bilinear`");
+        snow::fatal("[anime_viewer]: new_app(type), type should be `obj` or `bilinear`");
 }
 
 void run(double fps) {

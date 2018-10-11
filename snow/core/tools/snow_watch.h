@@ -2,6 +2,7 @@
 #include <chrono>
 #include <string>
 #include <iostream>
+#include "snow_log.h"
 
 namespace snow {
 
@@ -28,7 +29,7 @@ public:
     double stop() {
         if (mStop) return mDuration;
         mDuration = duration();
-        std::cout << "<" + mTag + ">: " << mDuration << " ms" << std::endl;
+        snow::info("<{0}>: {1:.3f} ms", mTag, mDuration);
         mStop = true;
         return mDuration;
     }

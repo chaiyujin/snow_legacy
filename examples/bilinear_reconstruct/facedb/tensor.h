@@ -45,7 +45,7 @@ public:
                 d = (d + 1) % D;
             }
         }
-        else throw std::runtime_error("[Tensor3]: unfoldData() don't support row major!\n");
+        else snow::fatal("[Tensor3]: unfoldData() don't support row major!\n");
 
         double *p = mDataPtr;
         for (int c0 = 0, i = 0; c0 < mShape[0]; ++c0) {

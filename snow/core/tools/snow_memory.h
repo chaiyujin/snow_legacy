@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <mutex>
+#include "snow_log.h"
 
 #define MEMORY_ALIGNMENT 32
 
@@ -14,7 +15,7 @@ namespace snow {
 
 inline void *_aligned_malloc(size_t size, int alignment) {
     if (alignment & (alignment - 1)) {
-        throw std::invalid_argument("[_aligned_malloc]: alignment should be 2 ^ n.");
+        snow::fatal("[_aligned_malloc]: alignment should be 2 ^ n, rather than {0:d}", alignment);
     }
     const int pointer_size      = sizeof(void *);
     const int required_size     = (int)size + (int)alignment - 1 + pointer_size;
@@ -201,13 +202,12 @@ public:
                     break;
                 }
             }
-            if (!find) throw std::runtime_error("[MemoryArena]: empty block not found!\n");
+            if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
         }
     }
 
     void reset() {
         std::lock_guard<std::mutex> lock(mMutex);
-        
         mAvailableBlocks.splice(mAvailableBlocks.begin(), mUsedBlocks);
     }
 

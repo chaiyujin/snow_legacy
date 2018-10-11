@@ -1,5 +1,6 @@
 #include "snow_image.h"
 #include "../tools/snow_path.h"
+#include "../tools/snow_log.h"
 #include <memory.h>
 #include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION
@@ -10,7 +11,8 @@
 namespace snow {
 
 Image Image::Read(std::string filename) {
-    if (!path::Exists(filename)) throw std::runtime_error("[Image]: read() file not found");
+    if (!path::Exists(filename)) { snow::fatal("[Image]: read() file not found"); return Image(); }
+
     int w, h, n;
     uint8_t *data = stbi_load(filename.c_str(), &w, &h, &n, STBI_rgb_alpha);
     n = STBI_rgb_alpha;
@@ -59,7 +61,7 @@ void Image::Flip(Image &image, int axis) {
             }
         }
     }
-    else throw std::runtime_error("[Image]: axis should be 0 (rows) or 1 (height)");
+    else snow::fatal("[Image]: axis should be 0 (rows) or 1 (height)");
 }
 
 
@@ -68,7 +70,7 @@ Image Image::Merge(const Image &image0, const Image &image1, int axis) {
     if (image1.size() == 0) return image0;
     if (axis == 0) {
         // merge rows
-        if (image0.bpp() != image1.bpp()) throw std::runtime_error("[Image]: Merge() two images have different bpp.");
+        if (image0.bpp() != image1.bpp()) snow::fatal("[Image]: Merge() two images have different bpp.");
         int newW = std::max(image0.width(), image1.width());
         int newH = image0.height() + image1.height();
         int newBPP = image0.bpp();
@@ -85,7 +87,7 @@ Image Image::Merge(const Image &image0, const Image &image1, int axis) {
     }
     else if (axis == 1) {
         // merge cols
-        if (image0.bpp() != image1.bpp()) throw std::runtime_error("[Image]: Merge() two images have different bpp.");
+        if (image0.bpp() != image1.bpp()) snow::fatal("[Image]: Merge() two images have different bpp.");
         int newW = image0.width() + image1.width();
         int newH = std::max(image0.height(), image1.height());
         int newBPP = image0.bpp();
@@ -101,7 +103,10 @@ Image Image::Merge(const Image &image0, const Image &image1, int axis) {
         }
         return image;
     }
-    else throw std::runtime_error("[Image]: axis should be 0 (rows) or 1 (height)");
+    else {
+        snow::fatal("[Image]: axis should be 0 (rows) or 1 (height)");
+        return Image();
+    }
 }
 
 }

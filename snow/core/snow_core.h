@@ -12,6 +12,7 @@
 #include "tools/snow_iostream.h"
 #include "tools/snow_path.h"
 #include "tools/snow_argparse.h"
+#include "tools/snow_log.h"
 // misc
 #include "misc/snow_simd.h"
 #include "misc/snow_thread.h"

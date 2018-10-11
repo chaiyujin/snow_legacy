@@ -40,11 +40,10 @@ void FaceDB::Initialize(std::string dir) {
     std::string expr_s_path = snow::path::Join(dir, "expr_singular.txt");
 
     if (!snow::path::AllExists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
-        printf("Failed to find tensor information file.\n");
-        exit(1);
+        snow::fatal("Failed to find tensor information file.\n");
     }
 
-    printf("[FaceDB]: begin to read\n");
+    snow::info("[FaceDB]: begin to read.");
 
     /* read tensor */
     auto tmp_alloc_read = [](float **tmp, FILE **fp, int size) -> void
@@ -345,6 +344,8 @@ void FaceDB::Initialize(std::string dir) {
         }
         // printf("read face only mesh done\n");
     }
+
+    snow::info("[FaceDB]: finish.");
 }
 
 void FaceDB::QueryCore(const double *iden, const double *expr, Tensor3 &result) {

@@ -100,7 +100,7 @@ public:
     }
 
     void updateTriangles(const std::vector<snow::int3> &triangles) {
-        if (triangles.size() > mNumTriangles) throw std::runtime_error("too many triangles.");
+        if (triangles.size() > mNumTriangles) snow::fatal("too many triangles.");
         mNumTriangles = (int)triangles.size();
         for (size_t i = 0; i < triangles.size(); ++i) {
             mIndicePtr[i * 3 + 0] = triangles[i].x;
@@ -114,7 +114,7 @@ public:
     }
 
     void updateWithMorphModel(const MorphModel &model) {
-        if (model.numVertices() > mNumVertices) throw std::runtime_error("too many vertices");
+        if (model.numVertices() > mNumVertices) snow::fatal("too many vertices");
         mNumVertices = model.numVertices();
         for (int i = 0; i < mNumVertices; ++i) {
             mPointsPtr[i * 8 + 0] = model.vertex(i).x;

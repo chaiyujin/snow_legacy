@@ -11,7 +11,7 @@
 namespace snow {
 
 #ifndef NDEBUG
-inline void __CheckRange(int i, int l, int r) { if (i < l || i >= r) throw std::runtime_error("out of range"); }
+inline void __CheckRange(int i, int l, int r) { if (i < l || i >= r) throw std::runtime_error("extype out of range"); }
 #else
 inline void __CheckRange(int i, int l, int r) {}
 #endif

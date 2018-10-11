@@ -187,7 +187,7 @@ public:
     }
     // off-screen
     static void offscreen(std::string videoPath, double fps, int videoWidth=0, int videoHeight=0) {
-        if (std::abs(std::round(fps) - fps) > 1e-5) throw std::runtime_error("offscreen only support integer fps");
+        if (std::abs(std::round(fps) - fps) > 1e-5) snow::fatal("offscreen only support integer fps");
         int frames = 0, w = 0, h = 0, numWins = (int)gWindowMap.size();
         for (auto it = gWindowMap.begin(); it != gWindowMap.end(); ++it) {
             VisWindow *win = it->second;
@@ -239,42 +239,42 @@ public:
     
     static void setText(std::string window, std::string text) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setText(text);
     }
 
     static void setObj(std::string window, std::string filename) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setObj(filename);
     }
 
     static void setAnime(std::string window, const std::vector<Vertices> &anime) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setAnime(anime);
     }
 
     static void addScrollImage(std::string window, std::string title, ScrollImage &scrollImage) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->addScrollImage(title, scrollImage);
     }
 
     static void setIden(std::string window, const std::vector<double> &iden) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setIden(iden);
     }
 
     static void setExprList(std::string window, const std::vector<std::vector<double>> &exprList) {
         if (gAppPtr == nullptr)
-            throw std::runtime_error("You forget newAPP() first!");
+            snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setExprList(exprList);
     }

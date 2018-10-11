@@ -12,8 +12,7 @@ void AbstractWindow::Initialize(int major, int minor, std::string glslVersion) {
         return;
     }
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
-        std::cerr << "Error: " << SDL_GetError() << std::endl;
-        throw std::runtime_error("SDL2 initialization error.");
+        snow::fatal("SDL2 initialization error: {0}", SDL_GetError());
     }
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -46,8 +45,7 @@ void AbstractWindow::GLADInit() {
     if (!gIsGLADLoaded) {
         // glad loading
         if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
-            std::cerr << "Failed to initialize GLAD" << std::endl;
-            throw std::runtime_error("Failed to initialize GLAD");
+            snow::fatal("Failed to initialize GLAD");
         }
         gIsGLADLoaded = true;
     }
@@ -57,8 +55,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
     : mWidth(width), mHeight(height), mRatio((float)width / (float)height)
 {
     if (gGLSLVersion.length() == 0) {
-        std::cerr << "[SDLWindow]: Please initialize or create an App before create a window.";
-        throw std::runtime_error("[SDLWindow]: Please initialize or create an App before create a window.");
+        snow::fatal("[SDLWindow]: Please initialize or create an App before create a window.");
     }
     mTitle = title;
     mWindowPtr = SDL_CreateWindow(title, x, y, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
@@ -69,8 +66,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
         mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
     }
     else {
-        std::cerr << "[SDLWindow]: Failed to create window.";
-        throw std::runtime_error("[SDLWindow]: Failed to create window.");
+        snow::fatal("[SDLWindow]: Failed to create window.");
     }
     this->hide();
 }

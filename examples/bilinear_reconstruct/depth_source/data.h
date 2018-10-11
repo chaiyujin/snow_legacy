@@ -28,7 +28,7 @@ public:
     size_t          size()      const { return mPixels * mBytesPerPixel; }
     
     void reshape(int w, int h, int bpp) { 
-        if (w * h * bpp != mPixels * mBytesPerPixel) throw std::runtime_error("[Image]: reshape() give different pixels.");
+        if (w * h * bpp != mPixels * mBytesPerPixel) snow::fatal("[Image]: reshape() give different pixels.");
         mWidth = w;
         mHeight = h;
         mBytesPerPixel = bpp;
@@ -36,7 +36,7 @@ public:
     }
 
     static void ColorizeDepth(const Image &depth, Image &colorized) {
-        if (depth.bpp() != 2) throw std::runtime_error("[Image]: colorizeDepth() input is not z16.");
+        if (depth.bpp() != 2) snow::fatal("[Image]: colorizeDepth() input is not z16.");
         if (colorized.size() != depth.size() * 2)
             colorized.alloc(depth.width(), depth.height(), depth.bpp() * 2);
         colorized.reshape(depth.width(), depth.height(), depth.bpp() * 2);

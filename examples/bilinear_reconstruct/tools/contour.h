@@ -6,7 +6,7 @@
 template <class T>
 std::pair<std::vector<snow::_float2<T>>, std::vector<size_t>> getContourGrahamScan(const std::vector<snow::_float2<T>> &points) {
 	if (points.size() < 3) {
-        throw std::runtime_error("cannot calculate contour for points less than 3.");
+        snow::fatal("cannot calculate contour for points less than 3.");
 	}
     std::vector<snow::_float2<T>> convexHull;
     std::vector<size_t>           index;

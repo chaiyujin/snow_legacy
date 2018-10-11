@@ -9,7 +9,8 @@ int main(int argc, char **argv) {
     parser.addArgument("data", 1, true);
     parser.addArgument("-a");
     parser.addArgument("--fuck");
-    parser.addArgument("-v", "--visualize", snow::ArgumentParser::AtLeastOne, true);
+    parser.addArgument("-v", "--visualize", snow::ArgumentParser::AtLeastOne, true, "visualize the app");
+    parser.addArgument("test");
 
     parser.parse(argc, argv);
 

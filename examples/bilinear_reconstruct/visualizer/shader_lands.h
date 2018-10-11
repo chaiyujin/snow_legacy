@@ -57,7 +57,7 @@ public:
     }
 
     void update2DLandmarks(const std::vector<snow::float2> &points) {
-        if (points.size() > mMaxPoints) throw std::runtime_error("2d landmarks has too many points.");
+        if (points.size() > mMaxPoints) snow::fatal("2d landmarks has too many points.");
         mNumPoints = (int)points.size();
         for (int i = 0; i < points.size(); ++i) {
             mPointsPtr[i * 3 + 0] = points[i].x;
@@ -71,7 +71,7 @@ public:
     }
 
     void update3DLandmarks(const std::vector<snow::float3> &points) {
-        if (points.size() > mNumPoints) throw std::runtime_error("3d landmarks has too many points.");
+        if (points.size() > mNumPoints) snow::fatal("3d landmarks has too many points.");
         mNumPoints = (int)points.size();
         for (int i = 0; i < points.size(); ++i) {
             mPointsPtr[i * 3 + 0] = points[i].x;

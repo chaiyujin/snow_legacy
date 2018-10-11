@@ -34,7 +34,7 @@ namespace snow {
         std::string name = SDL_GetWindowTitle(ptr->windowPtr());
         if (mWindowPtrDict.find(name) != mWindowPtrDict.end()) {
             std::cerr << "[App]: two windows have same name: " << name << std::endl;
-            throw std::runtime_error("[App]: two windows have same name.");
+            snow::fatal("[App]: two windows have same name.");
         }
         mWindowPtrDict.insert(std::pair<std::string, AbstractWindow*>(name, ptr));
         auto it = mWindowSettings.find(name);
@@ -164,7 +164,8 @@ namespace snow {
         };
         int buttonid;
         if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
-            throw std::runtime_error("SDL message box error.");
+            snow::fatal("SDL message box error.");
+            return false;
         }
         return (buttonid == 0);
     }

@@ -15,6 +15,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include "../tools/snow_log.h"
 #define SNOW_NONE_PTS       ((int64_t)UINT64_C(0x8000000000000000))
 #define SNOW_FRMAE_NONE_ID  ((int64_t)UINT64_C(0x8000000000000000))
 
@@ -85,7 +86,7 @@ protected:
     InputBase *                 mInputPtr;
     std::unique_ptr<FrameBase>  mFramePtr;
     
-    void checkInput() const     { if (!mInputPtr) throw std::runtime_error("Input not set!\n"); }
+    void checkInput() const     { if (!mInputPtr) snow::fatal("Input not set!\n"); }
 
 public:
     StreamBase(MediaType        type       = MediaType::None,

@@ -38,7 +38,7 @@ BilinearModel::~BilinearModel() {
     }
 }
 void BilinearModel::appendModel(size_t count) {
-    if (mIsChild) throw std::runtime_error("[BilinearModel]: appendModel() should not be child.\n");
+    if (mIsChild) snow::fatal("[BilinearModel]: appendModel() should not be child.");
     ++mCount;
 
     mTvi1List.emplace_back();
@@ -51,7 +51,7 @@ void BilinearModel::appendModel(size_t count) {
 }
 
 void BilinearModel::prepareAllModel() {
-    if (mIsChild) throw std::runtime_error("[BilinearModel]: appendModel() should not be child.\n");
+    if (mIsChild) snow::fatal("[BilinearModel]: appendModel() should not be child.");
 
     for (size_t i = 0; i < mCount; ++i) {
         mTvi1List[i].resize({ FaceDB::NumDimVert(), FaceDB::NumDimIden(), 1                   });

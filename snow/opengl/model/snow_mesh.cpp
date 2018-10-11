@@ -86,8 +86,7 @@ namespace snow {
             case 3: format = GL_RGB; break;
             case 4: format = GL_RGBA; break;
             default:
-                std::cerr << "[Texture]: unsupported nr_components " << nr_components << std::endl;
-                throw std::runtime_error("texture error");
+                snow::fatal("[Texture]: unsupported nr_components {0:d}", nr_components);
             }
 
             glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -101,9 +100,8 @@ namespace snow {
             stbi_image_free(data);
         }
         else {
-            std::cerr << "[Texture]: failed to load at path " << path << std::endl;
             stbi_image_free(data);
-            throw std::runtime_error("texture error");
+            snow::fatal("[Texture]: failed to load at path {0}", path);
         }
         return texture_id;
     }

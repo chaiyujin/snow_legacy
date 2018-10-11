@@ -73,7 +73,7 @@ void VisWindow::addAudio(std::string tag, const S16Signal &signal, int sampleRat
     if (gShared.gAudioGroup.mSampleRate == 0)
         gShared.gAudioGroup.mSampleRate = sampleRate;
     else if (gShared.gAudioGroup.mSampleRate != sampleRate)
-        throw std::runtime_error("[addAudio]: Different samplerates are given.");
+        snow::fatal("[addAudio]: Different samplerates are given.");
     // push
     gShared.gAudioGroup.mSignals.push_back(signal);
     gShared.gAudioGroup.mTags.push_back(tag);
@@ -110,7 +110,7 @@ void VisWindow::setObj(std::string filepath) {
         return;
     }
     if (mModelType != ModelType::Obj)
-        throw std::runtime_error("setObj() is not supported for Obj Model");
+        snow::fatal("setObj() is not supported for Obj Model");
     this->glMakeCurrent();  // important !!
     this->releaseObj();
     
@@ -124,7 +124,7 @@ void VisWindow::setObj(std::string filepath) {
 
 void VisWindow::setAnime(const std::vector<Vertices> &anime) {
     if (mModelType != ModelType::Obj)
-        throw std::runtime_error("setAnime() is not supported for Obj Model");
+        snow::fatal("setAnime() is not supported for Obj Model");
     mPrivate.mAnime = anime;
     mPrivate.mFrames = (int)anime.size();
     if (anime.size() > gShared.gMaxFrames) {
@@ -171,9 +171,9 @@ void VisWindow::setTexture(std::string title, uint8_t *data, int rows, int cols)
 /* for bilinear model */
 void VisWindow::setIden(const std::vector<double> &iden) {
     if (iden.size() != FaceDB::LengthIdentity)
-        throw std::runtime_error("<iden> size() is not correct!");
+        snow::fatal("<iden> size() is not correct!");
     if (mModelType != ModelType::Bilinear)
-        throw std::runtime_error("setIden() is not supported for Bilinear Model");
+        snow::fatal("setIden() is not supported for Bilinear Model");
     this->glMakeCurrent();
 
     if (mModelPtr == nullptr) {
@@ -190,9 +190,9 @@ void VisWindow::setIden(const std::vector<double> &iden) {
 void VisWindow::setExprList(const std::vector<std::vector<double>> &exprList) {
     if (exprList.size() == 0) return;
     if (exprList[0].size() != FaceDB::LengthExpression)
-        throw std::runtime_error("<expr> size() is not correct!");
+        snow::fatal("<expr> size() is not correct!");
     if (mModelType != ModelType::Bilinear)
-        throw std::runtime_error("setExprList() is not supported for Bilinear Model");
+        snow::fatal("setExprList() is not supported for Bilinear Model");
     mPrivate.mExprList = exprList;
     mPrivate.mFrames = (int)exprList.size();
     if (exprList.size() > gShared.gMaxFrames) {
@@ -324,7 +324,7 @@ void VisWindow::draw() {
                 if (idx < mPrivate.mExprList.size()) mModelPtr->modify(&mPrivate.mExprList.at(idx));
                 break;
             default:
-                throw std::runtime_error("Unknown model type.");
+                snow::fatal("Unknown model type.");
             }
             // update scroll image
             for (auto it = mPrivate.mScrollImageMap.begin(); it != mPrivate.mScrollImageMap.end(); ++it) {

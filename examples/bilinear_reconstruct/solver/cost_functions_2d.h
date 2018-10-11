@@ -51,8 +51,10 @@ inline std::pair<double, glm::dvec4>criterion2D(
 
         return {loss, glm::dvec4{grad2.x, grad2.y, 0., 0.}};
     }
-    else
-        throw std::runtime_error("error contour2d.");
+    else {
+        snow::fatal("error contour2d.");
+        return {0.0, glm::dvec4{0, 0, 0, 0}};
+    }
 }
 
 struct PoseCost2D : public ceres::SizedCostFunction<1, 3, 3> {
@@ -72,7 +74,7 @@ struct PoseCost2D : public ceres::SizedCostFunction<1, 3, 3> {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
-            throw std::runtime_error("only point constraint or only contour constraint at once.");
+            snow::fatal("only point constraint or only contour constraint at once.");
         }
     }
     ~PoseCost2D() { delete mPointPtr; delete mContourPtr; }
@@ -122,7 +124,7 @@ struct PoseScaleCost2D : public ceres::SizedCostFunction<1, 3, 3, 1> {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint);        }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>();  *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint)) {
-            throw std::runtime_error("only point constraint or only contour constraint at once.");
+            snow::fatal("only point constraint or only contour constraint at once.");
         }
     }
     ~PoseScaleCost2D() { delete mPointPtr; delete mContourPtr; }
@@ -177,7 +179,7 @@ struct ExprPoseCost2D : public ceres::CostFunction {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
-            throw std::runtime_error("only point constraint or only contour constraint at once.");
+            snow::fatal("only point constraint or only contour constraint at once.");
         mutable_parameter_block_sizes()->clear();
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
         mutable_parameter_block_sizes()->push_back(3);
@@ -257,7 +259,7 @@ struct IdenExprScaleCost2D : public ceres::CostFunction {
         if (pointConstraint)   { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
         if (contourConstraint) { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
-            throw std::runtime_error("only point constraint or only contour constraint at once.");
+            snow::fatal("only point constraint or only contour constraint at once.");
         mutable_parameter_block_sizes()->clear();
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthIdentity   - 1);
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);
@@ -348,7 +350,7 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
         if (pointConstraint)    { mPointPtr   = new CriterionPointToPoint2D(*pointConstraint, weightPoint); }
         if (contourConstraint)  { mContourPtr = new std::vector<glm::dvec2>(); *mContourPtr = *contourConstraint; }
         if ((pointConstraint && contourConstraint) || (!pointConstraint && !contourConstraint))
-            throw std::runtime_error("only point constraint or only contour constraint at once.");
+            snow::fatal("only point constraint or only contour constraint at once.");
         mutable_parameter_block_sizes()->clear();
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthIdentity   - 1);
         mutable_parameter_block_sizes()->push_back(FaceDB::LengthExpression - 1);

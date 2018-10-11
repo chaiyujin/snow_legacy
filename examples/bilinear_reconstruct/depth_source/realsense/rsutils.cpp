@@ -9,7 +9,7 @@ RealSenseSource::~RealSenseSource() {}
 
 void RealSenseSource::initFrom(std::string paramPath) {
     std::ifstream fin(paramPath);
-    if (!fin.is_open()) throw std::runtime_error("Failed to open parameter path.");
+    if (!fin.is_open()) snow::fatal("Failed to open parameter path.");
     // begin to read
     std::string name;
     // read intrinsics and extrinsics

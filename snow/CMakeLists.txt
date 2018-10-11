@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
 
 OPTION(SNOW_AVX              "AVX functions" off)
-OPTION(SNOW_RELEASE          "-O3 switch"    on)
-
 OPTION(SNOW_MODULE_OPENGL    "Build with module opengl" on)
 OPTION(SNOW_MODULE_FFMPEG    "Build with module ffmpeg" off)
 OPTION(SNOW_MODULE_FP        "Build with module functional programming" off)
@@ -22,12 +20,19 @@ set(SNOW_WIN32_DLLS     "")
 set(SNOW_DEFINITIONS    "")
 
 # add defitions
-if (SNOW_RELEASE)
+if (NOT CMAKE_BUILD_TYPE MATCHES "")
+    string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+endif (NOT CMAKE_BUILD_TYPE MATCHES "")
+if (CMAKE_BUILD_TYPE MATCHES "DEBUG")
+    message(STATUS "snow debug")
+else()
+    message(STATUS "snow release")
     list(APPEND SNOW_DEFINITIONS    "-DNDEBUG")
     if (NOT MSVC)
         list(APPEND SNOW_DEFINITIONS    "-O3")
     endif()
-endif (SNOW_RELEASE)
+endif (CMAKE_BUILD_TYPE MATCHES "DEBUG")
+
 if (SNOW_AVX)
     list(APPEND SNOW_DEFINITIONS    "-mavx")
     list(APPEND SNOW_DEFINITIONS    "-DSNOW_AVX")
@@ -44,7 +49,8 @@ endif (MSVC)
 # ====================================
 # =========== Module Core ============
 # ====================================
-set(SNOW_CORE_SOURCES        "${PROJECT_SOURCE_DIR}/core/data/snow_image.cpp")
+set(SNOW_CORE_SOURCES        "${PROJECT_SOURCE_DIR}/core/data/snow_image.cpp"
+                             "${PROJECT_SOURCE_DIR}/core/tools/snow_log.cpp")
 set(SNOW_CORE_INCLUDE_DIRS   "${PROJECT_SOURCE_DIR}/third-party/stb/")
 set(SNOW_CORE_LIBRARIES_DIRS "")
 set(SNOW_CORE_LIBRARIES      "")
@@ -60,6 +66,12 @@ list(APPEND SNOW_LIBRARIES      glm)
 # eigen3
 find_package(Eigen3 3.3 REQUIRED)
 list(APPEND SNOW_LIBRARIES      Eigen3::Eigen)
+
+# spdlog
+add_subdirectory("${PROJECT_SOURCE_DIR}/third-party/spdlog")
+list(APPEND SNOW_INCLUDE_DIRS   spdlog)
+list(APPEND SNOW_LIBRARIES      spdlog)
+
 
 # append to snow
 list(APPEND SNOW_SOURCES        ${SNOW_CORE_SOURCES})
@@ -106,8 +118,6 @@ if (SNOW_MODULE_OPENGL)
     set(SNOW_OPENGL_LIBRARIES      "")
 
     # === GLAD ===
-    # add_library(OPENGL_GLAD STATIC "${PROJECT_SOURCE_DIR}/third-party/glad/src/glad.c")
-    # list(APPEND SNOW_OPENGL_LIBRARIES OPENGL_GLAD)  # append glad
     list(APPEND SNOW_OPENGL_SOURCES "${PROJECT_SOURCE_DIR}/third-party/glad/src/glad.c")
 
     # === SDL2 ===

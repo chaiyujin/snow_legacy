@@ -1,39 +1,36 @@
-#include "facedb/facedb.h"
-#include "facedb/bilinear_model.h"
 #include "visualizer/window.h"
 #include "depth_source/realsense/rsutils.h"
-#include "tools/contour.h"
-#include "tools/landmarks.h"
-#include "tools/math_tools.h"
-#include "tools/projection.h"
-#include "solver/cost_functions_2d.h"
 #include "solver/frames_solver.h"
 #include "solver/video_solver.h"
 #include <snow.h>
 
-const std::string RootFaceDB = "../../../assets/fw/";
-const std::string RootVideo = "../../../assets/test_depth/";
-// const std::string RootVideo  = "D:/Projects/Recorder_qt5.6_sync/asset/000/";
-// const std::string RootVideo = "/media/chaiyujin/FE6C78966C784B81/Projects/Recorder_qt5.6_sync/asset/000/";
+std::string RootFaceDB = "";
+std::string RootVideo  = "";
 
-void usage();
 void solveIden(bool visualize, bool replace);
 void solveVideo(std::string videoPath, bool visualize, bool replace);
 
 int main(int argc, char **argv) {
-    if (argc < 2) { usage(); }
+    snow::ArgumentParser parser;
+    parser.addArgument("type");
+    parser.addArgument("--facedb",    1, true);
+    parser.addArgument("--video_dir", 1, true);
+    parser.addArgument("-v");
+    parser.addArgument("-y");
+    parser.parse(argc, argv);
+
+    std::string type = parser.get<std::string>("type");
+    RootFaceDB       = parser.get<std::string>("facedb");
+    RootVideo        = parser.get<std::string>("video_dir");
+    bool visualize   = parser.get<bool>("v");
+    bool replace     = parser.get<bool>("y");
+
     FaceDB::Initialize(RootFaceDB);
-    bool visualize = false;
-    bool replace   = false;
-    for (int i = 2; i < argc; ++i) {
-        visualize = visualize || !strcmp(argv[i], "-v");
-        replace   = replace   || !strcmp(argv[i], "-y");
-    }
     
-    if (!strcmp(argv[1], "iden"))
+    if (type == "iden")
         solveIden(visualize, replace);
     else {    
-        auto fileList = snow::path::FindFiles(RootVideo, std::regex(argv[1]), true);
+        auto fileList = snow::path::FindFiles(RootVideo, std::regex(type), true);
         for (const auto &file : fileList)
             std::cout << "Find video " << file << std::endl;
         std::cout << "Totally " << fileList.size() << std::endl;
@@ -44,11 +41,6 @@ int main(int argc, char **argv) {
         }
     }
     return 0;
-}
-
-void usage() {
-    printf("Usage: BilinearReconstruct [iden|video_path] [-v] [-y]");
-    exit(1);
 }
 
 void solveIden(bool visualize, bool replace) {

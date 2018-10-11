@@ -40,11 +40,10 @@ void FaceDB::Initialize(std::string dir) {
     std::string expr_s_path = snow::path::Join(dir, "expr_singular.txt");
 
     if (!snow::path::AllExists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
-        printf("Failed to find tensor information file.\n");
-        exit(1);
+        snow::fatal("Failed to find tensor information file.");
     }
 
-    printf("[FaceDB]: begin to read\n");
+    snow::info("[FaceDB]: begin to read");
 
     /* read tensor */
     auto tmp_alloc_read = [](float **tmp, FILE **fp, int size) -> void
@@ -87,8 +86,8 @@ void FaceDB::Initialize(std::string dir) {
         delete[] tmp;
         fclose(fp_tensor);
 
-        // std::cout << " core  shape: " << gTensorShape << std::endl;
-        // std::cout << "origin shape: " << gOriginShape << std::endl;
+        // snow::info("core shape  :{}", gTensorShape);
+        // snow::info("origin shape:{}", gOriginShape);
     }
 #else
     {
@@ -254,10 +253,8 @@ void FaceDB::Initialize(std::string dir) {
             gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[3]].push_back((int)gTriangles.size() - 1);
-            // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);
-        // printf("read face done\n");
     }
     /* read contours */
     {
@@ -293,7 +290,6 @@ void FaceDB::Initialize(std::string dir) {
             }
             return indices;
         });
-        // printf("read contour done\n");
     }
     /* read singular values */
     {
@@ -317,7 +313,6 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        // printf("read expr singular done\n");
     }
     /* read face only mesh */
     {
@@ -343,8 +338,9 @@ void FaceDB::Initialize(std::string dir) {
             }
             fin.close();
         }
-        // printf("read face only mesh done\n");
     }
+    
+    snow::info("[FaceDB]: finish.");
 }
 
 void FaceDB::QueryCore(const double *iden, const double *expr, Tensor3 &result) {

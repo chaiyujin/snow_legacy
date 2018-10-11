@@ -35,7 +35,7 @@ Tensor3::~Tensor3() {
 }
 
 const Tensor3 &Tensor3::operator=(const Tensor3 &b) {
-    if (mIsSub) throw std::runtime_error("[Tensor3]: operator = not allowed for sub-tensor!\n");
+    if (mIsSub) snow::fatal("[Tensor3]: operator = not allowed for sub-tensor!\n");
     this->free();
     mShape = b.mShape;
     this->alloc(mShape);
@@ -45,8 +45,8 @@ const Tensor3 &Tensor3::operator=(const Tensor3 &b) {
 
 void Tensor3::resize(const std::vector<int> & shape) {
     static const int align_1 = Alignment - 1;
-    if (shape.size() != 3) throw std::runtime_error("[Tensor3]: resize() shape is not 3 dims!\n");
-    if (mIsSub) throw std::runtime_error("[Tensor3]: resize() not allowed for sub-tensor!\n");
+    if (shape.size() != 3) snow::fatal("[Tensor3]: resize() shape is not 3 dims!\n");
+    if (mIsSub) snow::fatal("[Tensor3]: resize() not allowed for sub-tensor!\n");
 
     mShape = shape;
     mSize  = mShape[0] * mShape[1] * mShape[2];
