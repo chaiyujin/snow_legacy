@@ -80,7 +80,7 @@ namespace snow {
         glGenTextures(1, &texture_id);
         uint8_t *data = stbi_load(filename.c_str(), &width, &height, &nr_components, 0);
         if (data) {
-            GLenum format;
+            GLenum format = 0;
             switch (nr_components) {
             case 1: format = GL_RED; break;
             case 3: format = GL_RGB; break;
