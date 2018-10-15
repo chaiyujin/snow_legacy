@@ -1,6 +1,7 @@
 [submodule "snow/third-party/spdlog"]
 	path = snow/third-party/spdlog
 	url = https://github.com/gabime/spdlog.git
+	branch = v1.x
 [submodule "pybind11"]
 	path = pybind11
 	url = https://github.com/pybind/pybind11.git
