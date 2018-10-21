@@ -144,7 +144,7 @@ if (SNOW_MODULE_OPENGL)
         list(APPEND SNOW_OPENGL_LIBRARIES "${Cocoa}" "${OpenGL}" "${CoreFoundation}")
         # append dialog.mm for macos
         add_definitions( -DUSE_CLANG_COMPLETER )
-        list(APPEND SNOW_OPENGL_SOURCES "${PROJECT_SOURCE_DIR}/gui/snow_dialog.mm")
+        list(APPEND SNOW_OPENGL_SOURCES "${PROJECT_SOURCE_DIR}/opengl/gui/snow_dialog.mm")
     elseif (UNIX) # LINUX
         list(APPEND SNOW_OPENGL_LIBRARIES GL X11 pthread Xrandr Xi dl)
     endif ()

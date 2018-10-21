@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(BilinearReconstruct)
 # snow
-set(SNOW_MODULE_OPENG on CACHE BOOL "enable opengl" FORCE)  # set module on
+set(SNOW_MODULE_OPENGL on CACHE BOOL "enable opengl" FORCE)  # set module on
 add_subdirectory(../../snow ext/snow/)
 add_definitions(    ${SNOW_DEFINITIONS})
 include_directories(${SNOW_INCLUDE_DIRS})
