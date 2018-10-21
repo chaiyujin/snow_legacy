@@ -17,6 +17,8 @@ class VideoSolver {
 
     std::vector<PoseParameter>              mResultPoseList;
     std::vector<ExprParameter>              mResultExprList;
+
+    void filterLandmarks();
 public:
     VideoSolver() : mPVM(1.0), mRegExpr(1e-4) { mModel.appendModel();   }
     /* set parameters */

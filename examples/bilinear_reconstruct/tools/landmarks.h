@@ -6,6 +6,7 @@ class Landmarks {
     std::vector<snow::float2> mData;
     int64_t                   mTimestamp;
 public:
+    static const int Numbers = 73;
     Landmarks() : mData(0), mTimestamp(-1) {}
     int64_t timestamp() const { return mTimestamp; }
 
@@ -24,7 +25,7 @@ inline std::istream &operator>>(std::istream &in, Landmarks &lm) {
         // skip pts, dde
         for (int i = 0; i < num; ++i) in >> x >> y;
         for (int i = 0; i < num; ++i) in >> x >> y;
-        for (int i = 0; i < 73; ++i) {
+        for (int i = 0; i < Landmarks::Numbers; ++i) {
             in >> x >> y;
             x = x * 2.f - 1.f;
             y = 1.f - y * 2.f;

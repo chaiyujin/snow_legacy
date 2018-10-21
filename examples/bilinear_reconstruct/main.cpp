@@ -29,7 +29,8 @@ int main(int argc, char **argv) {
     
     if (type == "iden")
         solveIden(visualize, replace);
-    else {    
+    else {
+        std::cout << "using regex: `" << type << "` to find videos." << std::endl;
         auto fileList = snow::path::FindFiles(RootVideo, std::regex(type), true);
         for (const auto &file : fileList)
             std::cout << "Find video " << file << std::endl;

@@ -461,3 +461,28 @@ struct RegTerm : public ceres::CostFunction {
     }
 };
 
+struct DeltaRegTerm : public ceres::CostFunction {
+    int             mLength;
+    double          mWeight;
+    const double *  mRefPtr;
+
+    DeltaRegTerm(int length, double weight, const double *ref)
+        : mLength(length), mWeight(weight), mRefPtr(ref) {
+        mutable_parameter_block_sizes()->clear();
+        mutable_parameter_block_sizes()->push_back(length);
+        set_num_residuals(1);
+    }
+
+    virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
+        residuals[0] = 0.0;
+        for (int i = 0; i < mLength; ++i) {
+            residuals[0] += mWeight * (params[0][i] - mRefPtr[i]) * (params[0][i] - mRefPtr[i]);
+        }
+        if (jacobians && jacobians[0]) {
+            for (int i = 0; i < mLength; ++i) {
+                jacobians[0][i] = mWeight * 2.0 * (params[0][i] - mRefPtr[i]);
+            }
+        }
+        return true;
+    }
+};
