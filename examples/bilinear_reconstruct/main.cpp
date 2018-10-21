@@ -46,10 +46,6 @@ int main(int argc, char **argv) {
 
 void solveIden(bool visualize, bool replace) {
     std::string pathResult = snow::path::Join(RootVideo, "shared_params.txt");
-    if (snow::path::Exists(pathResult) && !replace) {
-        std::cout << "Result exists. use -y" << std::endl;
-        return;
-    }
 
     std::vector<glm::dmat4> viewMatList;
     std::vector<glm::dmat4> projMatList;
@@ -57,6 +53,7 @@ void solveIden(bool visualize, bool replace) {
     FramesSolver solver;
     solver.setRegIden(1e-4);
     solver.setRegExpr(1e-4);
+    bool ShowLandmarks = true;
     int Frames = 0;
     auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-(\\d)-(\\d).mkv"), true);
     for (const auto &filePath: fileList) {
@@ -80,7 +77,18 @@ void solveIden(bool visualize, bool replace) {
         }
         Frames ++;
     }
-    if (Frames) {
+    if (Frames == 0) return;
+    if (snow::path::Exists(pathResult) && !replace) {
+        std::cout << "Result exists. use -y to overwrite iden." << std::endl;
+        
+        std::ifstream fin(pathResult);
+        fin >> solver.model().scaleParameter()
+            >> solver.model().idenParameter();
+        fin.close();
+        ShowLandmarks = false;
+        Frames = 1;
+    }
+    else {
         printf("Begin to solve with %d frames\n", Frames);
         solver.solve(5, true);
         printf("Solve done.\n");
@@ -95,12 +103,19 @@ void solveIden(bool visualize, bool replace) {
         snow::App app;
         VisualizerWindow *win = new VisualizerWindow(75, 0, FaceDB::NumVertices(), FaceDB::NumTriangles());
 
+        solver.model().prepareAllModel();
+        solver.model().updateIdenOnCore(0);
+        solver.model().updateExpr(0);
+        solver.model().updateScale(0);
+        solver.model().rotateYXZ(0);
+        solver.model().translate(0);
         // visualization
         for (int iFrame = 0; iFrame < Frames; ++iFrame) {    
             solver.model().transformMesh(iFrame, glm::transpose(viewMatList[iFrame]));
             solver.model().updateMorphModel(iFrame);
             // append to visualizer        
-            win->append2DLandmarks(solver.landmarks(iFrame).data());
+            if (ShowLandmarks)
+                win->append2DLandmarks(solver.landmarks(iFrame).data());
             win->appendMorphModel(solver.model().morphModel());
             win->appendViewMat(viewMatList[iFrame]);
             win->appendProjMat(projMatList[iFrame]);

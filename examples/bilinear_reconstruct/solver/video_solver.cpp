@@ -115,7 +115,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
                 mModel.translate(0);
                 contourIndex = mModel.getContourIndex(0, mPVM);
             }
-            if (iEpoch < 3) continue;
+            if (iEpoch < 1) continue;
             /* solve expr */ {
                 double Scale = mModel.scaleParameter().param()[0];
                 ceres::Problem problem;

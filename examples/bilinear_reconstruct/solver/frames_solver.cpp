@@ -12,7 +12,7 @@ void FramesSolver::addFrame(const Landmarks &landmarks, const glm::dmat4 &pvm) {
 }
 
 void FramesSolver::solve(int epochs, bool verbose) {
-    const double weightContour = 1.0;
+    const double weightContour = 0.5;
     const double weightPoint   = 1.0;
     const int    NUM_LANDMARKS = 73;
     mModel.prepareAllModel();
@@ -82,7 +82,7 @@ void FramesSolver::solve(int epochs, bool verbose) {
             contourIndexList[i] = mModel.getContourIndex(i, mPVMList[i]);
         }
         /* update iden, expr */
-        if (iEpoch < 3) continue;
+        if (iEpoch < 1) continue;
         else {
             ceres::Problem problem;
             for (size_t iMesh = 0; iMesh < mModel.size(); ++iMesh) {
