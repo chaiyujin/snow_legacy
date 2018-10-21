@@ -116,10 +116,6 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
     auto pathLandmarks = videoPath + "_lmrecord";
     auto pathResult    = videoPath + "_pose_expr_params.txt";
     auto pathShared    = snow::path::Join(RootVideo, "shared_params.txt");
-    if (snow::path::Exists(pathResult) && !replace) {
-        std::cout << "Result exists. use -y" << std::endl;
-        return;
-    }
     if (!snow::path::AllExists({pathParams, pathLandmarks})) {
         std::cout << "Failed to find landmarks and camera params of video `" << videoPath << "`" << std::endl;
         return;
@@ -137,7 +133,7 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
         projMat = rsdevice.colorProjectionMat();
         solver.setPVMMat(pvmMat);
     }
-    /* read first landmarks */ {
+    /* read landmarks */ {
         std::ifstream fin(pathLandmarks);
         while (!fin.eof()) {
             Landmarks lms; fin >> lms;
@@ -154,7 +150,28 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
         solver.setSharedParameters(scale, iden);
         fin.close();
     }
-    {
+
+    if (snow::path::Exists(pathResult) && !replace) {
+        std::cout << "Result exists. use -y to overwrite" << std::endl;
+        /* read existed results */ {
+            std::ifstream fin(pathResult);
+            int numResults = 0;
+            std::string str;
+            fin >> numResults; std::getline(fin, str);
+            for (int iFrame = 0; iFrame < numResults; ++iFrame) {
+                PoseParameter pose;
+                ExprParameter expr;
+                int64_t ts;
+                fin >> ts; std::getline(fin, str);
+                fin >> pose >> expr;
+                solver.resultPoseList().emplace_back(pose);
+                solver.resultExprList().emplace_back(expr);
+            }
+            fin.close();
+        }
+        std::cout << "read existed results " << solver.numResults() << std::endl;
+    }
+    else {
         std::cout << "Begin to solve " << solver.landmarksList().size() << " frames from video: " << videoPath << std::endl;
         solver.solve(5, false);
         std::cout << "Done." << std::endl;
@@ -175,6 +192,7 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
 
         // visualization
         int Frames = solver.numResults();
+        solver.model().prepareAllModel();
         solver.model().updateIdenOnCore(0);
         for (int iFrame = 0; iFrame < Frames; ++iFrame) {
             printf("visualizer add %d frame\r", iFrame);

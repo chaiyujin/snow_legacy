@@ -37,6 +37,8 @@ public:
     const glm::dmat4 &               pvmMat()            const { return mPVM;             }
     const std::vector<Landmarks> &   landmarksList()     const { return mLandmarkList;    }
 
+    std::vector<PoseParameter>&      resultPoseList()          { return mResultPoseList;  }
+    std::vector<ExprParameter>&      resultExprList()          { return mResultExprList;  }
     const std::vector<PoseParameter>&resultPoseList()    const { return mResultPoseList;  }
     const std::vector<ExprParameter>&resultExprList()    const { return mResultExprList;  }
 };
