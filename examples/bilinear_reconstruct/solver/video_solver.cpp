@@ -78,7 +78,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
                 /* contour */
                 for (size_t iContour = 0; iContour < contourIndex.size(); ++iContour) {
                     size_t idx = contourIndex[iContour];
-                    auto *cost = new PoseCost2D(nullptr, 0.0, &mContourList[iFrame], WeightContour,
+                    auto *cost = new PoseCost2D(nullptr, 0.0, &mContourList[iFrame], WeightContour * 8.0,
                                                 getSource3D(idx), mPVM);
                     problem.AddResidualBlock(cost, nullptr,
                                             mModel.poseParameter(0).trainRotateYXZ(),
@@ -115,7 +115,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
                 mModel.translate(0);
                 contourIndex = mModel.getContourIndex(0, mPVM);
             }
-            if (iEpoch < 1) continue;
+            if (iEpoch < 3) continue;
             /* solve expr */ {
                 double Scale = mModel.scaleParameter().param()[0];
                 ceres::Problem problem;

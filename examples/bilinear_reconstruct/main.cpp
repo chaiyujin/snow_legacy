@@ -90,7 +90,7 @@ void solveIden(bool visualize, bool replace) {
     }
     else {
         printf("Begin to solve with %d frames\n", Frames);
-        solver.solve(5, true);
+        solver.solve(7, true);
         printf("Solve done.\n");
         {
             std::ofstream fout(pathResult);
