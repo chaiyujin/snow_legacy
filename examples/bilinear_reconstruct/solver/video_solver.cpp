@@ -52,7 +52,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
         mModel.poseParameter(0).useTrained();
     };
     // filter
-    filterLandmarks();
+    // filterLandmarks();
 
     int Frames = mLandmarkList.size();
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {
