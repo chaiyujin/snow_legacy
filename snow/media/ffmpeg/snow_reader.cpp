@@ -101,7 +101,7 @@ bool MediaReader::open() {
                 return ret;
             }
         }
-        InputStream *st = new InputStream;
+        InputStream *st = new InputStream();
         st->mType       = codec_ctx->codec_type;
         st->mStreamPtr  = stream;
         st->mDecPtr     = dec;
@@ -181,6 +181,10 @@ bool MediaReader::open() {
 
 void MediaReader::close() {
     clearQueues();
+    for (auto *q : mVideoQueues) delete q;
+    for (auto *q : mAudioQueues) delete q;
+    mVideoQueues.clear();
+    mAudioQueues.clear();
     for (auto *st : mStreamPtrList) delete st;
     mStreamPtrList.clear();
     if (mFmtCtxPtr) {
@@ -193,7 +197,7 @@ void MediaReader::close() {
 
 void MediaReader::clearQueues() {
     for (auto *q : mVideoQueues) q->clear();
-    for (auto *q: mAudioQueues)  q->clear();
+    for (auto *q : mAudioQueues) q->clear();
 }
 
 int MediaReader::processInput(MediaType request_type) {
@@ -207,6 +211,7 @@ int MediaReader::processInput(MediaType request_type) {
     ret = av_read_frame(mFmtCtxPtr, &pkt);
     if (ret == AVERROR(EAGAIN)) {
         mErrorAgain = true;
+        av_packet_unref(&pkt);
         return ret;
     }
     if (ret == AVERROR_EOF) {
@@ -215,6 +220,7 @@ int MediaReader::processInput(MediaType request_type) {
             mVideoQueues[i]->push(VideoFrame());
         for (size_t i = 0; i < mAudioQueues.size(); ++i)
             mAudioQueues[i]->push(AudioFrame());
+        av_packet_unref(&pkt);
         return ret;
     }
 
@@ -284,10 +290,7 @@ int MediaReader::processInput(MediaType request_type) {
         }
     }
 
-    if (got_frame) {
-        av_packet_unref(&pkt);
-    }
-
+    av_packet_unref(&pkt);
     return ret;
 }
 
@@ -404,47 +407,55 @@ void MediaReader::preReadAudioTracks() {
     while (processInput(MediaType::Audio) !=  AVERROR_EOF) ;
     int iTrack = 0;
     for (auto *q : mAudioQueues) {
-        bool invalid = false;
+        bool    invalid   = false;
+        int64_t startTime = 0;
         std::vector<float> track;
-        int64_t startTime = q->front().timestamp();
-        // padding zero for starttime
-        const int padding = startTime * mDstAudioFmt.mSampleRate / 1000;
-        startTime -= padding * 1000 / mDstAudioFmt.mSampleRate;
-        for (int i = 0; i < padding; ++i) track.push_back(0.0f);
-        // read from frames
-        while (q->size()) {
-            AudioFrame frame = q->frontAndPop();
-            if (frame.isNull()) break;
-            if (frame.mBytePerSample == 1) {
-                uint8_t val;
-                const uint8_t *data = frame.data();
-                for (int i = 0; i < frame.mNumSamples; ++i) {
-                    val = data[i];
-                    track.push_back( ((float)val - 128.0f) / 128.0f );
+        // check size
+        if (q->size() == 0) invalid = true;
+        else {
+            // try to get data from queue
+            startTime = q->front().timestamp();
+            // padding zero for starttime
+            const int padding = startTime * mDstAudioFmt.mSampleRate / 1000;
+            startTime -= padding * 1000 / mDstAudioFmt.mSampleRate;
+            for (int i = 0; i < padding; ++i) track.push_back(0.0f);
+            // read from frames
+            while (q->size()) {
+                AudioFrame frame = q->frontAndPop();
+                if (frame.isNull()) break;
+                if (frame.mBytePerSample == 1) {
+                    uint8_t val;
+                    const uint8_t *data = frame.data();
+                    for (int i = 0; i < frame.mNumSamples; ++i) {
+                        val = data[i];
+                        track.push_back( ((float)val - 128.0f) / 128.0f );
+                    }
                 }
-            }
-            else if (frame.mBytePerSample == 2) {
-                int16_t val;
-                const int16_t * data = (const int16_t *)frame.data();
-                for (int i = 0; i < frame.mNumSamples; ++i) {
-                    val = data[i];
-                    track.push_back( (float)val / 32767.0f );
+                else if (frame.mBytePerSample == 2) {
+                    int16_t val;
+                    const int16_t * data = (const int16_t *)frame.data();
+                    for (int i = 0; i < frame.mNumSamples; ++i) {
+                        val = data[i];
+                        track.push_back( (float)val / 32767.0f );
+                    }
                 }
-            }
-            else {
-                printf("only support uint8_t and int16_t audio, not bytes %d!\n", frame.mBytePerSample);
-                invalid = true;
-                break;
+                else {
+                    printf("only support uint8_t and int16_t audio, not bytes %d!\n", frame.mBytePerSample);
+                    invalid = true;
+                    break;
+                }
             }
         }
-        if (!invalid) {
+        if (invalid) { 
+            snow::warn("Audio track {} is invalid.", iTrack);
+            track.clear();
+            startTime = 0;
+        }
+        /* add to tracks */ {
             mWavTracks.emplace_back();
             mWavTracks.back().setSampleRate(mDstAudioFmt.mSampleRate);
             mWavTracks.back().addChannel(track);
             mWavTracks.back().setStartTime(startTime);
-            // mWavTracks.back().write(std::string("../../../assets/test") + std::to_string(iTrack) + ".wav");
-            // printf("[MediaReader]: Audio track %d: start at %d, has %d samples, %d sr\n",
-            //        iTrack, startTime, track.size(), mDstAudioFmt.mSampleRate);
         }
         ++iTrack;
     }

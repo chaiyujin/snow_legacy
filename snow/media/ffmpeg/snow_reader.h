@@ -38,28 +38,28 @@ struct AudioFormat {
 };
 
 struct InputStream {
-    AVMediaType        mType;
-    AVCodec    *        mDecPtr;
-    AVCodecContext *mDecCtxPtr;
-    AVStream *        mStreamPtr;
+    AVMediaType         mType;
+    AVCodec *           mDecPtr;
+    AVCodecContext *    mDecCtxPtr;
+    AVStream *          mStreamPtr;
     /* -- pre alloc frames -- */
-    AVFrame    *        mDecodeFramePtr;
-    AVFrame *        mTmpFramePtr;
-    SwsContext *    mSwsCtxPtr;        // video convert context
-    SwrContext *    mSwrCtxPtr;        // audio convert context
+    AVFrame *           mDecodeFramePtr;
+    AVFrame *           mTmpFramePtr;
+    SwsContext *        mSwsCtxPtr;        // video convert context
+    SwrContext *        mSwrCtxPtr;        // audio convert context
     /* -- sync timestamps -- */
-    int64_t            mStart;            /* time when read started */
-    int64_t            mNextDts;        /* predicted dts of the next packet read for this stream or
+    int64_t             mStart;            /* time when read started */
+    int64_t             mNextDts;        /* predicted dts of the next packet read for this stream or
                                     (when there are several frames in a packet) of the next
                                     frame in current packet (in AV_TIME_BASE units) */
-    int64_t            mDts;            ///< dts of the last packet read for this stream (in AV_TIME_BASE units)
-    int64_t            mNextPts;        ///< synthetic pts for the next decode frame (in AV_TIME_BASE units)
-    int64_t            mPts;            ///< current pts of the decoded frame  (in AV_TIME_BASE units)
-    int64_t            mMinPts, mMaxPts;
-    int                mNumSamples;
+    int64_t             mDts;            ///< dts of the last packet read for this stream (in AV_TIME_BASE units)
+    int64_t             mNextPts;        ///< synthetic pts for the next decode frame (in AV_TIME_BASE units)
+    int64_t             mPts;            ///< current pts of the decoded frame  (in AV_TIME_BASE units)
+    int64_t             mMinPts, mMaxPts;
+    int                 mNumSamples;
 
-    int                mVideoStreamIdx;  // stream index in all video streams
-    int                mAudioStreamIdx;  // stream index in all audio streams
+    int                 mVideoStreamIdx;  // stream index in all video streams
+    int                 mAudioStreamIdx;  // stream index in all audio streams
 
     InputStream() : mDecPtr(NULL), mDecCtxPtr(NULL)
                   , mDecodeFramePtr(NULL), mTmpFramePtr(NULL)
@@ -74,9 +74,9 @@ struct InputStream {
     ~InputStream() {
         if (mDecodeFramePtr) av_frame_free(&mDecodeFramePtr);
         if (mTmpFramePtr)    av_frame_free(&mTmpFramePtr);
-        if (mDecCtxPtr) avcodec_free_context(&mDecCtxPtr);
-        if (mSwsCtxPtr) { sws_freeContext(mSwsCtxPtr); mSwsCtxPtr = NULL; }
-        if (mSwrCtxPtr) swr_free(&mSwrCtxPtr);
+        if (mDecCtxPtr)      avcodec_free_context(&mDecCtxPtr);
+        if (mSwsCtxPtr)      { sws_freeContext(mSwsCtxPtr); mSwsCtxPtr = NULL; }
+        if (mSwrCtxPtr)      swr_free(&mSwrCtxPtr);
     }
 
     bool is_depth() { return strcmp(mDecPtr->name, "librvldepth") == 0; }

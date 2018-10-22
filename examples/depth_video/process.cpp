@@ -51,7 +51,7 @@ double collectVideo(const std::string &filename,
 
     double fps = reader.fps();
     /* resample */ if (abs(fps - FPS) > 1e-6) {
-        printf("[resample]: %.2f -> %.2f\n", fps, FPS);
+        // printf("[resample]: %.2f -> %.2f\n", fps, FPS);
         // copy first
         std::vector<ModelFrame> resampled;
         resampled.push_back(modelFrames[0]);
@@ -84,12 +84,12 @@ double collectVideo(const std::string &filename,
             int padding = (ast - vst) * SampleRate / 1000.0;
             for (int i = 0; i < padding; ++i)
                 audioTrack.push_back(0.0f);
-            printf("[audio]: pad %d samples\n", padding);
+            // printf("[audio]: pad %d samples\n", padding);
         }
         else if (ast < vst) { // dropping
             int dropping = (vst - ast) * SampleRate / 1000.0;
             startPos += (size_t)dropping;
-            printf("[audio]: drop %d samples\n", dropping);
+            // printf("[audio]: drop %d samples\n", dropping);
         }
         const auto &track = reader.audioTrack(AudioTrack);
         for (size_t i = startPos; i < track.size(); ++i)

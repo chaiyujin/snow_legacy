@@ -20,7 +20,7 @@ py::dict collect_video(const std::string &filepath) {
     std::vector<float>      audio;
     double fps = collectVideo(filepath, shared, frames, audio);
 
-    if (fps < 0.0 || frames.size() == 0 || audio.size() == 0) return py::none();
+    if (fps < 0.0 || frames.size() == 0 || audio.size() == 0) return py::dict();
 
     double scale = shared.mScale;
     py::array_t<float> np_audio(audio.size());
