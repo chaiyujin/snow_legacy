@@ -20,7 +20,7 @@ void VideoSolver::setSharedParameters(const ScaleParameter &scale, const IdenPar
 
 void VideoSolver::filterLandmarks() {
     printf("filter landmarks\n");
-	BilateralFilter1D filter(2.0, 1.0, 2, -0.5);
+	BilateralFilter1D filter(1.0, 1.0, 2, -0.5);
     std::vector<std::vector<float>> points;
     for (int i = 0; i < Landmarks::Numbers * 2; ++i) {
         std::vector<float> pointI(mLandmarkList.size());
@@ -53,7 +53,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
         mModel.poseParameter(0).useTrained();
     };
     // filter
-    // filterLandmarks();
+    filterLandmarks();
 
     int Frames = mLandmarkList.size();
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {

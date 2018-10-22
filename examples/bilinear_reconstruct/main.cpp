@@ -55,9 +55,9 @@ void solveIden(bool visualize, bool replace) {
     solver.setRegExpr(1e-4);
     bool ShowLandmarks = true;
     int Frames = 0;
-    // auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-(\\d)*0-(\\d).mkv"), true);
-    auto fileList = snow::path::FindFiles(RootVideo,
-        std::regex("((\\d)-(\\d)*0-(\\d))*(2-(\\d)*-1)*(5-(\\d)*-1)*.mkv"), true);
+    auto fileList = snow::path::FindFiles(RootVideo, std::regex("(\\d)-(\\d)*0-(\\d).mkv"), true);
+    // auto fileList = snow::path::FindFiles(RootVideo,
+    //     std::regex("((\\d)-(\\d)*0-(\\d))*(2-(\\d)*-1)*(5-(\\d)*-1)*.mkv"), true);
     for (const auto &filePath: fileList) {
         auto pathParams    = filePath + "_params_stream-1";
         auto pathLandmarks = filePath + "_lmrecord";
