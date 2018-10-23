@@ -1,6 +1,6 @@
 #include "frames_solver.h"
 
-#define NUM_THREADS 4
+#define NUM_THREADS 8
 
 void FramesSolver::addFrame(const Landmarks &landmarks, const glm::dmat4 &pvm) {
     std::vector<glm::dvec2> landmarkContour;

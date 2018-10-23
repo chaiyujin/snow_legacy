@@ -1,6 +1,7 @@
 #include "video_solver.h"
 #include "bilateral_filter.h"
-#define NUM_THREADS 1
+
+#define NUM_THREADS 8
 
 void VideoSolver::addFrame(const Landmarks &landmarks) {
     std::vector<glm::dvec2> landmarkContour;
@@ -58,7 +59,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {
         std::cout << "[Frame]: " << iFrame;
         if (verbose) std::cout << std::endl; else std::cout << "\r";
-        int ThisEpochs = epochs * ((iFrame == 0)? 5 : 1);
+        int ThisEpochs = epochs * ((iFrame == 0)? 10 : 1);
         for (int iEpoch = 0; iEpoch < ThisEpochs; ++iEpoch) {
             if (verbose) std::cout << "[Epoch]: " << iEpoch << std::endl;
             // each epoch
@@ -115,7 +116,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
                 mModel.translate(0);
                 contourIndex = mModel.getContourIndex(0, mPVM);
             }
-            if (iEpoch < 3) continue;
+            if (iEpoch < 4) continue;
             /* solve expr */ {
                 double Scale = mModel.scaleParameter().param()[0];
                 ceres::Problem problem;
