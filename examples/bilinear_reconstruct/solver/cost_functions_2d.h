@@ -36,19 +36,19 @@ inline std::pair<double, glm::dvec4>criterion2D(
         /* find line */ 
         for (int k = 0; k < lms.size() - 1; ++k) {
             double dist2Line  = PointToLine2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k].x, lms[k].y, lms[k+1].x, lms[k+1].y);
-            double dist = dist2Line;
+            double dist2Point = PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k].x, lms[k].y) +
+                                PointToPoint2D::sqrDistance(inputPoint.x, inputPoint.y, lms[k + 1].x, lms[k + 1].y);
+            double dist = dist2Line + dist2Point;
             if (dist < distance) {
                 index = k;
                 distance = dist;
-                loss = dist * weightContour;
-                
+                loss = dist2Line * weightContour;
                 grad2 = PointToLine2D::diffSqrDistance(
                                 inputPoint.x, inputPoint.y,
                                 lms[k].x, lms[k].y,
                                 lms[k+1].x, lms[k+1].y) * weightContour;
             }
         }
-
         return {loss, glm::dvec4{grad2.x, grad2.y, 0., 0.}};
     }
     else {

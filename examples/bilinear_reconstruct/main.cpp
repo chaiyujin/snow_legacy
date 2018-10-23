@@ -143,6 +143,7 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
     }
     glm::dmat4 pvmMat(1.0), viewMat(1.0), projMat(1.0);
     VideoSolver solver;
+    solver.setRegExpr(1e-4);
     /* read params */ {
         librealsense::RealSenseSource rsdevice(pathParams);
         pvmMat  = rsdevice.colorProjectionMat() * rsdevice.viewMat() * glm::transpose(rsdevice.viewMat());

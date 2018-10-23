@@ -1,7 +1,7 @@
 #include "video_solver.h"
 #include "bilateral_filter.h"
 
-#define NUM_THREADS 8
+#define NUM_THREADS 4
 
 void VideoSolver::addFrame(const Landmarks &landmarks) {
     std::vector<glm::dvec2> landmarkContour;
@@ -20,7 +20,7 @@ void VideoSolver::setSharedParameters(const ScaleParameter &scale, const IdenPar
 
 void VideoSolver::filterLandmarks() {
     printf("filter landmarks\n");
-	BilateralFilter1D filter(1.0, 1.0, 2, -0.5);
+	BilateralFilter1D filter(0.5, 0.5, 2, -0.5);
     std::vector<std::vector<float>> points;
     for (int i = 0; i < Landmarks::Numbers * 2; ++i) {
         std::vector<float> pointI(mLandmarkList.size());
@@ -55,11 +55,13 @@ void VideoSolver::solve(int epochs, bool verbose) {
     // filter
     filterLandmarks();
 
+    const int StartExprEpoch = 3;
+
     int Frames = mLandmarkList.size();
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {
         std::cout << "[Frame]: " << iFrame;
         if (verbose) std::cout << std::endl; else std::cout << "\r";
-        int ThisEpochs = epochs * ((iFrame == 0)? 10 : 1);
+        int ThisEpochs = epochs * ((iFrame == 0)? 1 : 1);
         for (int iEpoch = 0; iEpoch < ThisEpochs; ++iEpoch) {
             if (verbose) std::cout << "[Epoch]: " << iEpoch << std::endl;
             // each epoch
@@ -116,7 +118,7 @@ void VideoSolver::solve(int epochs, bool verbose) {
                 mModel.translate(0);
                 contourIndex = mModel.getContourIndex(0, mPVM);
             }
-            if (iEpoch < 4) continue;
+            if (iEpoch < StartExprEpoch) continue;
             /* solve expr */ {
                 double Scale = mModel.scaleParameter().param()[0];
                 ceres::Problem problem;
@@ -146,8 +148,8 @@ void VideoSolver::solve(int epochs, bool verbose) {
                     problem.AddResidualBlock(regExpr, nullptr, mModel.exprParameter(0).train() + 1);  
 #ifdef PARAMETER_FACS
                     for (size_t iE = 0; iE < FaceDB::LengthExpression-1; ++iE) {
-                        problem.SetParameterLowerBound(mModel.exprParameter(0).train() + 1, iE,  -0.2);
-                        problem.SetParameterUpperBound(mModel.exprParameter(0).train() + 1, iE,  1.2);
+                        problem.SetParameterLowerBound(mModel.exprParameter(0).train() + 1, iE,  -0.1);
+                        problem.SetParameterUpperBound(mModel.exprParameter(0).train() + 1, iE,  1.1);
                     }
 #endif
                 }
