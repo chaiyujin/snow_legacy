@@ -1,7 +1,7 @@
 #include "video_solver.h"
 #include "bilateral_filter.h"
 
-#define NUM_THREADS 4
+#define NUM_THREADS 1
 
 void VideoSolver::addFrame(const Landmarks &landmarks) {
     std::vector<glm::dvec2> landmarkContour;
@@ -59,8 +59,8 @@ void VideoSolver::solve(int epochs, bool verbose) {
 
     int Frames = mLandmarkList.size();
     for (int iFrame = 0; iFrame < Frames; ++iFrame) {
-        std::cout << "[Frame]: " << iFrame;
-        if (verbose) std::cout << std::endl; else std::cout << "\r";
+        std::cout << "[Frame]: " << iFrame << " / " << Frames;
+        if (verbose) std::cout << std::endl; else { std::cout << "\r" << std::flush; }
         int ThisEpochs = epochs * ((iFrame == 0)? 1 : 1);
         for (int iEpoch = 0; iEpoch < ThisEpochs; ++iEpoch) {
             if (verbose) std::cout << "[Epoch]: " << iEpoch << std::endl;

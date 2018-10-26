@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
         solveIden(visualize, replace);
     else {
         std::cout << "using regex: `" << type << "` to find videos." << std::endl;
-        auto fileList = snow::path::FindFiles(RootVideo, std::regex(type), true);
+        auto fileList = snow::path::FindFiles(RootVideo, std::regex(type), true, true);
         for (const auto &file : fileList)
             std::cout << "Find video " << file << std::endl;
         std::cout << "Totally " << fileList.size() << std::endl;
@@ -190,9 +190,10 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
         std::cout << "read existed results " << solver.numResults() << std::endl;
     }
     else {
-        std::cout << "Begin to solve " << solver.landmarksList().size() << " frames from video: " << videoPath << std::endl;
-        solver.solve(7, false);
-        std::cout << "Done." << std::endl;
+        {    
+            snow::StopWatch SolveWatch("time cost");
+            solver.solve(5, false);
+        }
         /* output results */ {
             std::ofstream fout(pathResult);
             fout << solver.numResults() << std::endl;

@@ -37,7 +37,7 @@ inline std::string Join(const std::string &dirname, const std::string &basename)
     }
     else return basename;
 }
-inline std::vector<std::string> FindFiles(const std::string &rootdir, const std::regex &pattern=std::regex("(.*)"), bool recursive=true) {
+inline std::vector<std::string> FindFiles(const std::string &rootdir, const std::regex &pattern=std::regex("(.*)"), bool recursive=true, bool sort=false) {
 #ifdef _WIN32
     char currentPath[2048];
     _getcwd(currentPath, 2048);
@@ -82,6 +82,7 @@ inline std::vector<std::string> FindFiles(const std::string &rootdir, const std:
         }
     }
     _chdir(currentPath);
+    if (sort) std::sort(results.begin(), results.end());
     return results;
 #else
     std::vector<std::string> results;
@@ -110,6 +111,7 @@ inline std::vector<std::string> FindFiles(const std::string &rootdir, const std:
             }
         }
     }
+    if (sort) std::sort(results.begin(), results.end());
     return results;
 #endif
 }
