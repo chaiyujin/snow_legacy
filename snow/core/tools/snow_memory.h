@@ -140,6 +140,10 @@ public:
     void *alloc(size_t size) {
         std::lock_guard<std::mutex> lock(mMutex);
 
+#ifdef TEST_MEMORY
+        snow::info("try to alloc {}", size);
+#endif
+
         void * ret = nullptr;
         if (!mCurBlockPtr || !(ret = mCurBlockPtr->alloc(size))) {
             // store in used
@@ -184,25 +188,38 @@ public:
         if (mCurBlockPtr == nullptr) return;
         std::lock_guard<std::mutex> lock(mMutex);
         
+#ifdef TEST_MEMORY
+        snow::info("try to free {}", Block::querySize(ptr));
+#endif
+
         const size_t count = Block::querySize(ptr) / sizeof(T);
         for (size_t i = 0; i < count; ++i) ptr[i].~T();
         Block * block = Block::free(ptr);
-#ifdef TEST_MEMORY
-        if (block) printf("-> reuse block 0x%X\n", block);
-#endif
-        if (block && block != mCurBlockPtr) {
-            // check if the empty block is in used blocks
-            bool find = false;
-            for (auto iter = mUsedBlocks.begin(); iter != mUsedBlocks.end(); ++iter) {
-                if ((*iter) == block) {
-                    mUsedBlocks.erase(iter);
-                    // recently used (just delete), push at first
-                    mAvailableBlocks.push_front(block);
-                    find = true;
-                    break;
+        if (block) {
+            if (block != mCurBlockPtr) {
+                // check if the empty block is in used blocks
+                bool find = false;
+                for (auto iter = mUsedBlocks.begin(); iter != mUsedBlocks.end(); ++iter) {
+                    if ((*iter) == block) {
+                        mUsedBlocks.erase(iter);
+                        // recently used (just delete), push at first
+                        mAvailableBlocks.push_front(block);
+                        find = true;
+                        break;
+                    }
                 }
+                if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
             }
-            if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
+            else {
+                // push current into avaliable
+                mAvailableBlocks.push_front(mCurBlockPtr);
+                mCurBlockPtr = nullptr;
+            }
+#ifdef TEST_MEMORY
+            snow::info("[MemoryArena] free() {:x} size {} pos {} avaliable {} used {}",
+                (intptr_t)block, block->mSize, block->mCurPos,
+                mAvailableBlocks.size(), mUsedBlocks.size());
+#endif
         }
     }
 
@@ -211,6 +228,9 @@ public:
         mAvailableBlocks.splice(mAvailableBlocks.begin(), mUsedBlocks);
     }
 
+    void log(std::string tag="") {
+        snow::info("[MemoryArena] {} avaliable {} used {}", tag, mAvailableBlocks.size(), mUsedBlocks.size());
+    }
 };
 
 }

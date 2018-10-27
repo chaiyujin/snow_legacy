@@ -38,6 +38,12 @@ BilinearModel::~BilinearModel() {
             delete mParamPosePtrList[i];
             delete mParamExprPtrList[i];
         }
+        mParamPosePtrList.clear();
+        mParamExprPtrList.clear();
+        mTvi1List.clear();
+        mTv1eList.clear();
+        mTv11List.clear();
+        mMeshList.clear();
     }
 }
 void BilinearModel::appendModel(size_t count) {
