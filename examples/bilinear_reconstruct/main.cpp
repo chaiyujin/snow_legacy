@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
             std::cout << "[ " << iFile << " / " << fileList.size() << " ]: "
                       << snow::path::Basename(fileList[iFile]) << std::endl;
             solveVideo(fileList[iFile], visualize, replace);
-            --iFile;
         }
     }
     return 0;
@@ -232,5 +231,4 @@ void solveVideo(std::string videoPath, bool visualize, bool replace) {
         app.addWindow(win);
         app.run();
     }
-    Tensor3::LogMemoryArena();
 }

@@ -16,5 +16,9 @@ template<typename... Args> void warn(const char *fmt, const Args &... args)  { L
 template<typename... Args> void debug(const char *fmt, const Args &... args) { Logger()->debug(fmt, args...);               }
 template<typename... Args> void error(const char *fmt, const Args &... args) { Logger()->error(fmt, args...);               }
 template<typename... Args> void fatal(const char *fmt, const Args &... args) { Logger()->critical(fmt, args...); exit(1);   }
+/* assert */
+template<typename... Args> void assertion(bool flag, const char *fmt="", const Args &... args) {
+    if (!flag) { Logger()->critical(fmt, args...); exit(1); }
+}
 
 }

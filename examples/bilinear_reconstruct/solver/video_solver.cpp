@@ -17,7 +17,6 @@ void VideoSolver::setSharedParameters(const ScaleParameter &scale, const IdenPar
     mModel.idenParameter().copyFrom(&iden);
 }
 
-
 void VideoSolver::filterLandmarks() {
     printf("filter landmarks\n");
 	BilateralFilter1D filter(0.5, 0.5, 2, -0.5);

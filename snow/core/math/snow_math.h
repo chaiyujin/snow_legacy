@@ -35,4 +35,23 @@ inline glm::quat QuatBetween(const glm::vec3 &vec0, const glm::vec3 &vec1, float
     return q;
 }
 
+inline size_t CeilLog2(size_t x) {
+    static const size_t t[6] = {
+        0xFFFFFFFF00000000ull,
+        0x00000000FFFF0000ull,
+        0x000000000000FF00ull,
+        0x00000000000000F0ull,
+        0x000000000000000Cull,
+        0x0000000000000002ull
+    };
+    size_t y = (((x & (x - 1)) == 0) ? 0 : 1);
+    size_t j = 32;
+    for (size_t i = 0; i < 6; i++) {
+        size_t k = (((x & t[i]) == 0) ? 0 : j);
+        y += k;  x >>= k;  j >>= 1;
+    }
+    return y;
+}
+
+
 }

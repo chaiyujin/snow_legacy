@@ -58,15 +58,12 @@ struct Block {
         , mCount(0), mCurPos(0) {}
     ~Block() { delete[] mData; }
 
+    void reset() { mCurPos = 0; mCount = 0; }
+
     static size_t actualSize(size_t size) { 
         static const int pointer_size  = sizeof(void *);
         static const int size_size     = sizeof(size_t);
         return size + (size_t)MEMORY_ALIGNMENT - 1 + pointer_size + size_size;
-    }
-
-    size_t leftSizeAfterAlloc(size_t size) {
-        size_t actualSize = Block::actualSize(size);
-        return mSize - mCurPos - actualSize;
     }
 
     void *alloc(size_t _size) {
@@ -118,58 +115,90 @@ struct Block {
 
 /**
  * MemoryArena: keep alloced blocks
+ * Using strategy of blob:
+ * - each blob has size of 2^n (n >= 8)
+ * - blobs are kept by two list: `avaliable`, `used` for each n.
+ * - each blob only keep one item.
+ * - alloc():
+ *      1. first determine n.
+ *      2. find avaliable blob in avaliable_n
+ *      3. if no avaliable, than alloc new blob.
+ *      4. move the blob into `used`
+ * - free():
+ *      1. first determine n.
+ *      2. find the position in used.
+ *      3. if not found, error
+ *      4. move the blob into `avaliable`
+ * - The arena should be effecient for repeatively allocating and freeing large memory, 
+ *   but not suitable for small size due to it's overhead.
  * */
+struct _NRecord {
+    std::list<Block *> mFreeBlobs;
+    std::list<Block *> mUsedBlobs;
+    _NRecord() : mFreeBlobs(0), mUsedBlobs(0) {}
+    ~_NRecord() {
+        for (auto *ptr : mFreeBlobs) delete ptr;
+        for (auto *ptr : mUsedBlobs) delete ptr;
+        mFreeBlobs.clear();
+        mUsedBlobs.clear();
+    }
+};
+
 class MemoryArena {
 private:
-    Block                  *mCurBlockPtr;
-    size_t                  mBlockSize;
-    std::list<Block *>      mUsedBlocks;
-    std::list<Block *>      mAvailableBlocks;
     std::mutex              mMutex;
+    size_t                  mMinN, mMinBlobSize;
+    size_t                  mMaxN, mMaxBlobSize;
+    std::vector<_NRecord>   mNRecordList;
+    std::vector<size_t>     mNTable;
+
+    size_t getN(size_t size) {
+        size_t n = std::max(mMinN, snow::CeilLog2(size));
+        snow::assertion(n <= mMaxN, "size {} is too large", size);
+        return n;
+    }
 
 public:
-    MemoryArena(size_t blockSize=32768)
-        : mCurBlockPtr(nullptr)
-        , mBlockSize(blockSize)
-        , mUsedBlocks(0)
-        , mAvailableBlocks(0) {}
+    MemoryArena(size_t minN = 8, size_t maxN = 32)
+        : mMinN(minN), mMinBlobSize(0)
+        , mMaxN(maxN), mMaxBlobSize(0)
+        , mNRecordList(maxN + 1)
+        , mNTable(maxN + 1) {
+        size_t nSize = 1;
+        for (size_t i = 0; i < mNTable.size(); ++i) {
+            mNTable[i] = nSize; nSize *= 2;
+        }
+        mMinBlobSize = mNTable[mMinN];
+        mMaxBlobSize = mNTable[mMaxN];
+    }
     ~MemoryArena() {
-        if (mCurBlockPtr) delete mCurBlockPtr;
-        for (auto *block : mUsedBlocks)      delete block;
-        for (auto *block : mAvailableBlocks) delete block;
-        mCurBlockPtr = nullptr;
-        mUsedBlocks.clear();
-        mAvailableBlocks.clear();
+        mNRecordList.clear();
+        mNTable.clear();
     }
 
     void *alloc(size_t size) {
-        std::lock_guard<std::mutex> lock(mMutex);
-
 #ifdef TEST_MEMORY
-        snow::info("try to alloc {}", size);
+        snow::info("[MemoryArena]: try to alloc {}", size);
 #endif
-
-        void * ret = nullptr;
-        if (!mCurBlockPtr || !(ret = mCurBlockPtr->alloc(size))) {
-            // store in used
-            if (mCurBlockPtr != nullptr) mUsedBlocks.push_back(mCurBlockPtr);
-            mCurBlockPtr = nullptr;
-
-            // find in available blocks
-            for (auto iter = mAvailableBlocks.begin(); iter != mAvailableBlocks.end(); ++iter) {
-                if ((ret = (*iter)->alloc(size)) != nullptr) {
-                    mCurBlockPtr = (*iter);
-                    mAvailableBlocks.erase(iter);
-                    break;
-                }
-            }
-            
-            // still not found
-            if (!mCurBlockPtr) {
-                mCurBlockPtr = new Block(std::max(Block::actualSize(size), (size_t)mBlockSize));
-            }
+        // for multi-threads
+        std::lock_guard<std::mutex> lock(mMutex);
+        // initialize the return
+        void *ret = nullptr;
+        // get actualsize and find the n
+        size_t actualSize = Block::actualSize(size);
+        size_t n = getN(actualSize);
+        // try to alloc in n-record
+        _NRecord &record = mNRecordList[n];
+        Block *blob = nullptr;
+        if (record.mFreeBlobs.size() > 0) {
+            blob = record.mFreeBlobs.front();
+            record.mFreeBlobs.pop_front();
         }
-        if (!ret) ret = mCurBlockPtr->alloc(size);
+        else {
+            blob = new Block(mNTable[n]);
+        }
+        record.mUsedBlobs.push_front(blob);
+        ret = blob->alloc(size);
         return ret;
     }
 
@@ -189,52 +218,55 @@ public:
 
     template <typename T>
     void free(T *ptr) {
+#ifdef TEST_MEMORY
+        snow::info("[MemoryArena]: try to free {}", Block::querySize(ptr));
+#endif
         if (ptr == nullptr) return;
-        if (mCurBlockPtr == nullptr) return;
+        if (mNRecordList.size() == 0) return;
         std::lock_guard<std::mutex> lock(mMutex);
-        
-#ifdef TEST_MEMORY
-        snow::info("try to free {}", Block::querySize(ptr));
-#endif
-
-        const size_t count = Block::querySize(ptr) / sizeof(T);
-        for (size_t i = 0; i < count; ++i) ptr[i].~T();
-        Block * block = Block::free(ptr);
-        if (block) {
-            if (block != mCurBlockPtr) {
-                // check if the empty block is in used blocks
-                bool find = false;
-                for (auto iter = mUsedBlocks.begin(); iter != mUsedBlocks.end(); ++iter) {
-                    if ((*iter) == block) {
-                        mUsedBlocks.erase(iter);
-                        // recently used (just delete), push at first
-                        mAvailableBlocks.push_front(block);
-                        find = true;
-                        break;
-                    }
-                }
-                if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
+        // first call deconstructor
+        const size_t freeSize = Block::querySize(ptr);
+        size_t n = getN(Block::actualSize(freeSize));
+        for (size_t i = 0; i < freeSize / sizeof(T); ++i) ptr[i].~T();
+        // free the block
+        Block *block = Block::free(ptr);
+        // block should not be nullptr
+        snow::assertion(block != nullptr);
+        bool find = false;
+        _NRecord &record = mNRecordList[n];
+        for (auto iter = record.mUsedBlobs.begin(); iter!= record.mUsedBlobs.end(); ++iter) {
+            if ((*iter) == block) {
+                record.mFreeBlobs.push_front((*iter));
+                record.mUsedBlobs.erase(iter);
+                find = true;
+                break;
             }
-            else {
-                // push current into avaliable
-                mAvailableBlocks.push_front(mCurBlockPtr);
-                mCurBlockPtr = nullptr;
-            }
-#ifdef TEST_MEMORY
-            snow::info("[MemoryArena] free() {:x} size {} pos {} avaliable {} used {}",
-                (intptr_t)block, block->mSize, block->mCurPos,
-                mAvailableBlocks.size(), mUsedBlocks.size());
-#endif
         }
+        if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
+#ifdef TEST_MEMORY
+        snow::info("[MemoryArena] free() {:x} size {} pos {} avaliable {} used {}",
+            (intptr_t)block, block->mSize, block->mCurPos,
+            mAvailableBlocks.size(), mUsedBlocks.size());
+#endif
     }
 
     void reset() {
         std::lock_guard<std::mutex> lock(mMutex);
-        mAvailableBlocks.splice(mAvailableBlocks.begin(), mUsedBlocks);
+        for (size_t n = 0; n < mNRecordList.size(); ++n) {
+            // clear used blobs
+            for (auto *blob: mNRecordList[n].mUsedBlobs)
+                blob->reset();
+            // splice
+            mNRecordList[n].mFreeBlobs.splice(mNRecordList[n].mFreeBlobs.begin(), mNRecordList[n].mUsedBlobs);
+        }
     }
 
     void log(std::string tag="") {
-        snow::info("[MemoryArena] {} avaliable {} used {}", tag, mAvailableBlocks.size(), mUsedBlocks.size());
+        for (size_t n = mMinN; n < mMaxN; ++n) {
+            snow::info("[{} blob {}] free {} used {}", tag, n, 
+                mNRecordList[n].mFreeBlobs.size(),
+                mNRecordList[n].mUsedBlobs.size());
+        }
     }
 };
 
