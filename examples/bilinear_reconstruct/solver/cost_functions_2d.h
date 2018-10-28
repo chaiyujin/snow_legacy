@@ -186,6 +186,8 @@ struct ExprPoseCost2D : public ceres::CostFunction {
         mutable_parameter_block_sizes()->push_back(3);
         set_num_residuals(1);
     }
+    ~ExprPoseCost2D() { delete mPointPtr; delete mContourPtr; }
+
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iE = 0, iR = 1, iT = 2;
         std::vector<double> expr(FaceDB::LengthExpression); expr[0] = 1.0;
@@ -266,6 +268,7 @@ struct IdenExprScaleCost2D : public ceres::CostFunction {
         mutable_parameter_block_sizes()->push_back(1);
         set_num_residuals(1);
     }
+    ~IdenExprScaleCost2D() { delete mPointPtr; delete mContourPtr; }
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iI = 0, iE = 1, iS = 2;
@@ -359,6 +362,7 @@ struct IdenExprScalePoseCost2D : public ceres::CostFunction {
         mutable_parameter_block_sizes()->push_back(3);
         set_num_residuals(1);
     }
+    ~IdenExprScalePoseCost2D() { delete mPointPtr; delete mContourPtr; }
 
     virtual bool Evaluate(double const * const * params, double *residuals, double **jacobians) const {
         const int iI = 0, iE = 1, iS = 2, iR = 3, iT = 4;

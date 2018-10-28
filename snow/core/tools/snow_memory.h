@@ -64,6 +64,11 @@ struct Block {
         return size + (size_t)MEMORY_ALIGNMENT - 1 + pointer_size + size_size;
     }
 
+    size_t leftSizeAfterAlloc(size_t size) {
+        size_t actualSize = Block::actualSize(size);
+        return mSize - mCurPos - actualSize;
+    }
+
     void *alloc(size_t _size) {
         static const uintptr_t pointer_size  = (uintptr_t)sizeof(void *);
         static const uintptr_t size_size     = (uintptr_t)sizeof(size_t);
@@ -72,7 +77,7 @@ struct Block {
         size_t actualSize = Block::actualSize(_size);
         if (mCurPos + actualSize > mSize) return nullptr;
 #ifdef TEST_MEMORY
-        printf("-> alloc 0x%X: start pos %d\n", this, mCurPos);
+        snow::info("  alloc from block {:x}, start at {:d}", (intptr)this, mCurPos);
 #endif
         uintptr_t start = (uintptr_t)mData + mCurPos + pointer_size + size_size;
         uintptr_t align = (start + alignment_1) & (~(alignment_1));

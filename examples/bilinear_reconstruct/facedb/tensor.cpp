@@ -32,6 +32,8 @@ Tensor3::Tensor3(const Tensor3 &father, int start, int len)
 }
 Tensor3::~Tensor3() {
     if (!mIsSub) this->free();
+    mMemShape.clear();
+    mShape.clear();
 }
 
 const Tensor3 &Tensor3::operator=(const Tensor3 &b) {

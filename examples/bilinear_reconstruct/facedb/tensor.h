@@ -81,6 +81,10 @@ public:
     double *        data(int d0, int d1=0, int d2=0)       { return mDataPtr + d0 * mMemShape[1] * mMemShape[2] + d1 * mMemShape[2] + d2; }
     const double *  data(int d0, int d1=0, int d2=0) const { return mDataPtr + d0 * mMemShape[1] * mMemShape[2] + d1 * mMemShape[2] + d2; }
 
+    void            clear() { free(); }
+    static void     LogMemoryArena() { gArena.log(); }
+    static void     ResetMemoryArena() { gArena.reset(); }
+
 private:
     double *            mDataPtr;
     bool                mIsSub;
