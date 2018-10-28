@@ -4,7 +4,7 @@
     - simple simd functions, string operations, path operations (like python os.path)
     - image (based on stb_image)
     - stream, frame, input (for data streaming)
-    - [ ] argparse
+    - argparse
 - OpenGL:
     - GUI: glad, SDL2, ImGui
     - Model: Naive obj reader, Assimp (optional)

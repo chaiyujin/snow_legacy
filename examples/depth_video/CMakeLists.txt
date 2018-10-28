@@ -15,7 +15,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} snow)
 
 # === Python Binding ===
-add_subdirectory(../../pybind11 ext/pybind11/)
+add_subdirectory(../../snow/third-party/pybind11 ext/pybind11/)
 pybind11_add_module(depth11
     ./pybind.cpp
     ./process.cpp)

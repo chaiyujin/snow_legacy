@@ -27,4 +27,4 @@ def test_obj():
 
 if __name__ == "__main__":
     test_anime_viewer()
-    # test_obj()
+    test_obj()

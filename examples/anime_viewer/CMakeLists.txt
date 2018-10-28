@@ -25,7 +25,7 @@ if (WIN32)
 endif (WIN32)
 
 # === Python Binding ===
-add_subdirectory(../../pybind11 ext/pybind11/)
+add_subdirectory(../../snow/third-party/pybind11 ext/pybind11/)
 pybind11_add_module(anime_viewer11
     ./pybind.cpp
     ./gui/window.cpp
