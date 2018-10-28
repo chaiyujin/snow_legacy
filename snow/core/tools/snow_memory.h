@@ -74,7 +74,7 @@ struct Block {
         size_t actualSize = Block::actualSize(_size);
         if (mCurPos + actualSize > mSize) return nullptr;
 #ifdef TEST_MEMORY
-        snow::info("  alloc from block {:x}, start at {:d}", (intptr)this, mCurPos);
+        snow::info("  alloc from block {:x}, start at {:d}", (intptr_t)this, mCurPos);
 #endif
         uintptr_t start = (uintptr_t)mData + mCurPos + pointer_size + size_size;
         uintptr_t align = (start + alignment_1) & (~(alignment_1));
@@ -244,9 +244,7 @@ public:
         }
         if (!find) snow::fatal("[MemoryArena]: empty block not found!\n");
 #ifdef TEST_MEMORY
-        snow::info("[MemoryArena] free() {:x} size {} pos {} avaliable {} used {}",
-            (intptr_t)block, block->mSize, block->mCurPos,
-            mAvailableBlocks.size(), mUsedBlocks.size());
+        this->log();
 #endif
     }
 
