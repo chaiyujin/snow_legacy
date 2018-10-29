@@ -52,7 +52,7 @@ void AbstractWindow::GLADInit() {
 }
 
 AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, int y)
-    : mWidth(width), mHeight(height), mRatio((float)width / (float)height)
+    : mWidth(width), mHeight(height), mRatio(-1.0)
 {
     if (gGLSLVersion.length() == 0) {
         snow::fatal("[SDLWindow]: Please initialize or create an App before create a window.");
@@ -74,10 +74,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
 void AbstractWindow::_processEvent(SDL_Event &event) {
     // update window size
     if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-        mWidth = event.window.data1;
-        mHeight = event.window.data2;
-        mRatio = (float)mWidth / (float)mHeight;
-        glViewport(0, 0, (GLsizei)mWidth, (GLsizei)mHeight);
+        this->_resize(event.window.data1, event.window.data2);
     }
     // gui process
     this->mImGui.processEvent(event);
@@ -99,17 +96,38 @@ void AbstractWindow::_draw(snow::Image *image) {
 }
 
 
+void AbstractWindow::_resize(int w, int h) {
+    mWidth  = w;
+    mHeight = h;
+    if (mRatio <= 0.0) {
+        // full ratio
+        glViewport(0, 0, (GLsizei)mWidth, (GLsizei)mHeight);
+    }
+    else {
+        // auto adjust width and height;
+        int glW = w, glH = h;
+        int glL = 0, glT = 0;
+        if (mRatio * h > w) { // smaller h
+            glH = int((float)w / mRatio);
+            glT = (h - glH) / 2;
+        }
+        else { // smaller w
+            glW = int((float)h * mRatio);
+            glL = (w - glW) / 2;
+        }
+        glViewport((GLsizei)glL, (GLsizei)glT,
+                   (GLsizei)glW, (GLsizei)glH);
+    }
+}
+
 void AbstractWindow::resize(int w, int h) {
     this->glMakeCurrent();
     SDL_SetWindowSize(this->mWindowPtr, w, h);
-    mWidth = w;
-    mHeight = h;
-    mRatio = (float)mWidth / (float)mHeight;
-    glViewport(0, 0, (GLsizei)mWidth, (GLsizei)mHeight);
+    this->_resize(w, h);
 }
 
 glm::mat4 AbstractWindow::perspective(const CameraBase *camera) {
-    return glm::perspective(glm::radians(camera->zoom()), (float)mWidth / (float)mHeight, 0.1f, 100.0f);
+    return glm::perspective(glm::radians(camera->zoom()), this->ratio(), 0.1f, 100.0f);
 }
 
 void CameraWindow::_processEvent(SDL_Event &event) {

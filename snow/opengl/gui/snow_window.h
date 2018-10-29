@@ -25,6 +25,8 @@ namespace snow {
 
         static bool         gIsGLADLoaded;
         static std::string  gGLSLVersion;
+
+        void                _resize(int w, int h);
     public:
         /* init */
         static void Initialize(int major, int minor, std::string glslVersion);
@@ -36,10 +38,13 @@ namespace snow {
                        int x=SDL_WINDOWPOS_CENTERED, int y=SDL_WINDOWPOS_CENTERED);
         virtual ~AbstractWindow();
         /* get */
-        SDL_Window *        windowPtr() { return mWindowPtr; }
-        SDL_GLContext       glContext() { return mGLContext; }
-        int                 width() const { return mWidth; }
-        int                 height() const { return mHeight; }
+        SDL_Window *        windowPtr()    { return mWindowPtr; }
+        SDL_GLContext       glContext()    { return mGLContext; }
+        int                 width()  const { return mWidth;     }
+        int                 height() const { return mHeight;    }
+        float               ratio()  const { return (mRatio <= 0.0) ? ((float)mWidth / (float)mHeight) : (mRatio); }
+        /* set */
+        void                setRatio(float w_hRatio) { mRatio = w_hRatio; }
         /* functions */
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
         glm::mat4           perspective(const CameraBase *camera);
