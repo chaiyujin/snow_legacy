@@ -27,6 +27,7 @@ namespace snow {
         static std::string  gGLSLVersion;
 
         void                _resize(int w, int h);
+        void                _viewport();
     public:
         /* init */
         static void Initialize(int major, int minor, std::string glslVersion);

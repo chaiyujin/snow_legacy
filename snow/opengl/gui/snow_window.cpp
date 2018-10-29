@@ -85,6 +85,8 @@ void AbstractWindow::_processEvent(SDL_Event &event) {
 void AbstractWindow::_draw(snow::Image *image) {
     this->glMakeCurrent();
     this->mImGui.newFrame();
+    // before custom draw, set view port();
+    this->_viewport();
     this->draw();  // custom draw
     this->mImGui.endFrame();
     if (image != nullptr) {
@@ -95,25 +97,28 @@ void AbstractWindow::_draw(snow::Image *image) {
     SDL_GL_SwapWindow(mWindowPtr);
 }
 
-
 void AbstractWindow::_resize(int w, int h) {
     mWidth  = w;
     mHeight = h;
+    _viewport();
+}
+
+void AbstractWindow::_viewport() {
     if (mRatio <= 0.0) {
         // full ratio
         glViewport(0, 0, (GLsizei)mWidth, (GLsizei)mHeight);
     }
     else {
         // auto adjust width and height;
-        int glW = w, glH = h;
+        int glW = mWidth, glH = mHeight;
         int glL = 0, glT = 0;
-        if (mRatio * h > w) { // smaller h
-            glH = int((float)w / mRatio);
-            glT = (h - glH) / 2;
+        if (mRatio * mHeight > mWidth) { // smaller h
+            glH = int((float)mWidth / mRatio);
+            glT = (mHeight - glH) / 2;
         }
         else { // smaller w
-            glW = int((float)h * mRatio);
-            glL = (w - glW) / 2;
+            glW = int((float)mHeight * mRatio);
+            glL = (mWidth - glW) / 2;
         }
         glViewport((GLsizei)glL, (GLsizei)glT,
                    (GLsizei)glW, (GLsizei)glH);
@@ -138,6 +143,8 @@ void CameraWindow::_processEvent(SDL_Event &event) {
 void CameraWindow::_draw(snow::Image *image) {
     this->glMakeCurrent();
     this->mImGui.newFrame();
+    // before custom draw, set view port();
+    this->_viewport();
     this->draw();  // custom draw
     {   // draw arch ball and gui
         if (DrawArcball) {
