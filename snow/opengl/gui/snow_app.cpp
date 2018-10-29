@@ -73,7 +73,7 @@ namespace snow {
                 }
             }
             if (!mRunning) {
-                // mRunning = !App::AskQuit();
+                // mRunning = !App::Query("Quit app", "are you sure to quit?");
                 if (!mRunning) break;
             }
 
@@ -134,7 +134,7 @@ namespace snow {
         }
     }
 
-    bool App::AskQuit() {
+    bool App::Query(std::string title, std::string query) {
         const SDL_MessageBoxButtonData buttons[] = {
             { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes" },
             { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "No" }
@@ -156,8 +156,8 @@ namespace snow {
         const SDL_MessageBoxData messageboxdata = {
             SDL_MESSAGEBOX_INFORMATION, /* .flags */
             NULL, /* .window */
-            "Quit app", /* .title */
-            "Confirm to quit app?", /* .message */
+            title.c_str(), /* .title */
+            query.c_str(), /* .message */
             SDL_arraysize(buttons), /* .numbuttons */
             buttons, /* .buttons */
             &colorScheme /* .colorScheme */

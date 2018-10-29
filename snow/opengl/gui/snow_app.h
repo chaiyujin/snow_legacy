@@ -44,7 +44,7 @@ namespace snow {
         void _loadSettings();
         void _saveSettings();
 
-        static bool AskQuit();
+        static bool Query(std::string title, std::string query);
         static uint32_t GetEventID(SDL_Event &);
     };
 }
