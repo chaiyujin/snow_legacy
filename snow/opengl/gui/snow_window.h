@@ -46,6 +46,7 @@ namespace snow {
         float               ratio()  const { return (mRatio <= 0.0) ? ((float)mWidth / (float)mHeight) : (mRatio); }
         /* set */
         void                setRatio(float w_hRatio) { mRatio = w_hRatio; }
+        void                setTitle(const std::string &title) { SDL_SetWindowTitle(mWindowPtr, title.c_str()); }
         /* functions */
         void                glMakeCurrent()     { SDL_GL_MakeCurrent(mWindowPtr, mGLContext); }
         glm::mat4           perspective(const CameraBase *camera);
@@ -56,6 +57,7 @@ namespace snow {
         void                show() { SDL_ShowWindow(this->mWindowPtr); }
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
+        virtual bool        onQuit(SDL_Event &event) { return true; }
         virtual void        draw() = 0;
     };
 

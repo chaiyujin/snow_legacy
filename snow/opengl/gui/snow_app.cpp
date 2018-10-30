@@ -73,8 +73,14 @@ namespace snow {
                 }
             }
             if (!mRunning) {
-                // mRunning = !App::Query("Quit app", "are you sure to quit?");
-                if (!mRunning) break;
+                // if any window refuse the quit, then continue
+                for (auto it = mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
+                    mRunning = !(it->second->onQuit(mEvent));
+                    if (mRunning) break;
+                }
+                if (!mRunning) {
+                    break;
+                }
             }
 
             /* draw */

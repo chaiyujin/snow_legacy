@@ -87,7 +87,7 @@ public:
     int     mWidth, mHeight;
     bool    mIsDepth;
     VideoFrame(): mWidth(0), mHeight(0), mIsDepth(false) {}
-    bool isNull() { return mWidth == 0 || mHeight == 0 || mTimestamp == SNOW_NONE_PTS; }
+    bool isNull() const { return mWidth == 0 || mHeight == 0 || mTimestamp == SNOW_NONE_PTS; }
     void fromAVFrame(AVFrame *frame, int64_t pts, bool depth) {
         mType       = MediaType::Video;
         mWidth      = frame->width;
