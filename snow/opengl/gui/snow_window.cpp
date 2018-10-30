@@ -104,12 +104,14 @@ void AbstractWindow::_resize(int w, int h) {
 }
 
 void AbstractWindow::_viewport() {
-    if (mRatio <= 0.0) {
-        // full ratio
-        glViewport(0, 0, (GLsizei)mWidth, (GLsizei)mHeight);
-    }
+    auto area = this->validArea();
+    glViewport((GLsizei)area[0], (GLsizei)area[1],
+               (GLsizei)area[2], (GLsizei)area[3]);
+}
+
+std::vector<int> AbstractWindow::validArea() const {
+    if (mRatio <= 0.0) { return { 0, 0, mWidth, mHeight}; }
     else {
-        // auto adjust width and height;
         int glW = mWidth, glH = mHeight;
         int glL = 0, glT = 0;
         if (mRatio * mHeight > mWidth) { // smaller h
@@ -120,8 +122,7 @@ void AbstractWindow::_viewport() {
             glW = int((float)mHeight * mRatio);
             glL = (mWidth - glW) / 2;
         }
-        glViewport((GLsizei)glL, (GLsizei)glT,
-                   (GLsizei)glW, (GLsizei)glH);
+        return {glL, glT, glW, glH};
     }
 }
 

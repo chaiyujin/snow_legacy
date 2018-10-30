@@ -44,6 +44,7 @@ namespace snow {
         int                 width()  const { return mWidth;     }
         int                 height() const { return mHeight;    }
         float               ratio()  const { return (mRatio <= 0.0) ? ((float)mWidth / (float)mHeight) : (mRatio); }
+        std::vector<int>    validArea() const;
         /* set */
         void                setRatio(float w_hRatio) { mRatio = w_hRatio; }
         void                setTitle(const std::string &title) { SDL_SetWindowTitle(mWindowPtr, title.c_str()); }
