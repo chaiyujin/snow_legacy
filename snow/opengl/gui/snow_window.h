@@ -22,6 +22,7 @@ namespace snow {
         SDL_GLContext       mGLContext;
         ImGuiSDL2           mImGui;
         std::string         mTitle;
+        std::string         mTag;
 
         static bool         gIsGLADLoaded;
         static std::string  gGLSLVersion;
@@ -44,6 +45,7 @@ namespace snow {
         int                 width()  const { return mWidth;     }
         int                 height() const { return mHeight;    }
         float               ratio()  const { return (mRatio <= 0.0) ? ((float)mWidth / (float)mHeight) : (mRatio); }
+        const std::string & tag()    const { return mTag;       }
         virtual std::vector<int> validArea() const;
         /* set */
         void                setRatio(float w_hRatio) { mRatio = w_hRatio; }

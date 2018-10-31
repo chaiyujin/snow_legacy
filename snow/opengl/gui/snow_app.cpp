@@ -31,7 +31,7 @@ namespace snow {
 
     void App::addWindow(AbstractWindow *ptr) {
         if (ptr == nullptr) return;
-        std::string name = SDL_GetWindowTitle(ptr->windowPtr());
+        std::string name = ptr->tag();
         if (mWindowPtrDict.find(name) != mWindowPtrDict.end()) {
             std::cerr << "[App]: two windows have same name: " << name << std::endl;
             snow::fatal("[App]: two windows have same name.");
@@ -128,11 +128,11 @@ namespace snow {
         if (fout.is_open()) {
             for (auto it=mWindowPtrDict.begin(); it != mWindowPtrDict.end(); ++it) {
                 SDL_Window *p = it->second->windowPtr();
-                std::string title = SDL_GetWindowTitle(p);
+                std::string tag = it->second->tag();
                 int x, y, w, h;
                 SDL_GetWindowPosition(p, &x, &y);
                 SDL_GetWindowSize(p, &w, &h);
-                fout << "[" << title << "]\n"
+                fout << "[" << tag << "]\n"
                      << "Pos=" << x << "," << y << "\n"
                      << "Size=" << w << "," << h << "\n\n";
             }

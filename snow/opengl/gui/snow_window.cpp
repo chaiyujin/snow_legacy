@@ -57,6 +57,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
     if (gGLSLVersion.length() == 0) {
         snow::fatal("[SDLWindow]: Please initialize or create an App before create a window.");
     }
+    mTag   = title;
     mTitle = title;
     mWindowPtr = SDL_CreateWindow(title, x, y, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
     if (mWindowPtr != nullptr) {
