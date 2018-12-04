@@ -101,6 +101,7 @@ if (SNOW_MODULE_OPENGL)
         "${PROJECT_SOURCE_DIR}/opengl/tools/snow_arcball.cpp"
         "${PROJECT_SOURCE_DIR}/opengl/tools/snow_camera.cpp"
         "${PROJECT_SOURCE_DIR}/opengl/gui/snow_app.cpp"
+        "${PROJECT_SOURCE_DIR}/opengl/gui/snow_text.cpp"
         "${PROJECT_SOURCE_DIR}/opengl/gui/snow_imgui.cpp"
         "${PROJECT_SOURCE_DIR}/opengl/gui/snow_window.cpp"
         "${PROJECT_SOURCE_DIR}/opengl/gui/snow_dialog.cpp"
@@ -133,6 +134,11 @@ if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_OPENGL_LIBRARIES_DIRS  "${ASSIMP_LIBRARIES_DIRS}")
     list(APPEND SNOW_WIN32_DLLS             "${ASSIMP_WIN32_DLLS}")
     list(APPEND SNOW_OPENGL_LIBRARIES       assimp)
+
+    # === freetype ===
+    find_package(Freetype REQUIRED)
+    list(APPEND SNOW_OPENGL_INCLUDE_DIRS    "${FREETYPE_INCLUDE_DIRS}")
+    list(APPEND SNOW_OPENGL_LIBRARIES       "${FREETYPE_LIBRARIES}")
 
     # === GL ====
     if (WIN32)

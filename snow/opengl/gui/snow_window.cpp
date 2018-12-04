@@ -1,4 +1,5 @@
 #include "snow_window.h"
+#include "snow_text.h"
 
 namespace snow {
 
@@ -65,6 +66,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
         this->glMakeCurrent();
         GLADInit();
         mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
+        Text::Initialize("../../../arial.ttf");
     }
     else {
         snow::fatal("[SDLWindow]: Failed to create window.");
@@ -89,6 +91,9 @@ void AbstractWindow::_draw(snow::Image *image) {
     // before custom draw, set view port();
     this->_viewport();
     this->draw();  // custom draw
+
+    Text::RenderText("(C) LearnOpenGL.com", 25.0f, 25.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+
     this->mImGui.endFrame();
     if (image != nullptr) {
         image->resize(this->mWidth, this->mHeight, 4);
