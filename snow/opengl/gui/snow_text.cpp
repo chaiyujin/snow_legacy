@@ -23,6 +23,7 @@
 
 namespace snow {
 
+bool Text::gInited = false;
 FT_Library Text::gFTLib;
 FT_Face    Text::gFTFace;
 snow::Shader Text::gShader;
@@ -30,6 +31,8 @@ GLuint Text::VAO=0, Text::VBO=0;
 std::map<GLchar, Character> Text::gCharacters;
 
 void Text::Initialize(const char *font) {
+    if (gInited) return;
+    gInited = true;
     if (FT_Init_FreeType(&gFTLib))
         snow::fatal("FreeType: Could not init FreeType Library.");
     if (FT_New_Face(gFTLib, font, 0, &gFTFace))

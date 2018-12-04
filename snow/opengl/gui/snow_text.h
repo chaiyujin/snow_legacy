@@ -15,6 +15,7 @@ struct Character {
 };
 
 class Text {
+    static bool gInited;
     static FT_Library gFTLib;
     static FT_Face    gFTFace;
     static snow::Shader gShader;
