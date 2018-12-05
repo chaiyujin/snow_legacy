@@ -5,6 +5,7 @@ import math
 
 def get_obj(path):
     vertices = []
+    vts = []
     faces = []
     with open(path) as fp:
         for line in fp:
@@ -12,6 +13,9 @@ def get_obj(path):
             if line[:2] == "v ":
                 _, x, y, z = line.split()
                 vertices.append((float(x), float(y), float(z)))
+            elif line[:2] == "vt":
+                _, x, y = line.split()
+                vts.append((float(x), float(y)))
             elif line[:2] == "f ":
                 _, x, y, z = line.split()
                 faces.append((int(x), int(y), int(z)))

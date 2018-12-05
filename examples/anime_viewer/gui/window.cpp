@@ -120,8 +120,10 @@ void VisWindow::setObj(std::string filepath) {
     this->glMakeCurrent();  // important !!
     this->releaseObj();
     
-    this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
-    this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
+    // this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
+    this->mModelPtr = new snow::Model(filepath);
+    // this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
+    this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 1.f, 0.f));
     this->mShaderPtr = new snow::Shader();
     this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
     this->mPrivate.mObjPath = filepath;
@@ -379,8 +381,10 @@ void VisWindow::draw() {
 
     /* draw model */ {
         mShaderPtr->use();
-        mShaderPtr->setVec3("lightPos", mCameraPtr->eye());
-        mShaderPtr->setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
+        mShaderPtr->setVec3("viewPos", mCameraPtr->eye());
+        mShaderPtr->setVec3("lightPosList[0]", {5, 2, 10});
+        mShaderPtr->setVec3("lightPosList[1]", {-5, 2, 10});
+        mShaderPtr->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
         // view. projection
         glm::mat4 projection = this->perspective(mCameraPtr);
         glm::mat4 view = mCameraPtr->viewMatrix();
