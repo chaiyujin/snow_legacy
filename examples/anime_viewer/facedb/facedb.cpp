@@ -233,27 +233,16 @@ void FaceDB::Initialize(std::string dir) {
         gTriangles.clear();
         gTrianglesOfPoint.resize(gTensorShape[0] / 3);
         int read_size;
-        while (!feof(fp_faces))
-        {
-            while (fgetc(fp_faces) != 'f') {
-                if (feof(fp_faces)) break;
-            }
-            if (feof(fp_faces)) break;
-            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[0], &tmp_uvi[0], &tmp_ni[0]);
-            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[1], &tmp_uvi[1], &tmp_ni[1]);
-            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[2], &tmp_uvi[2], &tmp_ni[2]);
-            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[3], &tmp_uvi[3], &tmp_ni[3]);
-            
-            --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2]; --tmp_vi[3];  // -1
+        int count = 0;
+        while (!feof(fp_faces)) {
+            read_size = fscanf(fp_faces, "%d", &tmp_vi[0]);
+            read_size = fscanf(fp_faces, "%d", &tmp_vi[1]);
+            read_size = fscanf(fp_faces, "%d", &tmp_vi[2]);
+            --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2];  // -1
             gTriangles.push_back({ tmp_vi[0], tmp_vi[1], tmp_vi[2] });
             gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[1]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
-            gTriangles.push_back({ tmp_vi[0], tmp_vi[2], tmp_vi[3] });
-            gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[3]].push_back((int)gTriangles.size() - 1);
-            // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);
         // printf("read face done\n");
