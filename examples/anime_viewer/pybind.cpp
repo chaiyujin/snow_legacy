@@ -8,10 +8,11 @@
 
 namespace py = pybind11;
 
-std::vector<double> vector_from_numpy(py::array_t<double, py::array::c_style> &data) {
+template <class T>
+std::vector<T> vector_from_numpy(py::array_t<T, py::array::c_style> &data) {
     assert(data.ndim() == 1);
-    std::vector<double> ret(data.shape(0));
-    memcpy(ret.data(), data.data(), sizeof(double) * data.shape(0));
+    std::vector<T> ret(data.shape(0));
+    memcpy(ret.data(), data.data(), sizeof(T) * data.shape(0));
     return ret;
 }
 
@@ -142,6 +143,11 @@ void set_expr_list(std::string window, py::array_t<double, py::array::c_style> &
         _exprList.push_back(expr);
     }
     Application::setExprList(window, _exprList);
+}
+
+void set_subtitle(std::string window, std::string sentence, py::array_t<int, py::array::c_style> &pos) {
+    std::vector<int> _pos = vector_from_numpy(pos);
+    Application::setSubtitle(window, sentence, _pos);
 }
 
 void initialize_bilinear(std::string root_dir) {

@@ -9,6 +9,7 @@
 #include "../../core/snow_core.h"
 #include "../tools/snow_arcball.h"
 #include "../tools/snow_camera.h"
+#include "snow_text.h"
 #include "snow_imgui.h"
 
 namespace snow {
@@ -23,6 +24,7 @@ namespace snow {
         ImGuiSDL2           mImGui;
         std::string         mTitle;
         std::string         mTag;
+        Text                mTextRender;
 
         static bool         gIsGLADLoaded;
         static std::string  gGLSLVersion;
@@ -58,6 +60,10 @@ namespace snow {
         void                resize(int w, int h);
         void                hide() { SDL_HideWindow(this->mWindowPtr); }
         void                show() { SDL_ShowWindow(this->mWindowPtr); }
+        /* text function */
+        void                text(const std::string &str, float x, float y, float scale=1.f, glm::vec3 rgb={1.f,1.f,1.f});
+        void                text(const std::string &str, const std::string &align, float y, float scale=1.f, glm::vec3 rgb={1.f,1.f,1.f});
+        void                textLine(const std::string &align, float y, float scale, const std::vector<std::string> &texts, const std::vector<glm::vec3> &rgbs);
         /* pure virual methods */
         virtual void        processEvent(SDL_Event &event) = 0;
         virtual bool        onQuit(SDL_Event &event) { return true; }

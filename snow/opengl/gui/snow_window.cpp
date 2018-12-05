@@ -1,5 +1,4 @@
 #include "snow_window.h"
-#include "snow_text.h"
 
 namespace snow {
 
@@ -66,7 +65,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
         this->glMakeCurrent();
         GLADInit();
         mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
-        Text::Initialize("../../../arial.ttf");
+        mTextRender.initialize("../../../arial.ttf");
     }
     else {
         snow::fatal("[SDLWindow]: Failed to create window.");
@@ -85,15 +84,45 @@ void AbstractWindow::_processEvent(SDL_Event &event) {
     this->processEvent(event);
 }
 
+
+void AbstractWindow::text(const std::string &str, float x, float y, float scale, glm::vec3 rgb) {
+    mTextRender.renderText(str, x, y, scale, rgb, this->width(), this->height());
+}
+
+void AbstractWindow::text(const std::string &str, const std::string &align, float y, float scale, glm::vec3 rgb) {
+    float length = mTextRender.textLength(str, scale);
+    float x = 10.f;
+    if (align == "center")     { x = (this->width() - length) / 2;  }
+    else if (align == "right") { x = this->width() - length - 10.f; }
+    mTextRender.renderText(str, x, y, scale, rgb, this->width(), this->height());
+}
+
+void AbstractWindow::textLine(const std::string &align, float y, float scale, const std::vector<std::string> &texts, const std::vector<glm::vec3> &rgbs) {
+    snow::assertion(texts.size() == rgbs.size(), "textLine(), texts and rgbs have different size {}, {}", texts.size(), rgbs.size());
+    float length = 0.0;
+    float x = 10.f;
+    std::vector<float> lengths;
+    for (auto &str : texts) {
+        auto len = mTextRender.textLength(str, scale);
+        length += len;
+        lengths.push_back(len);
+    }
+    if (align == "center")     { x = (this->width() - length) / 2;  }
+    else if (align == "right") { x = this->width() - length - 10.f; }
+    for (size_t i = 0; i < texts.size(); ++i) {
+        auto &str = texts[i];
+        auto &rgb = rgbs[i];
+        mTextRender.renderText(str, x, y, scale, rgb, this->width(), this->height());
+        x += lengths[i];
+    }
+}
+
 void AbstractWindow::_draw(snow::Image *image) {
     this->glMakeCurrent();
     this->mImGui.newFrame();
     // before custom draw, set view port();
     this->_viewport();
     this->draw();  // custom draw
-
-    Text::RenderText("(C) LearnOpenGL.com", 25.0f, 25.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
-
     this->mImGui.endFrame();
     if (image != nullptr) {
         image->resize(this->mWidth, this->mHeight, 4);

@@ -72,10 +72,15 @@ struct PrivateData {
     // for modeltype: bilinear
     std::vector<double>                 mIden;      
     std::vector<std::vector<double>>    mExprList;
+    // for subtitle
+    std::string                         mSubtitle;
+    std::vector<int>                    mSubtitlePos;
     int                                 mFrames;
     PrivateData()
         : mText(""), mObjPath(""), mScrollImageMap()
-        , mAnime(0), mIden(0), mExprList(0), mFrames(0) {}
+        , mAnime(0), mIden(0), mExprList(0)
+        , mSubtitle(""), mSubtitlePos(0)
+        , mFrames(0) {}
 };
 
 enum ModelType {
@@ -129,6 +134,7 @@ public:
     void setAnime(const std::vector<Vertices> &data);
     void addScrollImage(std::string title, const ScrollImage &scrollImage);
     void setText(std::string sentence) { mPrivate.mText = sentence; }
+    void setSubtitle(std::string sentence, const std::vector<int> &pos);
     void setIden(const std::vector<double> &iden);
     void setExprList(const std::vector<std::vector<double>> &exprList);
     void setController(bool flag) { mController = flag; }
@@ -277,5 +283,12 @@ public:
             snow::fatal("You forget newAPP() first!");
         VisWindow *win = getWindow(window, true);
         win->setExprList(exprList);
+    }
+
+    static void setSubtitle(std::string window, std::string sentence, const std::vector<int> &pos) {
+        if (gAppPtr == nullptr)
+            snow::fatal("You forget newAPP() first!");
+        VisWindow *win = getWindow(window, true);
+        win->setSubtitle(sentence, pos);
     }
 };

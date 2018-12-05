@@ -15,16 +15,21 @@ struct Character {
 };
 
 class Text {
-    static bool gInited;
-    static FT_Library gFTLib;
-    static FT_Face    gFTFace;
-    static snow::Shader gShader;
-    static std::map<GLchar, Character> gCharacters;
-    static GLuint VAO, VBO;
+    bool            mInited;
+    FT_Library      mFTLib;
+    FT_Face         mFTFace;
+    snow::Shader    mShader;
+    GLuint          mVAO, mVBO;
+    std::map<GLchar, Character> mCharacters;
 
 public:
-    static void Initialize(const char *font);
-    static void RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color);
+    constexpr const static glm::vec3 BaseColor = {1.f, 1.f, 0.965f};
+    constexpr const static glm::vec3 HighColor = {.4f, .698f, 1.f};
+
+    Text() : mInited(false) {}
+    void initialize(const char *font, int fontHeight=48);
+    void renderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, int win_width, int win_height);
+    GLfloat textLength(std::string text, GLfloat scale);
 };
 
 }

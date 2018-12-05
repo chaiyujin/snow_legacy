@@ -104,6 +104,11 @@ void VisWindow::releaseObj() {
     }
 }
 
+void VisWindow::setSubtitle(std::string sentence, const std::vector<int> &pos) {
+    mPrivate.mSubtitle = sentence;
+    mPrivate.mSubtitlePos = pos;
+}
+
 void VisWindow::setObj(std::string filepath) {
     if (!std::ifstream(filepath).good()) {
         std::cerr << "No such file: " << filepath << std::endl;
@@ -336,6 +341,16 @@ void VisWindow::draw() {
                         it->second.mCols
                     );
                 }
+            }
+            // update subtitle
+            if (mPrivate.mSubtitle.length() > 0) {
+                int pos = mPrivate.mSubtitle.length();
+                if (idx < mPrivate.mSubtitlePos.size())
+                    pos = mPrivate.mSubtitlePos[idx] + 1;
+                std::string past = mPrivate.mSubtitle.substr(0, pos);
+                std::string future = mPrivate.mSubtitle.substr(pos);
+                this->textLine("center", 25.f, 0.8f,  {past, future},
+                    {snow::Text::HighColor, snow::Text::BaseColor});
             }
         }
         
