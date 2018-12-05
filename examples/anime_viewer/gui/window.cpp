@@ -104,9 +104,10 @@ void VisWindow::releaseObj() {
     }
 }
 
-void VisWindow::setSubtitle(std::string sentence, const std::vector<int> &pos) {
+void VisWindow::setSubtitle(std::string sentence, const std::vector<int> &pos, float scale) {
     mPrivate.mSubtitle = sentence;
     mPrivate.mSubtitlePos = pos;
+    mPrivate.mSubtitleScale = scale;
 }
 
 void VisWindow::setObj(std::string filepath) {
@@ -236,12 +237,12 @@ void VisWindow::draw() {
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height),0);
             ImGui::Begin("", nullptr, ImGuiWindowFlags_NoResize);
         }
-        else if (mTitle.length() > 0) {    
+        else if (mPrivate.mMessage.length() > 0) {    
             int height = ImGui::GetItemsLineHeightWithSpacing() * 2 + ImGui::GetStyle().WindowPadding.y * 2;
             ImGui::SetNextWindowPos(ImVec2(0, 0), 0);
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height),0);
             ImGui::Begin("", nullptr, ImGuiWindowFlags_NoResize);
-            ImGui::Text("%s", mTitle.c_str());
+            ImGui::Text("%s", mPrivate.mMessage.c_str());
             ImGui::End();
         }
 
@@ -342,14 +343,23 @@ void VisWindow::draw() {
                     );
                 }
             }
+
             // update subtitle
             if (mPrivate.mSubtitle.length() > 0) {
+                const size_t half = 22;
                 int pos = mPrivate.mSubtitle.length();
                 if (idx < mPrivate.mSubtitlePos.size())
                     pos = mPrivate.mSubtitlePos[idx] + 1;
-                std::string past = mPrivate.mSubtitle.substr(0, pos);
-                std::string future = mPrivate.mSubtitle.substr(pos);
-                this->textLine("center", 25.f, 0.8f,  {past, future},
+                int left = 0, len = 0;
+                if (pos > half) left = pos - half;
+                len = half * 2 - (pos - left);
+                if (pos + len > mPrivate.mSubtitle.length()) len = mPrivate.mSubtitle.length() - pos;
+                if (len < half) left -= (half - len);
+                if (left < 0) left = 0;
+                std::string past = mPrivate.mSubtitle.substr(left, pos-left);
+                std::string future = mPrivate.mSubtitle.substr(pos, len);
+
+                this->textLine("center", 25.f, mPrivate.mSubtitleScale, {past, future},
                     {snow::Text::HighColor, snow::Text::BaseColor});
             }
         }
@@ -384,4 +394,5 @@ void VisWindow::draw() {
         // draw model
         mModelPtr->draw(*mShaderPtr);
     }
+
 }

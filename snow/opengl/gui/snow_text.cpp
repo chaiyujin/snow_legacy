@@ -1,4 +1,5 @@
 #include "snow_text.h"
+#include "../../fonts/fonts.h"
 
 #define VERT_CODE ""\
     "layout (location = 0) in vec4 vertex;"\
@@ -23,20 +24,22 @@
 
 namespace snow {
 
-// bool Text::gInited = false;
-// FT_Library Text::mFTLib;
-// FT_Face    Text::mFTFace;
-// snow::Shader Text::mShader;
-// GLuint Text::VAO=0, Text::VBO=0;
-// std::map<GLchar, Character> Text::mCharacters;
-
 void Text::initialize(const char *font, int fontHeight) {
     if (mInited) return;
     mInited = true;
     if (FT_Init_FreeType(&mFTLib))
         snow::fatal("FreeType: Could not init FreeType Library.");
-    if (FT_New_Face(mFTLib, font, 0, &mFTFace))
-        snow::fatal("FreeType: Failed to load font.");
+    // get to get font in 'fonts'
+    const unsigned char *mem;
+    int size;
+    if (getFont(font, &mem, &size)) {
+        if (FT_New_Memory_Face(mFTLib, mem, size, 0, &mFTFace))
+            snow::fatal("FreeType: Failed to load font.");
+    }
+    else {
+        if (FT_New_Face(mFTLib, font, 0, &mFTFace))
+            snow::fatal("FreeType: Failed to load font.");
+    }
     FT_Set_Pixel_Sizes(mFTFace, 0, fontHeight);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
@@ -103,10 +106,9 @@ GLfloat Text::textLength(std::string text, GLfloat scale) {
     return x;
 }
 
-void Text::renderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, int win_width, int win_height)
-{
+void Text::renderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, int win_width, int win_height) {
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     Shader &s = mShader;
     s.use();

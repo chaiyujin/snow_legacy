@@ -65,7 +65,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
         this->glMakeCurrent();
         GLADInit();
         mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
-        mTextRender.initialize("../../../arial.ttf");
+        mTextRender.initialize("ubuntu");
     }
     else {
         snow::fatal("[SDLWindow]: Failed to create window.");

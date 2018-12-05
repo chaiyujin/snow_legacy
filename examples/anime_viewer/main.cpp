@@ -37,10 +37,10 @@ void runBilinear(const char *fwPath) {
     Application::setExprList("bilinear", exprList);
     Application::setIden("bilinear2", iden);
     Application::setExprList("bilinear2", exprList);
-    Application::setSubtitle("bilinear", "Fuck you you", 
+    Application::setSubtitle("bilinear", 0.5, "test you you asdasd ascasd asfasdqw 123", 
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-     1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
-     5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6});
+     1, 1, 1, 5, 5, 5, 5, 6, 6, 6, 6, 6,
+     9, 9, 18, 18, 19, 20});
     // Application::offscreen("../../../assets/test_offscreen.mp4", 25.0, 1280, 480);
     Application::run(25.0);
     Application::terminate();

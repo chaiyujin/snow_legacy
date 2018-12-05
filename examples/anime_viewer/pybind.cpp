@@ -145,9 +145,9 @@ void set_expr_list(std::string window, py::array_t<double, py::array::c_style> &
     Application::setExprList(window, _exprList);
 }
 
-void set_subtitle(std::string window, std::string sentence, py::array_t<int, py::array::c_style> &pos) {
+void set_subtitle(std::string window, float scale, std::string sentence, py::array_t<int, py::array::c_style> &pos) {
     std::vector<int> _pos = vector_from_numpy(pos);
-    Application::setSubtitle(window, sentence, _pos);
+    Application::setSubtitle(window, scale, sentence, _pos);
 }
 
 void initialize_bilinear(std::string root_dir) {
@@ -169,6 +169,7 @@ PYBIND11_MODULE(anime_viewer11, m) {
     // for ModelType::Bilinear
     m.def("set_iden",           &set_iden,          "set iden for certain window");
     m.def("set_expr_list",      &set_expr_list,     "set expr list for certain window");
+    m.def("set_subtitle",       &set_subtitle,      "set subtitle for certain window");
     // run or terminate
     m.def("run",                &run,               "run app with given fps");
     m.def("offscreen",          &offscreen,         "offscreen rendering");
