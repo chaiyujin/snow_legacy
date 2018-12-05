@@ -21,8 +21,11 @@ public:
     // ------------------------------------------------------------------------
     Shader() : ID(0) {}
     Shader(std::string vertex_path, std::string fragment_path)
-        : Shader()
-    {
+        : Shader() {
+        this->buildFromFile(vertex_path, fragment_path);
+    }
+
+    void buildFromFile(std::string vertex_path, std::string fragment_path) {
         // 1. retrieve the vertex/fragment source code from filePath
         std::string vertex_code;
         std::string fragment_code;

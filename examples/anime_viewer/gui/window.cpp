@@ -120,12 +120,13 @@ void VisWindow::setObj(std::string filepath) {
     this->glMakeCurrent();  // important !!
     this->releaseObj();
     
-    // this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
-    this->mModelPtr = new snow::Model(filepath);
+    this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
+    // this->mModelPtr = new snow::Model(filepath);
     // this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
-    this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 1.f, 0.f));
+    this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 10.f), glm::vec3(0.f, 1.f, 0.f));
     this->mShaderPtr = new snow::Shader();
-    this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
+    // this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
+    this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
     this->mPrivate.mObjPath = filepath;
     std::cout << "[AnimeViewer]: Open mesh: " << filepath << std::endl;
 }
@@ -188,7 +189,9 @@ void VisWindow::setIden(const std::vector<double> &iden) {
         this->mModelPtr  = (snow::Model *) (new ShowModel());
         this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 1.f, 0.f));
         this->mShaderPtr = new snow::Shader();
-        this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
+        // this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
+        
+        this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
     }
     
     mPrivate.mIden = iden;
@@ -380,11 +383,41 @@ void VisWindow::draw() {
     }
 
     /* draw model */ {
+
+        // vec3 position;
+        
+        // float constant;
+        // float linear;
+        // float quadratic;
+        
+        // vec3 ambient;
+        // vec3 diffuse;
+        // vec3 specular;
+
         mShaderPtr->use();
         mShaderPtr->setVec3("viewPos", mCameraPtr->eye());
-        mShaderPtr->setVec3("lightPosList[0]", {5, 2, 10});
-        mShaderPtr->setVec3("lightPosList[1]", {-5, 2, 10});
-        mShaderPtr->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        mShaderPtr->setVec3("dirLight.direction", {0, -2, -10});
+        mShaderPtr->setVec3("dirLight.ambient", {0.05f, 0.05f, 0.05f});
+        mShaderPtr->setVec3("dirLight.diffuse", {0.9f, 0.9f, 0.9f});
+        mShaderPtr->setVec3("dirLight.specular", {0.1f, 0.1f, 0.1f});
+        mShaderPtr->setFloat("material.shininess", 64.0f);
+
+        mShaderPtr->setVec3("pointLights[0].position", {3, 1, 2});
+        mShaderPtr->setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+        mShaderPtr->setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[0].specular", {0.1f, 0.1f, 0.1f});
+        mShaderPtr->setFloat("pointLights[0].constant", 1.0f);
+        mShaderPtr->setFloat("pointLights[0].linear", 0.09);
+        mShaderPtr->setFloat("pointLights[0].quadratic", 0.032);
+
+        mShaderPtr->setVec3("pointLights[1].position", {-3, 1, 2});
+        mShaderPtr->setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+        mShaderPtr->setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[1].specular", {0.1f, 0.1f, 0.1f});
+        mShaderPtr->setFloat("pointLights[1].constant", 1.0f);
+        mShaderPtr->setFloat("pointLights[1].linear", 0.09);
+        mShaderPtr->setFloat("pointLights[1].quadratic", 0.032);
+
         // view. projection
         glm::mat4 projection = this->perspective(mCameraPtr);
         glm::mat4 view = mCameraPtr->viewMatrix();

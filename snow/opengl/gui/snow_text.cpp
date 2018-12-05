@@ -24,6 +24,9 @@
 
 namespace snow {
 
+const glm::vec3 Text::BaseColor = {1.f, 1.f, 0.965f};
+const glm::vec3 Text::HighColor = {.4f, .698f, 1.f};
+
 void Text::initialize(const char *font, int fontHeight) {
     if (mInited) return;
     mInited = true;

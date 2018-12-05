@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 
+std::string                     FaceDB::gRoot="";
 double                          FaceDB::MAX_ALLOWED_WEIGHT_RANGE = 1.25;
 std::vector<int>                FaceDB::gTensorShape;
 std::vector<int>                FaceDB::gOriginShape;
@@ -16,7 +17,10 @@ std::vector<double>             FaceDB::gExprSingular;
 MatrixRM                        FaceDB::gIdenUT;
 MatrixRM                        FaceDB::gExprUT;
 /* static face information */
+
+std::vector<snow::float2>       FaceDB::gTexCoords;
 std::vector<snow::int3>         FaceDB::gTriangles;
+std::vector<snow::int3>         FaceDB::gTrianglesUV;
 std::vector<std::vector<int>>   FaceDB::gTrianglesOfPoint;
 std::vector<int>                FaceDB::gFaceVertices;
 std::vector<snow::int3>         FaceDB::gFaceTriangles;
@@ -42,6 +46,7 @@ void FaceDB::Initialize(std::string dir) {
     if (!snow::path::AllExists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
         snow::fatal("Failed to find tensor information file.\n");
     }
+    gRoot = dir;
 
     snow::info("[FaceDB]: begin to read.");
 
@@ -231,15 +236,27 @@ void FaceDB::Initialize(std::string dir) {
         FILE *fp_faces = fopen(face_path.c_str(), "r");
         gTrianglesOfPoint.clear();
         gTriangles.clear();
+        gTrianglesUV.clear();
         gTrianglesOfPoint.resize(gTensorShape[0] / 3);
         int read_size;
         int count = 0;
-        while (!feof(fp_faces)) {
-            read_size = fscanf(fp_faces, "%d", &tmp_vi[0]);
-            read_size = fscanf(fp_faces, "%d", &tmp_vi[1]);
-            read_size = fscanf(fp_faces, "%d", &tmp_vi[2]);
+        gTexCoords.clear();
+        read_size = fscanf(fp_faces, "%d", &count);
+        float u, v;
+        for (int i = 0; i < count; ++i) {
+            read_size = fscanf(fp_faces, "%f %f", &u, &v);
+            v = 1.0 - v;
+            gTexCoords.push_back({ u, v });
+        }
+        read_size = fscanf(fp_faces, "%d", &count);
+        for (int i = 0; i < count; ++i) {
+            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[0], &tmp_uvi[0], &tmp_ni[0]);
+            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[1], &tmp_uvi[1], &tmp_ni[1]);
+            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[2], &tmp_uvi[2], &tmp_ni[2]);
             --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2];  // -1
+            --tmp_uvi[0]; --tmp_uvi[1]; --tmp_uvi[2];  // -1
             gTriangles.push_back({ tmp_vi[0], tmp_vi[1], tmp_vi[2] });
+            gTrianglesUV.push_back({ tmp_uvi[0], tmp_uvi[1], tmp_uvi[2] });
             gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[1]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);

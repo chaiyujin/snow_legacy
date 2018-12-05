@@ -1,4 +1,5 @@
 #include "visualize.h"
+#include <fstream>
 
 void ShowModel::load() {
     mBilinearModel.updateMesh();
@@ -7,15 +8,33 @@ void ShowModel::load() {
     std::vector<snow::Vertex> vertices;
     std::vector<snow::Texture> textures;
 
-    for (int i = 0; i < FaceDB::NumVertices(); ++i)
-        vertices.push_back({ {0, 0, 0}, {0, 0, 0}, {0, 0} });
-
     for (int i = 0; i < FaceDB::Triangles().size(); ++i) {
-        indices.push_back(FaceDB::Triangles()[i].x);
-        indices.push_back(FaceDB::Triangles()[i].y);
-        indices.push_back(FaceDB::Triangles()[i].z);
+        int vt0 = FaceDB::TrianglesUV()[i].x;
+        int vt1 = FaceDB::TrianglesUV()[i].y;
+        int vt2 = FaceDB::TrianglesUV()[i].z;
+        glm::vec2 uv0 = snow::toGLM(FaceDB::TexCoords()[vt0]);
+        glm::vec2 uv1 = snow::toGLM(FaceDB::TexCoords()[vt1]);
+        glm::vec2 uv2 = snow::toGLM(FaceDB::TexCoords()[vt2]);
+
+        vertices.push_back({ {0, 0, 0}, {0, 0, 0}, uv0 });
+        vertices.push_back({ {0, 0, 0}, {0, 0, 0}, uv1 });
+        vertices.push_back({ {0, 0, 0}, {0, 0, 0}, uv2 });
+        indices.push_back(i * 3);
+        indices.push_back(i * 3 + 1);
+        indices.push_back(i * 3 + 2);
     }
 
+    // texture
+    std::string filename = snow::path::Join(FaceDB::RootDir(), "diffuse.bmp");
+    if (std::ifstream(filename).good()) {
+        // texture
+        snow::Texture texture;
+        texture.id = snow::TextureFromFile(filename.c_str(), "", true);
+        texture.type = "type_name";
+        texture.path = filename;
+        textures_loaded.push_back(texture);
+        textures.push_back(texture);
+    }
     meshes.push_back(snow::Mesh::CreateMesh(vertices, indices, textures, true));
 
     updateFromTensor(mBilinearModel.mesh());
@@ -23,12 +42,27 @@ void ShowModel::load() {
 
 void ShowModel::updateFromTensor(const Tensor3 &tensor) {
     FaceDB::UpdateNormals(tensor);
-    for (size_t i = 0; i < tensor.shape(0); i += 3) {
-        meshes[0]->vertices[i / 3].position = { *tensor.data(i), *tensor.data(i+1), *tensor.data(i+2) };
-    }
-    for (int i = 0; i < FaceDB::NumVertices(); ++i) {
-        auto norm = FaceDB::VertNormals()[i];
-        meshes[0]->vertices[i].normal = { norm.x, norm.y, norm.z };
+    auto getVert = [&](int vi) -> glm::vec3 {
+        return {
+             (float)*tensor.data(vi*3),
+             (float)*tensor.data(vi*3+1),
+             (float)*tensor.data(vi*3+2)
+        };
+    };
+    auto getNorm = [&](int vi) -> glm::vec3 {
+        auto norm = FaceDB::VertNormals()[vi];
+        return { norm.x, norm.y, norm.z };
+    };
+    for (int i = 0; i < FaceDB::Triangles().size(); ++i) {
+        int v0 = FaceDB::Triangles()[i].x;
+        int v1 = FaceDB::Triangles()[i].y;
+        int v2 = FaceDB::Triangles()[i].z;
+        meshes[0]->vertices[i*3].position = getVert(v0);
+        meshes[0]->vertices[i*3].normal = getNorm(v0);
+        meshes[0]->vertices[i*3+1].position = getVert(v1);
+        meshes[0]->vertices[i*3+1].normal = getNorm(v1);
+        meshes[0]->vertices[i*3+2].position = getVert(v2);
+        meshes[0]->vertices[i*3+2].normal = getNorm(v2);
     }
     glBindVertexArray(meshes[0]->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, meshes[0]->VBO);

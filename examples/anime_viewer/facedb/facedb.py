@@ -3,6 +3,24 @@ Generate triangles.txt
 """
 import math
 
+class Face:
+    def __init__(self, x, y, z):
+        if x.find("/") >= 0:
+            v0, vt0, vn0 = x.split("/")
+            v1, vt1, vn1 = y.split("/")
+            v2, vt2, vn2 = z.split("/")
+            self.v = [int(v0), int(v1), int(v2)]
+            self.vt = [int(vt0), int(vt1), int(vt2)]
+            self.vn = [int(vn0), int(vn1), int(vn2)]
+        else:
+            self.v = [int(x), int(y), int(z)]
+            self.vt = [0, 0, 0]
+            self.vn = [0, 0, 0]
+    
+    def equal(self, x, y, z):
+        return self.v[0] == x and self.v[1] == y and self.v[2] == z
+
+
 def get_obj(path):
     vertices = []
     vts = []
@@ -18,15 +36,17 @@ def get_obj(path):
                 vts.append((float(x), float(y)))
             elif line[:2] == "f ":
                 _, x, y, z = line.split()
-                faces.append((int(x), int(y), int(z)))
+                faces.append(Face(x, y, z))
+
     print("{} vertices, {} faces in {}".format(
         len(vertices), len(faces), path
     ))
-    return vertices, faces
+    return vertices, vts, faces
 
 def generate_triangles(template_path, mesh_path, result_path):
-    old_verts, old_faces = get_obj(template_path)
-    new_verts, new_faces = get_obj(mesh_path)
+    old_verts, vts, old_faces = get_obj(template_path)
+    new_verts, _, new_faces = get_obj(mesh_path)
+    
     def dist(p0, p1):
         return math.sqrt( (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2 )
 
@@ -47,11 +67,24 @@ def generate_triangles(template_path, mesh_path, result_path):
         index.append(k)
 
     with open(result_path, "w") as fp:
+        fp.write("%d\n" % len(vts))
+        for vt in vts:
+            fp.write("%f %f\n" % vt)
+        fp.write("%d\n" % len(new_faces))
         for face in new_faces:
-            x = index[face[0]-1]+1
-            y = index[face[1]-1]+1
-            z = index[face[2]-1]+1
-            fp.write("%d %d %d\n" % (x,y,z))
+            x = index[face.v[0]-1]+1
+            y = index[face.v[1]-1]+1
+            z = index[face.v[2]-1]+1
+            find = False
+            for f in old_faces:
+                if f.equal(x, y, z):
+                    find = True
+                    fp.write("%d/%d/0 %d/%d/0 %d/%d/0\n" % (
+                        f.v[0], f.vt[0],
+                        f.v[1], f.vt[1],
+                        f.v[2], f.vt[2]))
+                    break
+            assert find
 
 
 if __name__ == "__main__":

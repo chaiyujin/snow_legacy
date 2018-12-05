@@ -136,9 +136,16 @@ if (SNOW_MODULE_OPENGL)
     list(APPEND SNOW_OPENGL_LIBRARIES       assimp)
 
     # === freetype ===
-    find_package(Freetype REQUIRED)
-    list(APPEND SNOW_OPENGL_INCLUDE_DIRS    "${FREETYPE_INCLUDE_DIRS}")
-    list(APPEND SNOW_OPENGL_LIBRARIES       "${FREETYPE_LIBRARIES}")
+    if (WIN32)
+        list(APPEND SNOW_OPENGL_INCLUDE_DIRS    "${PROJECT_SOURCE_DIR}/../third_party/freetype/include")
+        list(APPEND SNOW_OPENGL_LIBRARIES_DIRS  "${PROJECT_SOURCE_DIR}/../third_party/freetype/win64")
+        list(APPEND SNOW_OPENGL_LIBRARIES       freetype)
+        list(APPEND SNOW_WIN32_DLLS             "${PROJECT_SOURCE_DIR}/../third_party/freetype/win64/freetype.dll")
+    else ()
+        find_package(Freetype REQUIRED)
+        list(APPEND SNOW_OPENGL_INCLUDE_DIRS    "${FREETYPE_INCLUDE_DIRS}")
+        list(APPEND SNOW_OPENGL_LIBRARIES       "${FREETYPE_LIBRARIES}")
+    endif ()
 
     # === GL ====
     if (WIN32)

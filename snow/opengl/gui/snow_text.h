@@ -25,8 +25,8 @@ class Text {
     void _doneInit();
 
 public:
-    constexpr const static glm::vec3 BaseColor = {1.f, 1.f, 0.965f};
-    constexpr const static glm::vec3 HighColor = {.4f, .698f, 1.f};
+    const static glm::vec3 BaseColor;
+    const static glm::vec3 HighColor;
 
     Text() : mInited(false) {}
     void initialize(const char *font, int fontHeight=48);
