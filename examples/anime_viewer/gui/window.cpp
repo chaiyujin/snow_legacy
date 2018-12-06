@@ -120,13 +120,13 @@ void VisWindow::setObj(std::string filepath) {
     this->glMakeCurrent();  // important !!
     this->releaseObj();
     
-    this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
-    // this->mModelPtr = new snow::Model(filepath);
+    // this->mModelPtr  = (snow::Model *) (new ObjMesh(filepath));
+    this->mModelPtr = new snow::Model(filepath);
     // this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, -1.f, 0.f));
     this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 10.f), glm::vec3(0.f, 1.f, 0.f));
     this->mShaderPtr = new snow::Shader();
-    // this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
-    this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
+    this->mShaderPtr->buildFromCode(VERT_GLSL, FRAG_GLSL);
+    // this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
     this->mPrivate.mObjPath = filepath;
     std::cout << "[AnimeViewer]: Open mesh: " << filepath << std::endl;
 }
@@ -187,11 +187,10 @@ void VisWindow::setIden(const std::vector<double> &iden) {
 
     if (mModelPtr == nullptr) {
         this->mModelPtr  = (snow::Model *) (new ShowModel());
-        this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 1.f, 0.f));
+        this->mCameraPtr = new snow::ArcballCamera(glm::vec3(0.f, 0.f, 10.f), glm::vec3(0.f, 1.f, 0.f));
         this->mShaderPtr = new snow::Shader();
-        // this->mShaderPtr->buildFromCode(VERT_GLSL, (this->mModelPtr->textures_loaded.size() == 0) ? FRAG_NOTEX_GLSL : FRAG_GLSL);
-        
-        this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
+        this->mShaderPtr->buildFromCode(VERT_GLSL, FRAG_GLSL);
+        // this->mShaderPtr->buildFromFile("../glsl/vert.glsl", "../glsl/frag.glsl");
     }
     
     mPrivate.mIden = iden;
@@ -396,11 +395,13 @@ void VisWindow::draw() {
 
         mShaderPtr->use();
         mShaderPtr->setVec3("viewPos", mCameraPtr->eye());
+        mShaderPtr->setVec3("lightPos", mCameraPtr->eye());
+        
         mShaderPtr->setVec3("dirLight.direction", {0, -2, -10});
         mShaderPtr->setVec3("dirLight.ambient", {0.05f, 0.05f, 0.05f});
         mShaderPtr->setVec3("dirLight.diffuse", {0.9f, 0.9f, 0.9f});
         mShaderPtr->setVec3("dirLight.specular", {0.1f, 0.1f, 0.1f});
-        mShaderPtr->setFloat("material.shininess", 64.0f);
+        mShaderPtr->setFloat("material.shininess", 32.0f);
 
         mShaderPtr->setVec3("pointLights[0].position", {3, 1, 2});
         mShaderPtr->setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
@@ -418,13 +419,29 @@ void VisWindow::draw() {
         mShaderPtr->setFloat("pointLights[1].linear", 0.09);
         mShaderPtr->setFloat("pointLights[1].quadratic", 0.032);
 
+        mShaderPtr->setVec3("pointLights[2].position", {3, 1, -2});
+        mShaderPtr->setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
+        mShaderPtr->setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[2].specular", {0.1f, 0.1f, 0.1f});
+        mShaderPtr->setFloat("pointLights[2].constant", 1.0f);
+        mShaderPtr->setFloat("pointLights[2].linear", 0.09);
+        mShaderPtr->setFloat("pointLights[2].quadratic", 0.032);
+    
+        mShaderPtr->setVec3("pointLights[3].position", {-3, 1, -2});
+        mShaderPtr->setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
+        mShaderPtr->setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[3].specular", {0.1f, 0.1f, 0.1f});
+        mShaderPtr->setFloat("pointLights[3].constant", 1.0f);
+        mShaderPtr->setFloat("pointLights[3].linear", 0.09);
+        mShaderPtr->setFloat("pointLights[3].quadratic", 0.032);
+
         // view. projection
         glm::mat4 projection = this->perspective(mCameraPtr);
         glm::mat4 view = mCameraPtr->viewMatrix();
         mShaderPtr->setMat4("projection", projection);
         mShaderPtr->setMat4("view", view);
         // model, normal
-        glm::mat4 model = mModelPtr->autoModelTransform(projection * view, 0.3);
+        glm::mat4 model = mModelPtr->autoModelTransform(projection * view, 0.25);
         glm::mat4 normal = glm::transpose(glm::inverse(model));
         mShaderPtr->setMat4("model", model);
         mShaderPtr->setMat4("normal", normal);

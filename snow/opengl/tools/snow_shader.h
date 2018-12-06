@@ -65,17 +65,19 @@ public:
         this->_prependVersion(vertex_code);
         this->_prependVersion(fragment_code);
         const char* v_shader_code = vertex_code.c_str();
-        const char * f_shader_code = fragment_code.c_str();
+        const char* f_shader_code = fragment_code.c_str();
+        int vertex_shader_string_length = vertex_code.length();
+        int fragment_shader_string_length  = fragment_code.length();
         // 2. compile shaders
         unsigned int vertex, fragment;
         // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &v_shader_code, NULL);
+        glShaderSource(vertex, 1, &v_shader_code, &vertex_shader_string_length);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
         // fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &f_shader_code, NULL);
+        glShaderSource(fragment, 1, &f_shader_code, &fragment_shader_string_length);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         // shader Program

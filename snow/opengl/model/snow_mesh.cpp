@@ -41,6 +41,9 @@ namespace snow {
         // tex_coords
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords));
+        // tangent
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
 
         // unbind VAO
         glBindVertexArray(0);
@@ -49,6 +52,7 @@ namespace snow {
     void Mesh::draw(Shader &shader) {
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
+        unsigned int normalNr = 1;
         for(unsigned int i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // bind texture id
@@ -58,6 +62,8 @@ namespace snow {
                 number = std::to_string(diffuseNr++);
             else if(name == "texture_specular")
                 number = std::to_string(specularNr++);
+            else if (name == "texture_normal")
+                number = std::to_string(normalNr++);
 
             shader.setInt((std::string("material.") + name.substr(8) + number).c_str(), i);
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
