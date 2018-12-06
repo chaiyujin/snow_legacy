@@ -65,7 +65,7 @@ AbstractWindow::AbstractWindow(const char *title, int width, int height, int x, 
         this->glMakeCurrent();
         GLADInit();
         mImGui.init(mWindowPtr, mGLContext, gGLSLVersion);
-        mTextRender.initialize("ubuntu");
+        mTextRender.initialize("ubuntu-mono");
     }
     else {
         snow::fatal("[SDLWindow]: Failed to create window.");

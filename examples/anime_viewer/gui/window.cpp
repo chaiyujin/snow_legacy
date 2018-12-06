@@ -397,44 +397,47 @@ void VisWindow::draw() {
         mShaderPtr->setVec3("viewPos", mCameraPtr->eye());
         mShaderPtr->setVec3("lightPos", mCameraPtr->eye());
         
-        mShaderPtr->setVec3("dirLight.direction", {0, -2, -10});
+        mShaderPtr->setVec3("dirLight.direction", {0, 0, -10});
         mShaderPtr->setVec3("dirLight.ambient", {0.05f, 0.05f, 0.05f});
-        mShaderPtr->setVec3("dirLight.diffuse", {0.9f, 0.9f, 0.9f});
-        mShaderPtr->setVec3("dirLight.specular", {0.1f, 0.1f, 0.1f});
-        mShaderPtr->setFloat("material.shininess", 32.0f);
+        mShaderPtr->setVec3("dirLight.diffuse", {1.0f, 1.0f, 1.0f});
+        mShaderPtr->setVec3("dirLight.specular", {0.0f, 0.0f, 0.0f});
+        mShaderPtr->setFloat("material.shininess", 4.0f);
 
-        mShaderPtr->setVec3("pointLights[0].position", {3, 1, 2});
+        mShaderPtr->setVec3("pointLights[0].position", {5, 3, 3});
         mShaderPtr->setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-        mShaderPtr->setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[0].diffuse", 0.5f, 0.5f, 0.5f);
         mShaderPtr->setVec3("pointLights[0].specular", {0.1f, 0.1f, 0.1f});
         mShaderPtr->setFloat("pointLights[0].constant", 1.0f);
         mShaderPtr->setFloat("pointLights[0].linear", 0.09);
         mShaderPtr->setFloat("pointLights[0].quadratic", 0.032);
 
-        mShaderPtr->setVec3("pointLights[1].position", {-3, 1, 2});
+        mShaderPtr->setVec3("pointLights[1].position", {-5, 3, 3});
         mShaderPtr->setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-        mShaderPtr->setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[1].diffuse", 0.5f, 0.5f, 0.5f);
         mShaderPtr->setVec3("pointLights[1].specular", {0.1f, 0.1f, 0.1f});
         mShaderPtr->setFloat("pointLights[1].constant", 1.0f);
         mShaderPtr->setFloat("pointLights[1].linear", 0.09);
         mShaderPtr->setFloat("pointLights[1].quadratic", 0.032);
 
-        mShaderPtr->setVec3("pointLights[2].position", {3, 1, -2});
+        mShaderPtr->setVec3("pointLights[2].position", {5, -3, 3});
         mShaderPtr->setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
-        mShaderPtr->setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[2].diffuse", 0.5f, 0.5f, 0.5f);
         mShaderPtr->setVec3("pointLights[2].specular", {0.1f, 0.1f, 0.1f});
         mShaderPtr->setFloat("pointLights[2].constant", 1.0f);
         mShaderPtr->setFloat("pointLights[2].linear", 0.09);
         mShaderPtr->setFloat("pointLights[2].quadratic", 0.032);
     
-        mShaderPtr->setVec3("pointLights[3].position", {-3, 1, -2});
+        mShaderPtr->setVec3("pointLights[3].position", {-5, -3, 3});
         mShaderPtr->setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
-        mShaderPtr->setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        mShaderPtr->setVec3("pointLights[3].diffuse", 0.5f, 0.5f, 0.5f);
         mShaderPtr->setVec3("pointLights[3].specular", {0.1f, 0.1f, 0.1f});
         mShaderPtr->setFloat("pointLights[3].constant", 1.0f);
         mShaderPtr->setFloat("pointLights[3].linear", 0.09);
         mShaderPtr->setFloat("pointLights[3].quadratic", 0.032);
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
         // view. projection
         glm::mat4 projection = this->perspective(mCameraPtr);
         glm::mat4 view = mCameraPtr->viewMatrix();

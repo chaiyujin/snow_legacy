@@ -17,6 +17,7 @@ class FaceDB
 {
     FaceDB() {}
     ~FaceDB() {}
+    static std::string                      gRoot;
     static std::vector<int>                 gTensorShape;
     static std::vector<int>                 gOriginShape;
     static Tensor3                          gCoreTensor;
@@ -25,7 +26,9 @@ class FaceDB
     static std::vector<double>              gIdenSingular;
     static std::vector<double>              gExprSingular;
     /* static face information */
+    static std::vector<snow::float2>        gTexCoords;
     static std::vector<snow::int3>          gTriangles;
+    static std::vector<snow::int3>          gTrianglesUV;
     static std::vector<std::vector<int>>    gTrianglesOfPoint;
     static std::vector<int>                 gFaceVertices;
     static std::vector<snow::int3>          gFaceTriangles;
@@ -53,6 +56,7 @@ public:
 #endif
 
     static double MAX_ALLOWED_WEIGHT_RANGE;
+    static const std::string &                  RootDir()       { return gRoot;               }
     static int                                  NumDimVert()    { return gTensorShape[0];     }
     static int                                  NumDimIden()    { return gTensorShape[1];     }
     static int                                  NumDimExpr()    { return gTensorShape[2];     }
@@ -65,7 +69,9 @@ public:
     static const std::vector<double> &          IdenSingular()  { return gIdenSingular; }
     static const std::vector<double> &          ExprSingular()  { return gExprSingular; }
 
+    static const std::vector<snow::float2> &    TexCoords()     { return gTexCoords; }
     static const std::vector<snow::int3> &      Triangles()     { return gTriangles; }
+    static const std::vector<snow::int3> &      TrianglesUV()   { return gTrianglesUV; }
     static const std::vector<int>  &            FaceVertices()  { return gFaceVertices; }
     static const std::vector<snow::int3> &      FaceTriangles() { return gFaceTriangles; }
 

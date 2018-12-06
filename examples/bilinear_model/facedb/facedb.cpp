@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 
+std::string                     FaceDB::gRoot="";
 double                          FaceDB::MAX_ALLOWED_WEIGHT_RANGE = 1.25;
 std::vector<int>                FaceDB::gTensorShape;
 std::vector<int>                FaceDB::gOriginShape;
@@ -16,7 +17,10 @@ std::vector<double>             FaceDB::gExprSingular;
 MatrixRM                        FaceDB::gIdenUT;
 MatrixRM                        FaceDB::gExprUT;
 /* static face information */
+
+std::vector<snow::float2>       FaceDB::gTexCoords;
 std::vector<snow::int3>         FaceDB::gTriangles;
+std::vector<snow::int3>         FaceDB::gTrianglesUV;
 std::vector<std::vector<int>>   FaceDB::gTrianglesOfPoint;
 std::vector<int>                FaceDB::gFaceVertices;
 std::vector<snow::int3>         FaceDB::gFaceTriangles;
@@ -40,11 +44,11 @@ void FaceDB::Initialize(std::string dir) {
     std::string expr_s_path = snow::path::Join(dir, "expr_singular.txt");
 
     if (!snow::path::AllExists({ tensor_path, face_path, cont_path, mask_path, iden_s_path, expr_s_path })) {
-        printf("Failed to find tensor information file.\n");
-        exit(1);
+        snow::fatal("Failed to find tensor information file.\n");
     }
+    gRoot = dir;
 
-    printf("[FaceDB]: begin to read\n");
+    snow::info("[FaceDB]: begin to read.");
 
     /* read tensor */
     auto tmp_alloc_read = [](float **tmp, FILE **fp, int size) -> void
@@ -232,29 +236,30 @@ void FaceDB::Initialize(std::string dir) {
         FILE *fp_faces = fopen(face_path.c_str(), "r");
         gTrianglesOfPoint.clear();
         gTriangles.clear();
+        gTrianglesUV.clear();
         gTrianglesOfPoint.resize(gTensorShape[0] / 3);
         int read_size;
-        while (!feof(fp_faces))
-        {
-            while (fgetc(fp_faces) != 'f') {
-                if (feof(fp_faces)) break;
-            }
-            if (feof(fp_faces)) break;
+        int count = 0;
+        gTexCoords.clear();
+        read_size = fscanf(fp_faces, "%d", &count);
+        float u, v;
+        for (int i = 0; i < count; ++i) {
+            read_size = fscanf(fp_faces, "%f %f", &u, &v);
+            v = 1.0 - v;
+            gTexCoords.push_back({ u, v });
+        }
+        read_size = fscanf(fp_faces, "%d", &count);
+        for (int i = 0; i < count; ++i) {
             read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[0], &tmp_uvi[0], &tmp_ni[0]);
             read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[1], &tmp_uvi[1], &tmp_ni[1]);
             read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[2], &tmp_uvi[2], &tmp_ni[2]);
-            read_size = fscanf(fp_faces, "%d/%d/%d", &tmp_vi[3], &tmp_uvi[3], &tmp_ni[3]);
-            
-            --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2]; --tmp_vi[3];  // -1
+            --tmp_vi[0]; --tmp_vi[1]; --tmp_vi[2];  // -1
+            --tmp_uvi[0]; --tmp_uvi[1]; --tmp_uvi[2];  // -1
             gTriangles.push_back({ tmp_vi[0], tmp_vi[1], tmp_vi[2] });
+            gTrianglesUV.push_back({ tmp_uvi[0], tmp_uvi[1], tmp_uvi[2] });
             gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[1]].push_back((int)gTriangles.size() - 1);
             gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
-            gTriangles.push_back({ tmp_vi[0], tmp_vi[2], tmp_vi[3] });
-            gTrianglesOfPoint[tmp_vi[0]].push_back((int)gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[2]].push_back((int)gTriangles.size() - 1);
-            gTrianglesOfPoint[tmp_vi[3]].push_back((int)gTriangles.size() - 1);
-            // printf("%d %d %d %d\n", tmp_vi[0], tmp_vi[1], tmp_vi[2], tmp_vi[3]);
         }
         fclose(fp_faces);
         // printf("read face done\n");
@@ -345,6 +350,8 @@ void FaceDB::Initialize(std::string dir) {
         }
         // printf("read face only mesh done\n");
     }
+
+    snow::info("[FaceDB]: finish.");
 }
 
 void FaceDB::QueryCore(const double *iden, const double *expr, Tensor3 &result) {
