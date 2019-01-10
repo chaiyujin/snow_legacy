@@ -1,3 +1,14 @@
+# Refactoring
+- Core (the core class and interfaces)
+    - basic math: vec, quat, matrix and transform
+    - eigen3: for linear algebra
+    - data types: audio, image
+    - logger: based on spdlog
+    - timer: record time
+    - memory allocater (an interface)
+- Media (the codes related to media)
+- OpenGL (the codes related to opengl)
+
 # Modules
 - Core:
     - glm, eigen3, extened_types(such as `int3`)
@@ -15,7 +26,3 @@
     - [ ] OpenCV
     - [ ] Dlib
 - [ ] Functional Programming
-
-
-# TODO
-- [ ] Test memory arena in multi-threads. (it seems very slow now)
