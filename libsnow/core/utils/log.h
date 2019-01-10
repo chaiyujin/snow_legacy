@@ -1,4 +1,5 @@
 #pragma once
+#include "../common.h"
 #ifdef NDEBUG
 // release
 #include <spdlog/spdlog.h>
@@ -11,11 +12,15 @@
 #include <spdlog/fmt/ostr.h>
 #define __RAY_LOG_LEVEL__ spdlog::level::trace
 #endif
+#ifdef __APPLE__
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#endif
 
 namespace snow { namespace log {
 
 /* get loggers of spdlog and set level */
-std::vector<std::shared_ptr<spdlog::logger>> &GetLoggers();
+SNOW_API std::vector<std::shared_ptr<spdlog::logger>> &GetLoggers();
 
 /* set logger */
 inline void AddLogger(const char *name)     { 
