@@ -108,12 +108,11 @@ namespace snow {
         };
 
         std::ifstream fin("snowapp.ini");
-        std::regex re_title("(\\[)(.*)(\\])");
         if (fin.is_open()) {
             std::string line;
             while (!fin.eof()) {
                 std::getline(fin, line); Trim(line);
-                if (std::regex_match(line, re_title)) {
+                if (line.front() == '[' and line.back() == ']') {
                     // read title
                     Settings sets = parseSettings(line, fin);
                     mWindowSettings.insert(std::pair<std::string, Settings>(line, sets));
