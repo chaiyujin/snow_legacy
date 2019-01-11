@@ -1,4 +1,4 @@
-#include "tool_log.h"
+#include "log.h"
 
 namespace snow { namespace log {
 

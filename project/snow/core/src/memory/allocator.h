@@ -1,23 +1,26 @@
 #pragma once
-#include "common.h"
-#include "tool_log.h"
+#include "../common.h"
+#include "../tools/log.h"
+#include "arena.h"
 #include <vector>
 #include <memory>
 namespace snow { namespace memory {
 
+/* api of allocation */
+SNOW_API void *_snow_alloc(size_t size, size_t align);
+SNOW_API void _snow_free(void *ptr);
+
 template <class T, int AlignBytes=SNOW_DEFAULT_ALIGNBYTES>
-inline T *allocate(size_t size) {
-    void *ptr = nullptr;
-    // posix_memalign(&ptr, AlignBytes, size);
-    ptr = malloc(size);
+SNOW_INLINE T *allocate(size_t size) {
+    void *ptr = _snow_alloc(size, AlignBytes);
     log::debug("allocate({}) -> {}", size, ptr);
     return (T*)ptr;
 }
 
-inline void deallocate(void *ptr) {
+SNOW_INLINE void deallocate(void *ptr) {
     if (ptr != nullptr) {
         log::debug("deallocate({})", (void*)ptr);
-        free((void*)ptr);
+        _snow_free(ptr);
     }
 }
 
@@ -29,28 +32,28 @@ class Allocator {
 
 public:
     SNOW_FORCE_INLINE void * operator new(size_t size) {
-        log::debug("Allocator::new");
+        log::debug("allocator::new");
         return allocate<void, AlignBytes>(size);
     }
     SNOW_FORCE_INLINE void operator delete(void * ptr) {
-        log::debug("Allocator::delete");
+        log::debug("allocator::delete");
         deallocate(ptr);
     }
     SNOW_FORCE_INLINE void * operator new[](size_t size) {
-        log::debug("Allocator::new[]");
+        log::debug("allocator::new[]");
         return allocate<void, AlignBytes>(size);
     }
     SNOW_FORCE_INLINE void operator delete[](void * ptr) {
-        log::debug("Allocator::delete[]");
+        log::debug("allocator::delete[]");
         deallocate(ptr);
     }
     /* placement new */
     SNOW_FORCE_INLINE void * operator new  (size_t size, void *ptr) {
-        log::debug("Allocator::placement new");
+        log::debug("allocator::placement new");
         SNOW_UNUSED(size); return ptr;
     }
     SNOW_FORCE_INLINE void * operator new[](size_t size, void *ptr) {
-        log::debug("Allocator::placement new[]");
+        log::debug("allocator::placement new[]");
         SNOW_UNUSED(size); return ptr;
     }
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 #include <string>
-#include "tool_log.h"
+#include "log.h"
 
 namespace snow {
 
@@ -12,11 +12,11 @@ class Timer {
     using clock = std::chrono::high_resolution_clock;
     using point = std::chrono::time_point<clock>;
 protected:
-    point mStarTime;
+    point mStartTime;
 public:
     Timer() { restart(); }
-    void restart() { mStarTime = clock::now(); }
-    size_t microseconds() const { return std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - mStarTime).count(); }
+    void restart() { mStartTime = clock::now(); }
+    size_t microseconds() const { return std::chrono::duration_cast<std::chrono::microseconds>(clock::now() - mStartTime).count(); }
     double milliseconds() const { return (double)microseconds() / 1000.0;    }
     double seconds()      const { return (double)microseconds() / 1000000.0; }
 };

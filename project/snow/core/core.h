@@ -1,12 +1,13 @@
 #pragma once
 #include "src/common.h"
-#include "src/tool_log.h"
-#include "src/tool_timer.h"
-#include "src/memo_allocator.h"
-#include "src/data_image.h"
+#include "src/tools/log.h"
+#include "src/tools/path.h"
+#include "src/tools/timer.h"
+#include "src/memory/allocator.h"
+#include "src/data/image.h"
 
 namespace snow {
 
-SNOW_API void test_build(int);
+SNOW_INLINE std::string __version__(void) { return SNOW_VERSION_STRING; }
 
 }
