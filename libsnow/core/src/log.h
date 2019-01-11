@@ -1,21 +1,16 @@
 #pragma once
-#include "../common.h"
-#ifdef NDEBUG
-// release
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
+#include "common.h"
+#ifdef NDEBUG // release
 #define __RAY_LOG_LEVEL__ spdlog::level::info
-#else
-// debug
+#else // debug
 #define SPDLOG_TRACE_ON
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
 #define __RAY_LOG_LEVEL__ spdlog::level::trace
 #endif
-#ifdef __APPLE__
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#endif
+#include "../third-party/spdlog/spdlog.h"
+#include "../third-party/spdlog/fmt/ostr.h"
+#include "../third-party/spdlog/sinks/stdout_color_sinks.h"
+#include "../third-party/spdlog/sinks/rotating_file_sink.h"
+
 
 namespace snow { namespace log {
 
