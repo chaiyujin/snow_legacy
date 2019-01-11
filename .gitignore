@@ -10,3 +10,4 @@ pybind11_tmp/
 *.py[cod]
 *.npy
 .vscode/
+libsnow/
