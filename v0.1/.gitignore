@@ -1,0 +1,11 @@
+*.DS_Store*
+*.ini
+*bin/
+*build/
+*.vscode/
+*CMakeFiles/
+*assets/
+third_party/
+pybind11_tmp/
+*.py[cod]
+*.npy
