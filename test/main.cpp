@@ -13,7 +13,6 @@ template <class ost> ost&operator<<(ost&out, const A& a) {
 }
 
 int main() {
-
     {
         snow::log::info("snow version: {}", snow::__version__());
         auto image = snow::Image::Load("../scene.jpeg");

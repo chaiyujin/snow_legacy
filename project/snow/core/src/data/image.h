@@ -10,9 +10,11 @@ namespace snow {
 class SNOW_API Image {
 private:
     using bytes = std::shared_ptr<uint8_t>;
-    bytes mData;
-    int   mWidth, mHeight, mBPP;
-    int   mRealSize;
+    bytes    mData;
+    uint32_t mWidth, mHeight, mBPP;
+    uint32_t mRealSize;
+
+    void  _check(uint32_t w, uint32_t h, uint32_t bpp) const;
 public:
     /* static methods */
     
@@ -24,27 +26,31 @@ public:
     static Image MergeY(const Image &a, const Image &b);
 
     /* constructor */
-    Image(): mData(nullptr, memory::deallocate)
-           , mWidth(0), mHeight(0), mBPP(0), mRealSize(0) {}
-    Image(int w, int h, int bpp) : Image() { this->resize(w, h, bpp); }
+    Image()
+        : mData(nullptr, memory::deallocate)
+        , mWidth(0), mHeight(0), mBPP(0), mRealSize(0) {}
+    Image(uint32_t w, uint32_t h, uint32_t bpp)
+        : Image() { this->resize(w, h, bpp); }
     Image(const Image &b)
         : mData(b.mData)
         , mWidth(b.mWidth), mHeight(b.mHeight), mBPP(b.mBPP)
         , mRealSize(b.mRealSize) {}
     Image clone() const;
-    void resize(int w, int h, int bpp);
+    bool isNull() const { return this->size() == 0; }
+    void resize(uint32_t w, uint32_t h, uint32_t bpp);
     // clear
     void zero() { memset(mData.get(), 0, this->size()); }
     // access to data
     uint8_t * data() { return mData.get(); }
     const uint8_t * data() const { return mData.get(); }
+    void setData(const uint8_t *ptr, uint32_t w, uint32_t h, uint32_t bpp);
     // access to attributes
-    const int width()    const { return mWidth;  }
-    const int height()   const { return mHeight; }
-    const int bpp()      const { return mBPP;    }
-    const int pixels()   const { return mWidth*mHeight;      }
-    const int size()     const { return mWidth*mHeight*mBPP; }
-    const int realSize() const { return mRealSize; }
+    const uint32_t width()    const { return mWidth;  }
+    const uint32_t height()   const { return mHeight; }
+    const uint32_t bpp()      const { return mBPP;    }
+    const uint32_t pixels()   const { return mWidth*mHeight;      }
+    const uint32_t size()     const { return mWidth*mHeight*mBPP; }
+    const uint32_t realSize() const { return mRealSize; }
     // access to static methods
     bool save(const std::string &filename, bool makeDir=false) { return Image::Save(filename, *this, makeDir); }
     Image &flipX() { Image::FlipX(*this); return *this; }

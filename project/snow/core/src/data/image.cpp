@@ -9,14 +9,22 @@
 
 namespace snow {
 
+void  Image::_check(uint32_t w, uint32_t h, uint32_t bpp) const {
+    if (w <= 0) log::fatal("[Image]: given w `{}` <= 0", w);
+    if (h <= 0) log::fatal("[Image]: given h `{}` <= 0", h);
+    if (bpp != 1 && bpp != 3 && bpp != 4)
+        log::fatal("[Image]: only support bpp == (1, 3, 4). (Gray, RGB, RGBA)");
+}
+
 Image Image::clone() const {
     Image ret(mWidth, mHeight, mBPP);
     memcpy(ret.data(), this->data(), ret.size());
     return ret;
 }
 
-void Image::resize(int w, int h, int bpp) {
-    const int newSize = w*h*bpp;
+void Image::resize(uint32_t w, uint32_t h, uint32_t bpp) {
+    this->_check(w, h, bpp);
+    const uint32_t newSize = w*h*bpp;
     if (newSize > mRealSize) {
         mData.reset(); // release memory (if count==1)
         mData.reset(memory::allocate<uint8_t>(newSize),
@@ -27,6 +35,11 @@ void Image::resize(int w, int h, int bpp) {
     mHeight = h;
     mBPP = bpp;
     this->zero();
+}
+
+void Image::setData(const uint8_t *ptr, uint32_t w, uint32_t h, uint32_t bpp) {
+    resize(w, h, bpp);
+    memcpy(this->data(), ptr, this->size());
 }
 
 /* static methods */
@@ -66,12 +79,12 @@ bool  Image::Save(std::string filename, const Image &image, bool makeDir) {
 void  Image::FlipX(Image &image) {
     // flip cols
     uint8_t *data;
-    for (int r = 0; r < image.mHeight; ++r) {
+    for (uint32_t r = 0; r < image.mHeight; ++r) {
         data = image.data() + r * image.mWidth * image.mBPP;
-        for (int c = 0; c < image.mWidth/2; ++c) {
-            int i = c * image.mBPP;
-            int j = (image.mWidth - 1 - c) * image.mBPP;
-            for (int k = 0; k < image.mBPP; ++k) {
+        for (uint32_t c = 0; c < image.mWidth/2; ++c) {
+            uint32_t i = c * image.mBPP;
+            uint32_t j = (image.mWidth - 1 - c) * image.mBPP;
+            for (uint32_t k = 0; k < image.mBPP; ++k) {
                 std::swap(data[i + k], data[j + k]);
             }
         }
@@ -82,12 +95,12 @@ void  Image::FlipY(Image &image) {
     // flip rows
     uint8_t *data0;
     uint8_t *data1;
-    for (int r = 0; r < image.mHeight/2; ++r) {
+    for (uint32_t r = 0; r < image.mHeight/2; ++r) {
         data0 = image.data() + r * image.mWidth * image.mBPP;
         data1 = image.data() + (image.mHeight - 1 - r) * image.mWidth * image.mBPP;
-        for (int c = 0; c < image.mWidth; ++c) {
-            int i = c * image.mBPP;
-            for (int k = 0; k < image.mBPP; ++k) {
+        for (uint32_t c = 0; c < image.mWidth; ++c) {
+            uint32_t i = c * image.mBPP;
+            for (uint32_t k = 0; k < image.mBPP; ++k) {
                 std::swap(data0[i + k], data1[i + k]);
             }
         }
@@ -100,18 +113,18 @@ Image Image::MergeX(const Image &image0, const Image &image1) {
     /* merge cols */ {
         log::assertion(image0.bpp() == image1.bpp(),
                        "[Image]: MergeX() two images have different bpp()");
-        int newW = image0.width() + image1.width();
-        int newH = std::max(image0.height(), image1.height());
-        int newBPP = image0.bpp();
+        uint32_t newW = image0.width() + image1.width();
+        uint32_t newH = std::max(image0.height(), image1.height());
+        uint32_t newBPP = image0.bpp();
         Image image(newW, newH, newBPP);
         uint8_t *tar;
         const uint8_t *src;
-        for (int r = 0; r < newH; ++r) {
+        for (uint32_t r = 0; r < newH; ++r) {
             tar = image.data() + r * image.mWidth * newBPP;
             src = image0.data() + r * image0.mWidth * newBPP;
-            for (int c = 0; c < image0.mWidth * newBPP; ++c) *tar++ = *src++;
+            for (uint32_t c = 0; c < image0.mWidth * newBPP; ++c) *tar++ = *src++;
             src = image1.data() + r * image1.mWidth * newBPP;
-            for (int c = 0; c < image1.mWidth * newBPP; ++c) *tar++ = *src++;
+            for (uint32_t c = 0; c < image1.mWidth * newBPP; ++c) *tar++ = *src++;
         }
         return image;
     }
@@ -123,17 +136,17 @@ Image Image::MergeY(const Image &image0, const Image &image1) {
     /* merge rows */ {
         log::assertion(image0.bpp() == image1.bpp(),
                        "[Image]: MergeY() two images have different bpp()");
-        int newW = std::max(image0.width(), image1.width());
-        int newH = image0.height() + image1.height();
-        int newBPP = image0.bpp();
+        uint32_t newW = std::max(image0.width(), image1.width());
+        uint32_t newH = image0.height() + image1.height();
+        uint32_t newBPP = image0.bpp();
         Image image(newW, newH, newBPP);
         uint8_t *tar;
         const uint8_t *src;
-        for (int r = 0; r < newH; ++r) {
+        for (uint32_t r = 0; r < newH; ++r) {
             tar = image.data() + r * image.mWidth * newBPP;
             if (r < image0.height()) src = image0.data() + r * image0.mWidth * newBPP;
             else                     src = image1.data() + (r - image0.mHeight) * image1.mWidth * newBPP;
-            for (int c = 0; c < image0.mWidth * newBPP; ++c) *tar ++ = *src++;
+            for (uint32_t c = 0; c < image0.mWidth * newBPP; ++c) *tar ++ = *src++;
         }
         return image;
     }
