@@ -5,6 +5,7 @@
 #include "src/tools/timer.h"
 #include "src/memory/allocator.h"
 #include "src/data/image.h"
+#include "src/data/wav.h"
 
 namespace snow {
 

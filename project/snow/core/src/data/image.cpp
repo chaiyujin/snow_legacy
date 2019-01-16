@@ -26,7 +26,7 @@ void Image::resize(uint32_t w, uint32_t h, uint32_t bpp) {
     this->_check(w, h, bpp);
     const uint32_t newSize = w*h*bpp;
     if (newSize > mRealSize) {
-        mData.reset(); // release memory (if count==1)
+        // mData.reset(); // release memory (if count==1)
         mData.reset(memory::allocate<uint8_t>(newSize),
                     memory::deallocate);
         mRealSize = newSize;

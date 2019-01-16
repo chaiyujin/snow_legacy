@@ -10,11 +10,19 @@ namespace snow { namespace memory {
 SNOW_API void *_snow_alloc(size_t size, size_t align);
 SNOW_API void _snow_free(void *ptr);
 
-template <class T, int AlignBytes=SNOW_DEFAULT_ALIGNBYTES>
-SNOW_INLINE T *allocate(size_t size) {
-    void *ptr = _snow_alloc(size, AlignBytes);
+template <class T>
+SNOW_INLINE T *allocate(size_t count, size_t alignBytes=SNOW_DEFAULT_ALIGNBYTES) {
+    const size_t size = count * sizeof(T);
+    void *ptr = _snow_alloc(size, alignBytes);
     log::debug("allocate({}) -> {}", size, ptr);
     return (T*)ptr;
+}
+
+template <>
+SNOW_INLINE void *allocate<void>(size_t count, size_t alignBytes) {
+    void *ptr = _snow_alloc(count, alignBytes);
+    log::debug("allocate({}) -> {}", count, ptr);
+    return ptr;
 }
 
 SNOW_INLINE void deallocate(void *ptr) {
@@ -33,7 +41,7 @@ class Allocator {
 public:
     SNOW_FORCE_INLINE void * operator new(size_t size) {
         log::debug("allocator::new");
-        return allocate<void, AlignBytes>(size);
+        return allocate<void>(size, AlignBytes);
     }
     SNOW_FORCE_INLINE void operator delete(void * ptr) {
         log::debug("allocator::delete");
@@ -41,7 +49,7 @@ public:
     }
     SNOW_FORCE_INLINE void * operator new[](size_t size) {
         log::debug("allocator::new[]");
-        return allocate<void, AlignBytes>(size);
+        return allocate<void>(size, AlignBytes);
     }
     SNOW_FORCE_INLINE void operator delete[](void * ptr) {
         log::debug("allocator::delete[]");
