@@ -18,8 +18,8 @@ private:
 public:
     /* static methods */
     
-    static Image Load(std::string filename);
-    static bool  Save(std::string filename, const Image &img, bool makeDir=false);
+    static Image Load(const std::string &filename);
+    static bool  Save(const std::string &filename, const Image &img, bool makeDirs=false);
     static void  FlipX(Image &img);
     static void  FlipY(Image &img);
     static Image MergeX(const Image &a, const Image &b);
@@ -45,14 +45,15 @@ public:
     const uint8_t * data() const { return mData.get(); }
     void setData(const uint8_t *ptr, uint32_t w, uint32_t h, uint32_t bpp);
     // access to attributes
-    const uint32_t width()    const { return mWidth;  }
-    const uint32_t height()   const { return mHeight; }
-    const uint32_t bpp()      const { return mBPP;    }
-    const uint32_t pixels()   const { return mWidth*mHeight;      }
-    const uint32_t size()     const { return mWidth*mHeight*mBPP; }
-    const uint32_t realSize() const { return mRealSize; }
+    uint32_t width()    const { return mWidth;  }
+    uint32_t height()   const { return mHeight; }
+    uint32_t bpp()      const { return mBPP;    }
+    uint32_t pixels()   const { return mWidth*mHeight;      }
+    uint32_t size()     const { return mWidth*mHeight*mBPP; }
+    uint32_t realSize() const { return mRealSize; }
     // access to static methods
-    bool save(const std::string &filename, bool makeDir=false) { return Image::Save(filename, *this, makeDir); }
+    bool load(const std::string &filename);
+    bool save(const std::string &filename, bool makeDirs=false) const;
     Image &flipX() { Image::FlipX(*this); return *this; }
     Image &flipY() { Image::FlipY(*this); return *this; }
     Image flippedX() { Image ret(this->clone()); Image::FlipX(ret); return ret; }

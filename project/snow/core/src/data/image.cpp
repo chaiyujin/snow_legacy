@@ -42,38 +42,48 @@ void Image::setData(const uint8_t *ptr, uint32_t w, uint32_t h, uint32_t bpp) {
     memcpy(this->data(), ptr, this->size());
 }
 
-/* static methods */
-
-Image Image::Load(std::string filename) {
-    if (!path::exists(filename)) { 
+bool Image::load(const std::string &filename) {
+    if (!path::exists(filename)) {
         log::fatal("[Image]: read() file not found");
-        return Image();
+        return false;
     } else {
         int w, h, n;
         uint8_t *data = stbi_load(filename.c_str(), &w, &h, &n, STBI_rgb_alpha);
         n = STBI_rgb_alpha;
-        Image image(w, h, n);
-        memcpy(image.data(), data, w * h * n);
+        this->setData(data, w, h, n);
         stbi_image_free(data);
-        return image;
+        return true;
     }
 }
 
-bool  Image::Save(std::string filename, const Image &image, bool makeDir) {
+bool Image::save(const std::string &filename, bool makeDirs) const {
     if (!path::exists(path::dirname(filename))) {
         log::debug("not exists {}", path::dirname(filename));
-        if (!makeDir || !path::makedirs(filename, true)) {
+        if (!makeDirs || !path::makedirs(filename, true)) {
             log::error("[Image]: save() failed to create file: {}", filename);
             return false;
         }
     }
-    if (!(path::extension(filename) == ".png")) {
+    auto filepath = filename;
+    if (!(path::extension(filepath) == ".png")) {
         log::warn("[Image]: only support .png");
-        filename = path::change_extension(filename, ".png");
+        filepath = path::change_extension(filepath, ".png");
     }
-    stbi_write_png(filename.c_str(), image.width(), image.height(), image.bpp(),
-                   image.data(), image.width() * image.bpp());
+    stbi_write_png(filepath.c_str(), mWidth, mHeight, mBPP,
+                   mData.get(), mWidth * mBPP);
     return true;
+}
+
+/* static methods */
+
+Image Image::Load(const std::string &filename) {
+    Image ret;
+    ret.load(filename);
+    return ret;
+}
+
+bool Image::Save(const std::string &filename, const Image &image, bool makeDirs) {
+    return image.save(filename, makeDirs);
 }
 
 void  Image::FlipX(Image &image) {

@@ -30,6 +30,10 @@ message(STATUS "[snow install]: `make install` to install at ${SNOW_INSTALL_DIR}
 SET(CMAKE_CXX_FLAGS       "${CMAKE_CXX_FLAGS} -O3 -std=c++11 -g -march=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG -O0 -g -std=c++11 -march=native")
 
+SET(WARNING_FLAGS "-Wall -Werror -Wno-multichar -Wno-switch -Wno-unused-result -Wno-unused-local-typedefs")
+SET(CMAKE_CXX_FLAGS       "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS}")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${WARNING_FLAGS}")
+
 # # set directory
 SET(SNOW_ROOT       ${PROJECT_SOURCE_DIR})
 SET(SNOW_INSTALL_INC ${SNOW_INSTALL_DIR}/include)

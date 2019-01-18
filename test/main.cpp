@@ -14,8 +14,7 @@ template <class ost> ost&operator<<(ost&out, const A& a) {
 
 int main() {
     {
-        snow::WavPcm wav;
-        wav.load("../test.wav");
+        auto wav = snow::WavPcm::Load("../test.wav");
         wav.dumpHeader();
         wav.save("test.wav");
     }

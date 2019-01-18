@@ -76,30 +76,53 @@ bool WavPcm::load(const std::string &path) {
     return true;
 }
 
-bool WavPcm::save(const std::string &path) {
-    if (isNull()) { log::error("[WavPcm]: null!"); return false;               }
-    if (mHeader.mSampleRate == 0) { log::error("[WavPcm]: sample rate is not set!"); return false; }
+bool WavPcm::save(const std::string &filename, bool makeDirs) const {
+    if (isNull()) {
+        log::error("[WavPcm]: null!");
+        return false;
+    }
+    if (mHeader.mSampleRate == 0) {
+        log::error("[WavPcm]: sample rate is not set!");
+        return false;
+    }
+
+    if (!path::exists(path::dirname(filename))) {
+        log::debug("not exists {}", path::dirname(filename));
+        if (!makeDirs || !path::makedirs(filename, true)) {
+            log::error("[WavPcm]: save() failed to create file: {}", filename);
+            return false;
+        }
+    }
+
+    auto filepath = filename;
+    if (!(path::extension(filepath) == ".wav")) {
+        log::warn("[WavPcm]: only support .wav");
+        filepath = path::change_extension(filepath, ".wav");
+    }
+
+    Header header;
     // set header
-    mHeader.mChunkId[0] = 'R'; mHeader.mChunkId[1] = 'I'; mHeader.mChunkId[2] = 'F'; mHeader.mChunkId[3] = 'F';
-    mHeader.mFormat[0]  = 'W'; mHeader.mFormat[1]  = 'A'; mHeader.mFormat[2]  = 'V'; mHeader.mFormat[3]  = 'E';
-    mHeader.mSubChunk1Id[0] = 'f'; mHeader.mSubChunk1Id[1] = 'm'; mHeader.mSubChunk1Id[2] = 't'; mHeader.mSubChunk1Id[3] = ' ';
-    mHeader.mSubChunk1Size  = 16;
-    mHeader.mAudioFormat = 1;
-    mHeader.mNumChannels = 1;  // only one track
-    mHeader.mByteRate = mHeader.mSampleRate * 2 * 1;
-    mHeader.mBlockAlign = 16 * 1 / 8;
-    mHeader.mBitsPerSample = 16;  // int16_t
+    header.mSampleRate = mHeader.mSampleRate;
+    header.mChunkId[0] = 'R'; header.mChunkId[1] = 'I'; header.mChunkId[2] = 'F'; header.mChunkId[3] = 'F';
+    header.mFormat[0]  = 'W'; header.mFormat[1]  = 'A'; header.mFormat[2]  = 'V'; header.mFormat[3]  = 'E';
+    header.mSubChunk1Id[0] = 'f'; header.mSubChunk1Id[1] = 'm'; header.mSubChunk1Id[2] = 't'; header.mSubChunk1Id[3] = ' ';
+    header.mSubChunk1Size  = 16;
+    header.mAudioFormat = 1;
+    header.mNumChannels = 1;  // only one track
+    header.mByteRate = header.mSampleRate * 2 * 1;
+    header.mBlockAlign = 16 * 1 / 8;
+    header.mBitsPerSample = 16;  // int16_t
     // calc mChunkSize
-    mHeader.mChunkSize = (uint32_t)(sizeof(mHeader) + mNumSamples * 2);
+    header.mChunkSize = (uint32_t)(sizeof(header) + mNumSamples * 2);
 
     // chunk
     Chunk chunk;
     chunk.mId[0] = 'd'; chunk.mId[1] = 'a'; chunk.mId[2] = 't'; chunk.mId[3] = 'a';
     chunk.mSize = (int32_t)mNumSamples * 2;
 
-    std::ofstream fout(path, std::ios::binary);
+    std::ofstream fout(filepath, std::ios::binary);
     if (fout.is_open()) {
-        fout.write((char *)(&mHeader), sizeof(mHeader));
+        fout.write((char *)(&header), sizeof(header));
         fout.write((char *)(&chunk),   sizeof(chunk));
         for (uint32_t i = 0; i < mNumSamples; ++i) {
             float x = data()[i];
@@ -150,6 +173,17 @@ void WavPcm::dumpHeader() const {
         mHeader.mSampleRate,
         mHeader.mBitsPerSample
     );
+}
+
+
+WavPcm WavPcm::Load(const std::string &filename) {
+    WavPcm wav;
+    wav.load(filename);
+    return wav;
+}
+
+bool WavPcm::Save(const std::string &filename, const WavPcm &wav, bool makeDirs) {
+    return wav.save(filename, makeDirs);
 }
 
 }

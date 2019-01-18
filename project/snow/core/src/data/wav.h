@@ -42,7 +42,7 @@ public:
     WavPcm(uint32_t sampleRate) : WavPcm() { mHeader.mSampleRate = sampleRate; }
 
     bool load(const std::string &path);
-    bool save(const std::string &path);
+    bool save(const std::string &path, bool makeDirs=false) const;
     bool isNull() const { return mData == nullptr; }
     /* set */
     void setData(const float *dataPtr, uint32_t numSamples);
@@ -57,6 +57,10 @@ public:
     std::vector<float> channel() const;
     /* debug */
     void dumpHeader() const;
+
+    /* static methods */
+    static WavPcm Load(const std::string &filename);
+    static bool Save(const std::string &filename, const WavPcm &wav, bool makeDirs=false);
 };
 
 }
