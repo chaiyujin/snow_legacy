@@ -12,17 +12,17 @@
 
 namespace snow { namespace path {
 
-bool mkdir(const std::string &dirname, bool exist_ok=true);
+bool makedir(const std::string &dirname, bool exist_ok=true);
 
 SNOW_INLINE bool makedirs(const std::string &dirname, bool exist_ok=true) {
     bool good = true;
     const size_t len = dirname.length();
     for (size_t i = 0; (i < len) && good; ++i) {
         if (dirname[i] == '/' || dirname[i] == '\\') {
-            good &= path::mkdir(dirname.substr(0, i), exist_ok);
+            good &= path::makedir(dirname.substr(0, i), exist_ok);
         }
     }
-    if (good) good &= path::mkdir(dirname, exist_ok);
+    if (good) good &= path::makedir(dirname, exist_ok);
     return good;
 }
 
@@ -86,7 +86,7 @@ SNOW_INLINE std::string dirname(const std::string &filepath) {
 }
 
 /* to not confuse with mkdir */
-SNOW_INLINE bool path::mkdir(const std::string &dirname, bool exist_ok) {
+SNOW_INLINE bool path::makedir(const std::string &dirname, bool exist_ok) {
 #ifdef WIN32
     int ret = _mkdir(dirname.c_str());
 #else

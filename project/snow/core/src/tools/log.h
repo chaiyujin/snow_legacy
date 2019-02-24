@@ -19,11 +19,11 @@ SNOW_API std::vector<std::shared_ptr<spdlog::logger>> &get_loggers();
 
 // add logger
 SNOW_INLINE void add_logger(const char *name)     { 
-    get_loggers().push_back(std::move(spdlog::stdout_color_mt(name)));
+    get_loggers().push_back(spdlog::stdout_color_mt(name));
 }
 // add file logger
 SNOW_INLINE void add_logger(const char *name, const char *path) {
-    get_loggers().push_back(std::move(spdlog::rotating_logger_mt(name, path, 1048576 * 5, 3)));
+    get_loggers().push_back(spdlog::rotating_logger_mt(name, path, 1048576 * 5, 3));
 }
 
 /* auto init */
