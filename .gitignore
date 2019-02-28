@@ -8,3 +8,5 @@ third_party/
 pybind11_tmp/
 *.py[cod]
 *.npy
+libsnow/
+v0.1/
