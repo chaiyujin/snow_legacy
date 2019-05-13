@@ -231,7 +231,7 @@ int MediaReader::processInput(MediaType request_type) {
     {
         ffmpeg::decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            int64_t pts = st->mDecodeFramePtr->best_effort_timestamp;
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f nb_samples %d %s\n",
@@ -267,7 +267,7 @@ int MediaReader::processInput(MediaType request_type) {
     else if ((st->mType == AVMEDIA_TYPE_VIDEO) && (request_type & MediaType::Video)) {
         ffmpeg::decode(st->mDecCtxPtr, st->mDecodeFramePtr, &got_frame, &pkt);
         if (got_frame) {
-            int64_t pts = av_frame_get_best_effort_timestamp(st->mDecodeFramePtr);
+            int64_t pts = st->mDecodeFramePtr->best_effort_timestamp;
 #ifdef DEBUG_TS
             std::cout << pkt.stream_index << " " << pts << std::endl;
             printf("%s %d: pts %f %s\n",

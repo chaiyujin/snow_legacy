@@ -120,7 +120,7 @@ MediaWriter::MediaWriter(std::string filename)
     , mEncodeVideo(false)
     , mEncodeAudio(false) {
     
-    av_register_all();
+    // av_register_all();
 
     /* allocate the output media context */
     avformat_alloc_output_context2(&mFmtCtxPtr, nullptr, nullptr, filename.c_str());

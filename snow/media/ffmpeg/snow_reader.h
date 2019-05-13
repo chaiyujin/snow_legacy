@@ -165,7 +165,7 @@ protected:
     int     processInput(MediaType request_type=MediaType::AudioVideo);
     void    preReadAudioTracks();
 public:
-    static void initializeFFmpeg() { if (!gInitialized) { av_register_all(); gInitialized = true; } }
+    static void initializeFFmpeg() { if (!gInitialized) { gInitialized = true; } }
 
     MediaReader(const std::string &filename);
     MediaReader(const MediaReader &b);
